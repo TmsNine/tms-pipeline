@@ -35,25 +35,29 @@ drive it.
 
 Open your agent (Claude Code or Codex) in the repo and use a prompt like this:
 
-> Let's create the product spec for **<product>**. The idea is **<core idea>**; the goal is
+> Let's define the **MVP documentation** for **<product>**. The idea is **<core idea>**; the goal is
 > **<outcome>**.
 > Interview me **one question at a time**, each with 2–3 concrete options, and **mark the recommended
-> option** clearly. I'll answer each; when you have no more questions, produce a `PRD.md`.
-> Then distribute every decision from my answers into the matching folders of the tms-pipeline
+> option** clearly. I'll answer each; when you have no more questions, produce an **initial MVP
+> documentation set** — only what's decided so far, to be filled in further as development progresses.
+> Distribute every decision from my answers into the matching folders of the tms-pipeline
 > documentation-base template (`00 Governance/`, `02 Product/`, `03 Architecture/`, `04 Delivery/`),
 > and keep all of it **in sync with my documentation vault** as the single source of truth.
 
 What this gives you:
 
-- A real **PRD** plus the rest of the doc base, filled from your own decisions — not the agent's guesses.
+- An **initial MVP documentation set** filled from your own decisions — not the agent's guesses. It's a
+  living baseline: you grow it as development progresses, not a one-off document.
 - One question at a time with a **recommended answer highlighted**, so you can move fast by accepting
   defaults or pushing back.
 - Every output **sorted into the doc-vault template folders** (copy `templates/docs-vault/PROJECT_NAME/`
   into your vault first — see [docs/03-doc-base.md](docs/03-doc-base.md)), and kept **synchronized with
   that vault**, which becomes your single source of truth.
 
-Once you have a doc base and at least one backlog item, run `npx tms-pipeline` and start the pipeline
-normally (below).
+Once you have this baseline doc set and at least one backlog item, run `npx tms-pipeline` and start the
+pipeline normally (below). From then on, the vault keeps growing: **after each task ships, its delivered
+behavior and decisions are folded back into the right docs**, so the vault always reflects what was
+actually built (see [Documentation Discipline](docs/00-methodology.md) and the review gate).
 
 ---
 

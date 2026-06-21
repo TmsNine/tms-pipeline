@@ -8,6 +8,7 @@ Date: [DATE]
 - [ ] Change-surface triggers handled (contracts, auth, async, persistence, copy)
 - [ ] Validation evidence present (`05_test_report.md`)
 - [ ] Follow-ups + pre-launch manual actions captured (per AGENTS.md)
+- [ ] Documentation base updated — delivered behavior/decisions folded into the owning docs so the vault reflects reality
 
 ## Verdict
 - [ ] **go** — ships as-is

@@ -210,6 +210,10 @@ typecheck, lint, build, logs). No ceremony for simple local tasks.
 - Update docs when a change materially affects architecture, setup, operations, contracts, user flows, or
   important decisions. After implementation, check whether durable knowledge should be added/aligned, and
   call out any relevant doc drift left out of scope.
+- **Keep the documentation base a living source of truth.** It starts as an MVP baseline and grows with
+  the product. After a task ships, the vault must reflect what was actually built — fold the delivered
+  behavior and decisions back into the owning docs (PRD / flow / architecture / backlog status), so the
+  vault state always matches reality, not just the original intent.
 
 ## UI And Design
 
