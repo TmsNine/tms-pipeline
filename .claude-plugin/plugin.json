@@ -1,0 +1,37 @@
+{
+  "name": "tms-pipeline",
+  "version": "0.1.0",
+  "description": "An opinionated AI-agent delivery pipeline: 8 staged skills (ticket → research → design → gap-audit → plan → implement → test → review-gate) with multi-agent mob implementation, severity-rated gap audit, cost-tiered escort profiles, and guaranteed follow-up/launch capture.",
+  "author": {
+    "name": "TmsNine"
+  },
+  "repository": "https://github.com/TmsNine/tms-pipeline",
+  "homepage": "https://github.com/TmsNine/tms-pipeline",
+  "license": "Apache-2.0",
+  "keywords": [
+    "pipeline",
+    "delivery",
+    "methodology",
+    "multi-agent",
+    "code-review",
+    "gap-audit",
+    "context-engineering"
+  ],
+  "skills": [
+    "./skills/tms-ticket",
+    "./skills/tms-research",
+    "./skills/tms-design",
+    "./skills/tms-gap-audit",
+    "./skills/tms-plan",
+    "./skills/tms-implement",
+    "./skills/tms-test",
+    "./skills/tms-review",
+    "./skills/tms-audit-scope",
+    "./skills/tms-audit-sweep",
+    "./skills/tms-audit-triage",
+    "./skills/tms-audit-backlog",
+    "./skills/tms-care-refactoring",
+    "./skills/tms-loop-code-review",
+    "./skills/tms-ui-refactoring"
+  ]
+}

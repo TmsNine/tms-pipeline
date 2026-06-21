@@ -26,6 +26,37 @@ blank skeletons give you a starting structure, but filling them with real produc
 
 ---
 
+## Haven't started the project yet? Bootstrap first
+
+tms-pipeline expects a documentation base and a backlog to already exist — it delivers tasks, it doesn't
+invent the product. If you're starting from nothing, do this **one-time bootstrap** first to reach the
+starting line. This is a manual pre-step, not a pipeline stage and not an automated brainstorm — you
+drive it.
+
+Open your agent (Claude Code or Codex) in the repo and use a prompt like this:
+
+> Let's create the product spec for **<product>**. The idea is **<core idea>**; the goal is
+> **<outcome>**.
+> Interview me **one question at a time**, each with 2–3 concrete options, and **mark the recommended
+> option** clearly. I'll answer each; when you have no more questions, produce a `PRD.md`.
+> Then distribute every decision from my answers into the matching folders of the tms-pipeline
+> documentation-base template (`00 Governance/`, `02 Product/`, `03 Architecture/`, `04 Delivery/`),
+> and keep all of it **in sync with my documentation vault** as the single source of truth.
+
+What this gives you:
+
+- A real **PRD** plus the rest of the doc base, filled from your own decisions — not the agent's guesses.
+- One question at a time with a **recommended answer highlighted**, so you can move fast by accepting
+  defaults or pushing back.
+- Every output **sorted into the doc-vault template folders** (copy `templates/docs-vault/PROJECT_NAME/`
+  into your vault first — see [docs/03-doc-base.md](docs/03-doc-base.md)), and kept **synchronized with
+  that vault**, which becomes your single source of truth.
+
+Once you have a doc base and at least one backlog item, run `npx tms-pipeline` and start the pipeline
+normally (below).
+
+---
+
 ## Why it exists: context engineering
 
 Generic prompts ("build this feature, no bugs") don't scale — a single mega-prompt fills with noise and
@@ -106,17 +137,23 @@ Both are free and open-source and share the same core.
 
 ## Install
 
-```bash
-# 1) Configure the methodology onto YOUR existing project (short y/n-style wizard)
-npx tms-pipeline
+The skills and methodology work on **both Claude Code and Codex**. The onboarding wizard asks which
+tool(s) you use and writes only what you need (e.g. no `.claude/CLAUDE.md` if you only use Codex).
 
-# 2) Install the skills + agents into Claude Code
+```bash
+# 1) Configure the methodology onto YOUR existing project (short y/n wizard; asks Claude/Codex)
+npx tms-pipeline
+```
+
+```text
+# 2a) Claude Code — install the skills + agents
 /plugin marketplace add TmsNine/tms-pipeline
 /plugin install tms-pipeline@tms-pipeline
 /reload-plugins
-```
 
-(Codex reads `AGENTS.md` natively; see [configuration → Codex](docs/02-configuration.md#codex).)
+# 2b) Codex — reads AGENTS.md natively; install the skills/agents for Codex
+#     (see docs/02-configuration.md#codex)
+```
 
 ---
 
@@ -134,7 +171,7 @@ Open the generated `AGENTS.md` and:
 
 - resolve any `<<TODO: ...>>` markers — most importantly **`PROFILE_C_TRIGGERS`** (which surfaces force
   full security escort) and your tenancy/identity model;
-- if you copied the doc-base skeletons, **rename the `<PROJECT_NAME>` folder** to your project and point
+- if you copied the doc-base skeletons, **rename the `PROJECT_NAME` folder** to your project and point
   `DOC_BASE_PATH` at it.
 
 → Reference: [docs/02-configuration.md](docs/02-configuration.md).
@@ -155,7 +192,15 @@ Pick a task from your backlog and walk the stages. The agent does one stage, the
 ```
 
 After each stage a file appears in your task folder (`docs/ACME-123/`). Read it, confirm or correct, then
-run the next stage. Ask the agent to "run end-to-end" if you want it to proceed without stopping.
+run the next stage.
+
+> **Start each stage in a clean context window.** This is the whole point of context engineering — the
+> next stage should receive only its predecessor's artifact, not the accumulated noise of the previous
+> conversation. Each stage skill ends by reminding you to do this. Before running the next stage:
+> **Claude Code** → `/clear`; **Codex** → `/clear` (or `/new`). Then run the next `/tms-*` command.
+
+Ask the agent to "run end-to-end" only for small tasks where keeping one context is cheaper than the gain
+from clearing.
 
 ### Step 4 — Where things land
 
@@ -188,9 +233,25 @@ docs/          the full methodology + getting-started + configuration + doc-base
 
 ---
 
+## Credits & sources
+
+This project synthesizes and builds on the work of others:
+
+- **Core single-task methodology** — adapted from the video
+  ["Почему AI генерит мусор — и как заставить его писать нормальный код"](https://youtu.be/7oRBHxMvWxQ)
+  by **Dmitry Bereznitsky (Дмитрий Березницкий)**, which lays out the context-engineering, four-phase (research → design →
+  planning → implementation) workflow with mob programming and quality gates.
+- **The four-stage codebase-audit pipeline** (`/tms-audit-scope` → `sweep` → `triage` → `backlog`) —
+  adapted from ideas shared by [di.sukharev](https://www.instagram.com/di.sukharev/) and reworked into
+  skills here.
+- **The `AGENTS.md` canon** — parts draw on the `AGENTS.md` format and conventions by
+  **Boris Cherny**.
+
+Everything else (the eight-stage extension, the severity-rated gap audit, the escort cost profiles, the
+follow-up/launch capture, and the packaging) is original to this project.
+
 ## License
 
 [Apache-2.0](LICENSE). Free to use and adapt. Treat the methodology as a living process — adjust the
 stage names, escort triggers, and prompts to your team's culture; the principle that matters is
 controlling the context at every step.
-# tms-pipeline

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "tms-pipeline",
+  "description": "The tms-pipeline delivery methodology — staged skills + multi-agent implementation for an existing project.",
+  "owner": {
+    "name": "TmsNine"
+  },
+  "plugins": [
+    {
+      "name": "tms-pipeline",
+      "source": ".",
+      "description": "8-stage AI-agent delivery pipeline with multi-agent mob implementation, severity-rated gap audit, cost-tiered escort profiles, and follow-up/launch capture.",
+      "version": "0.1.0",
+      "category": "development"
+    }
+  ]
+}
