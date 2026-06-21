@@ -26,10 +26,10 @@ tms-pipeline настраивает методологию поставки **п
 Чтобы быстро запуститься на вашем проекте:
 
 ```bash
-# 1. Onboard your project (renders AGENTS.md + .claude/CLAUDE.md, optionally lays down skeletons)
+# 1. Онбординг проекта (пишет AGENTS.md + .claude/CLAUDE.md, по желанию кладёт скелеты)
 npx tms-pipeline
 
-# 2. Install the skills/agents into Claude Code
+# 2. Установить скиллы/агентов в Claude Code
 /plugin marketplace add TmsNine/tms-pipeline
 /plugin install tms-pipeline@tms-pipeline
 /reload-plugins
@@ -57,4 +57,17 @@ npx tms-pipeline
 ## Codex
 
 Codex читает `AGENTS.md` нативно, поэтому методология применяется так же. Тела навыков не зависят от
-инструмента. Различия в каталогах см. в [конфигурации](02-configuration.ru.md#codex).
+инструмента. У Codex нет аналога `/plugin install`, поэтому скиллы и агентов нужно положить туда, где
+Codex их ищет — в `~/.codex`:
+
+- проще всего: запустите `npx tms-pipeline`, выберите Codex и согласитесь на копирование — мастер сам
+  скопирует `skills/` → `~/.codex/skills/` и `agents/` → `~/.codex/agents/`;
+- вручную: `cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/`.
+
+Различия в каталогах см. в [конфигурации](02-configuration.ru.md#codex).
+
+## Посмотреть пример
+
+В [`templates/example-task/ACME-101/`](../templates/example-task/ACME-101/) лежит полный синтетический
+прогон одной задачи через все восемь стадий — от `00_ticket.md` до `06_review_gate.md`. Прочитайте файлы
+по порядку, чтобы увидеть формат каждой стадии до того, как запускать конвейер на своей задаче.

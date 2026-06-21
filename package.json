@@ -5,6 +5,10 @@
   "bin": {
     "tms-pipeline": "installer/cli/index.js"
   },
+  "scripts": {
+    "test": "node --test",
+    "check:links": "node scripts/check-links.mjs"
+  },
   "files": [
     "installer/",
     "templates/",

@@ -6,6 +6,19 @@ design audit, a cost model for spawning agents, and a hard rule that discovered 
 
 🇷🇺 [Читать по-русски](README.ru.md) · 📖 [Full methodology](docs/00-methodology.md) · 🚀 [Getting started](docs/01-getting-started.md)
 
+> Russian is the canonical language for this repo's docs; the English files follow it.
+
+---
+
+## In 30 seconds
+
+- **What it is.** Eight staged skills that move **one already-defined** task from ticket to reviewed
+  code, keeping the agent's context clean at every step.
+- **What it isn't.** It does not generate a project, brainstorm features, or "build your product."
+- **One command.** `npx tms-pipeline` configures the methodology on top of your **existing** repo.
+- **See it live.** [A full task run through all 8 stages →](templates/example-task/ACME-101/) — a
+  synthetic task from `00_ticket.md` to `06_review_gate.md`, so you can see each stage's format first.
+
 ---
 
 ## What this is — and what it is NOT
@@ -155,9 +168,15 @@ npx tms-pipeline
 /plugin install tms-pipeline@tms-pipeline
 /reload-plugins
 
-# 2b) Codex — reads AGENTS.md natively; install the skills/agents for Codex
-#     (see docs/02-configuration.md#codex)
+# 2b) Codex — reads AGENTS.md natively. Codex has no /plugin install equivalent, so its skills/agents
+#     go under ~/.codex. The `npx tms-pipeline` wizard offers to copy them automatically if you pick
+#     Codex. Manually:
+#       cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/
+#     More: docs/02-configuration.md#codex
 ```
+
+> The wizard installs only what you select: answer "no" to Claude Code and no `.claude/CLAUDE.md` is
+> written; answer "no" to Codex and `~/.codex` is left untouched.
 
 ---
 

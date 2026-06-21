@@ -57,4 +57,17 @@ task (see the tutorial in the README).
 ## Codex
 
 Codex reads `AGENTS.md` natively, so the methodology applies the same way. The skill bodies are
-tool-agnostic. See [configuration](02-configuration.md#codex) for the directory differences.
+tool-agnostic. Codex has no `/plugin install` equivalent, so its skills and agents must go where Codex
+looks for them — under `~/.codex`:
+
+- easiest: run `npx tms-pipeline`, select Codex, and accept the copy prompt — the wizard copies
+  `skills/` → `~/.codex/skills/` and `agents/` → `~/.codex/agents/`;
+- manually: `cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/`.
+
+See [configuration](02-configuration.md#codex) for the directory differences.
+
+## See a worked example
+
+[`templates/example-task/ACME-101/`](../templates/example-task/ACME-101/) is a complete synthetic run of
+one task through all eight stages — from `00_ticket.md` to `06_review_gate.md`. Read the files in order to
+see each stage's format before running the pipeline on your own task.

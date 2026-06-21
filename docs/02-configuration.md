@@ -40,8 +40,9 @@ These need human judgement — they are the most important to get right:
 - **`PERSISTENCE_AND_TENANCY`** — how data is stored and how tenant/user identity is resolved and scoped.
 - **`MIGRATION_POLICY`** — how schema changes are made and registered (delete if you have no database).
 - **`LAUNCH_STAGE_MAPPING`** — which kind of manual action goes into which section of your launch playbook.
-- **`TRACEABILITY_LOCATION`**, **`CODE_LAYOUT_HINT`**, **`DOC_INDEX_HINT`** — optional pointers; delete
-  if not applicable.
+- **`TRACEABILITY_LOCATION`**, **`CODE_LAYOUT_HINT`**, **`DOC_INDEX_HINT`**, **`DESIGN_SYSTEM_HINT`** —
+  optional pointers (the last is the path to your design system / component library for UI projects);
+  delete if not applicable.
 
 Claude or Codex can help you draft these by reading your codebase — just ask after onboarding.
 
@@ -64,3 +65,14 @@ multi-tenant SaaS should keep cross-tenant data exposure as Class A).
 - Custom subagents: Claude Code reads agent definitions from `agents/` (and `~/.claude/agents/`); Codex
   uses its own agents directory. The five mob roles in `agents/` are portable in content; place them
   where each tool expects them.
+
+### Installing the skills/agents for Codex
+
+Codex has no `/plugin install` equivalent, so the files go under `~/.codex`:
+
+- **Automatically:** run `npx tms-pipeline`, answer yes to "Do you use Codex?" and accept the copy prompt
+  — the wizard copies `skills/` → `~/.codex/skills/` and `agents/` → `~/.codex/agents/`. If you don't use
+  Codex, the wizard leaves `~/.codex` untouched.
+- **Manually:** `cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/`.
+
+`AGENTS.md` stays in the project root (the wizard writes it) — Codex reads it natively.
