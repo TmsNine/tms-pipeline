@@ -29,7 +29,8 @@ const COLOR = process.stdout.isTTY && !process.env.NO_COLOR;
 const sgr = (n) => (COLOR ? `\x1b[${n}m` : '');
 const C = {
   reset: sgr(0), bold: sgr(1), dim: sgr(2),
-  cyan: sgr(36), green: sgr(32), yellow: sgr(33), blue: sgr(34), gray: sgr(90),
+  // Main accent: acid green (xterm-256 color 118 ≈ #87ff00).
+  acid: sgr('38;5;118'), green: sgr(32), yellow: sgr(33), gray: sgr(90),
 };
 const paint = (s, color) => `${color}${s}${C.reset}`;
 
@@ -152,7 +153,7 @@ async function prompt(text) {
 
 function banner() {
   console.log('');
-  for (const line of BANNER) console.log('  ' + paint(line, C.bold + C.cyan));
+  for (const line of BANNER) console.log('  ' + paint(line, C.bold + C.acid));
   console.log('  ' + paint(STRINGS.en.tagline + '  ·  ' + STRINGS.ru.tagline, C.dim));
   if (DRY_RUN) console.log('  ' + paint('(dry-run: nothing will be written to disk)', C.yellow));
   console.log('');
@@ -162,7 +163,7 @@ function banner() {
 async function askText(label, def) {
   if (YES) return def || '';
   const suffix = def ? paint(` [${def}]`, C.dim) : '';
-  const raw = await prompt(`  ${paint(label, C.bold)}${suffix}\n  ${paint('>', C.cyan)} `);
+  const raw = await prompt(`  ${paint(label, C.bold)}${suffix}\n  ${paint('>', C.acid)} `);
   return raw === '' ? (def || '') : raw;
 }
 
@@ -170,7 +171,7 @@ async function askText(label, def) {
 async function askYesNo(label, def) {
   if (YES) return def;
   const hint = def ? 'Y/n' : 'y/N';
-  const raw = (await prompt(`  ${paint(label, C.bold)} ${paint(`(${hint})`, C.dim)}\n  ${paint('>', C.cyan)} `)).toLowerCase();
+  const raw = (await prompt(`  ${paint(label, C.bold)} ${paint(`(${hint})`, C.dim)}\n  ${paint('>', C.acid)} `)).toLowerCase();
   if (raw === '') return def;
   return raw === 'y' || raw === 'yes';
 }
@@ -182,9 +183,9 @@ async function askMenu(title, options) {
   console.log('  ' + paint(title, C.bold));
   for (const o of options) {
     const note = o.note ? paint('  ' + o.note, C.dim) : '';
-    console.log(`    ${paint(o.key + ')', C.cyan)} ${o.label}${note}`);
+    console.log(`    ${paint(o.key + ')', C.acid)} ${o.label}${note}`);
   }
-  const raw = await prompt(`  ${paint('>', C.cyan)} `);
+  const raw = await prompt(`  ${paint('>', C.acid)} `);
   const hit = options.find((o) => o.key === raw);
   return hit ? hit.key : options[0].key;
 }
@@ -290,18 +291,18 @@ async function main() {
   }
 
   console.log('');
-  console.log('  ' + paint(S.done, C.bold + C.green));
-  console.log('    ' + paint('1.', C.cyan) + ' ' + paint(S.step_init, C.bold));
+  console.log('  ' + paint(S.done, C.bold + C.acid));
+  console.log('    ' + paint('1.', C.acid) + ' ' + paint(S.step_init, C.bold));
   console.log('       ' + paint(S.step_init2, C.dim));
   if (cfg.useClaude && cfg.copyClaudeAssets) {
-    console.log('    ' + paint('2.', C.cyan) + ' ' + S.step_claudeInstalled);
+    console.log('    ' + paint('2.', C.acid) + ' ' + S.step_claudeInstalled);
   } else if (cfg.useClaude) {
-    console.log('    ' + paint('2.', C.cyan) + ' ' + S.step_claudePlugin);
+    console.log('    ' + paint('2.', C.acid) + ' ' + S.step_claudePlugin);
   }
   if (cfg.useCodex && !cfg.copyCodexAssets) {
-    console.log('    ' + paint('2.', C.cyan) + ' ' + S.step_codex);
+    console.log('    ' + paint('2.', C.acid) + ' ' + S.step_codex);
   }
-  console.log('    ' + paint('3.', C.cyan) + ' ' + S.step_task);
+  console.log('    ' + paint('3.', C.acid) + ' ' + S.step_task);
   console.log('');
 }
 

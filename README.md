@@ -1,3 +1,12 @@
+```text
+████████╗███╗   ███╗███████╗
+╚══██╔══╝████╗ ████║██╔════╝
+   ██║   ██╔████╔██║███████╗
+   ██║   ██║╚██╔╝██║╚════██║
+   ██║   ██║ ╚═╝ ██║███████║
+   ╚═╝   ╚═╝     ╚═╝╚══════╝
+```
+
 # tms-pipeline
 
 **Discipline for AI agents: it turns one task into proper, reviewed code — without chaos, bugs, or lost
