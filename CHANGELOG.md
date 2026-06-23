@@ -7,6 +7,13 @@ All notable changes to tms-pipeline are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `/tms-new` skill: a one-time guided bootstrap for a brand-new product (interview one question at a
+  time, then lay down an MVP doc set + folder structure) — framed explicitly as setup, not a feature
+  brainstorm. Registered in both plugin manifests (skill count 15 → 16).
+- `docs/04-stages-deep-dive.md` (+ `.ru.md`): an under-the-hood walkthrough of all eight stages — which agents
+  run, on which model tiers, input/output, and where the human checkpoint is.
+- Human-in-the-loop is now an explicit through-line in the README and methodology (you review each
+  stage's artifact before the agent proceeds).
 - Zero-dependency test suite for the onboarding engine (`node --test`), covering token rendering, the
   no-overwrite-without-`--force` rule, dry-run, Codex-asset gating, version-sync across the four manifest
   files, and skill-manifest/disk parity.
@@ -21,8 +28,11 @@ All notable changes to tms-pipeline are documented here. The format follows
 ### Changed
 - `/tms-init` now calls the canonical engine via `--answers` instead of re-implementing template
   rendering, removing the duplicated question list and the drift risk between the two onboarding paths.
-- Russian is now the canonical language for docs; English files follow it.
+- Russian is now the canonical language for docs; English files follow it. Russian docs rewritten to
+  read natively (notably the multi-agent implementation section), with the README tagline reworded away
+  from jargon ("opinionated delivery pipeline" → benefit-first).
 - Concrete Codex install instructions (exact `~/.codex` paths and copy commands) across README and docs.
+- Newcomer reassurance callouts where placeholders are filled ("don't guess alone — ask your AI agent").
 
 ### Fixed
 - `DESIGN_SYSTEM_HINT` was used in `AGENTS.template.md` but neither asked nor deferred; it is now a

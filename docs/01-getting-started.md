@@ -17,6 +17,11 @@ It is **not** a project generator. It will not brainstorm features or scaffold a
 your project has no docs or backlog yet, the included blank skeletons (`templates/docs-vault/`) give you a
 starting structure, but filling them with real product decisions is your work, done your way.
 
+If you're starting completely from nothing, the **`/tms-new`** skill performs this one-time bootstrap for
+you as a guided, one-question-at-a-time interview, and assembles a starter set of documents at the end.
+The skill does not invent the product for you — you decide what to build; it just organizes your answers
+into place. Details in the [README](../README.md).
+
 ## The two on-ramps
 
 Both are free and use the same decoupled core.
@@ -49,6 +54,9 @@ If you'd rather understand and wire it up yourself:
 3. Copy `templates/AGENTS.template.md` to your repo as `AGENTS.md` and fill in the placeholders by hand
    (see [configuration](02-configuration.md)).
 
+> Not sure what to put in the placeholders? Don't guess alone — ask your AI agent (Claude Code or Codex)
+> to read your code and propose the values, then confirm or correct them.
+
 ## Verify the install
 
 In Claude Code, run `/help` or open the skills list — you should see the `tms-*` skills. Then start a
@@ -71,3 +79,6 @@ See [configuration](02-configuration.md#codex) for the directory differences.
 [`templates/example-task/ACME-101/`](../templates/example-task/ACME-101/) is a complete synthetic run of
 one task through all eight stages — from `00_ticket.md` to `06_review_gate.md`. Read the files in order to
 see each stage's format before running the pipeline on your own task.
+
+→ What each stage does under the hood (which agents, which models, where your check is) — in
+[docs/04-stages-deep-dive.md](04-stages-deep-dive.md).

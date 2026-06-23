@@ -1,8 +1,9 @@
 # tms-pipeline
 
-**An opinionated delivery pipeline for AI coding agents (Claude Code & Codex).**
-Eight staged skills take an already-defined task from ticket to reviewed code — with a severity-rated
-design audit, a cost model for spawning agents, and a hard rule that discovered work is never lost.
+**Discipline for AI agents: it turns one task into proper, reviewed code — without chaos, bugs, or lost
+details.**
+Eight staged skills take an already-defined task from ticket to finished code. The call at every step
+stays yours: the agent does a stage, you review it, and only then do you move on (human in the loop).
 
 🇷🇺 [Читать по-русски](README.ru.md) · 📖 [Full methodology](docs/00-methodology.md) · 🚀 [Getting started](docs/01-getting-started.md)
 
@@ -10,14 +11,18 @@ design audit, a cost model for spawning agents, and a hard rule that discovered 
 
 ---
 
-## In 30 seconds
+## In short
 
 - **What it is.** Eight staged skills that move **one already-defined** task from ticket to reviewed
   code, keeping the agent's context clean at every step.
-- **What it isn't.** It does not generate a project, brainstorm features, or "build your product."
+- **You stay in the loop the whole time (human in the loop).** This is not "set a task and walk away":
+  after each stage the agent stops, you check what it did, and only then launch the next one. You don't
+  delegate the work wholesale — you steer the agent and verify every step.
+- **What it isn't.** It does not generate a product, invent features for you, or act as a "magic button."
 - **One command.** `npx tms-pipeline` configures the methodology on top of your **existing** repo.
 - **See it live.** [A full task run through all 8 stages →](templates/example-task/ACME-101/) — a
   synthetic task from `00_ticket.md` to `06_review_gate.md`, so you can see each stage's format first.
+- **Under the hood.** [How each stage works: which agents, on which models, and why →](docs/04-stages-deep-dive.md)
 
 ---
 
@@ -43,10 +48,12 @@ blank skeletons give you a starting structure, but filling them with real produc
 
 tms-pipeline expects a documentation base and a backlog to already exist — it delivers tasks, it doesn't
 invent the product. If you're starting from nothing, do this **one-time bootstrap** first to reach the
-starting line. This is a manual pre-step, not a pipeline stage and not an automated brainstorm — you
-drive it.
+starting line. This is a one-time preparation step, not a pipeline stage and not an automated brainstorm:
+you define the product, the agent only asks questions and sorts your answers into documents.
 
-Open your agent (Claude Code or Codex) in the repo and use a prompt like this:
+The easiest path is the **`/tms-new`** skill: it runs this bootstrap for you as an interview (one question
+at a time, each with a recommended option) and, at the end, creates the starter document set and folder
+structure. Prefer to do it by hand? Use the prompt below:
 
 > Let's define the **MVP documentation** for **<product>**. The idea is **<core idea>**; the goal is
 > **<outcome>**.
@@ -55,7 +62,8 @@ Open your agent (Claude Code or Codex) in the repo and use a prompt like this:
 > documentation set** — only what's decided so far, to be filled in further as development progresses.
 > Distribute every decision from my answers into the matching folders of the tms-pipeline
 > documentation-base template (`00 Governance/`, `02 Product/`, `03 Architecture/`, `04 Delivery/`),
-> and keep all of it **in sync with my documentation vault** as the single source of truth.
+> and keep both the codebase and the documentation **in sync with my documentation vault** as the single
+> source of truth.
 
 What this gives you:
 
@@ -99,7 +107,9 @@ flowchart LR
 ```
 
 Each stage produces one durable file in the task folder and, by default, stops for your confirmation
-before the next. There is **no** brainstorm/ideation stage — the pipeline begins once a task exists.
+before the next. That stop is not a formality: you read the stage's artifact, review it, and correct it
+if needed before the agent proceeds (that's exactly how an error is caught in text, not in finished code).
+There is **no** brainstorm/ideation stage — the pipeline begins once a task exists.
 
 | Stage | Skill | What it does |
 |-------|-------|--------------|
@@ -111,6 +121,9 @@ before the next. There is **no** brainstorm/ideation stage — the pipeline begi
 | 04 Implement | `/tms-implement` | Multi-agent "mob": lead + worker/proving agents, gated wave by wave. |
 | 05 Test | `/tms-test` | Validate the primary (user-visible) signal + secondary signals. |
 | 06 Review gate | `/tms-review` | Verify vs the design contract; go / conditional_go / no-go. |
+
+→ What exactly happens in each stage (which agents, on which models, where your check is) — in the
+[under-the-hood stage walkthrough](docs/04-stages-deep-dive.md).
 
 Plus extra skills for codebase work: a four-stage **audit** pipeline (`/tms-audit-scope` →
 `sweep` → `triage` → `backlog`), maintenance **refactoring** (`/tms-care-refactoring`,
@@ -143,12 +156,13 @@ so the full machinery only kicks in for substantial work.
 
 ## Two ways to adopt it
 
-| | Turnkey | Methodology |
-|---|---|---|
-| For | Getting running fast | Understanding & wiring it by hand |
-| How | `npx tms-pipeline` wizard + `/plugin install` | Read the docs, install skills, write `AGENTS.md` yourself |
+The result is the same — the only difference is how much you do by hand.
 
-Both are free and open-source and share the same core.
+- **Turnkey — this is right for most people.** Run `npx tms-pipeline`, answer a short list of questions
+  (Enter accepts the default) — the wizard writes `AGENTS.md` and installs the skills for you. Take this
+  path if you want to start working today without digging into the internals.
+- **Manual — if you want control.** Read the methodology, install the skills, and write `AGENTS.md`
+  yourself. Take this path if you want to understand every detail and tune the process for your team.
 
 ---
 
@@ -196,6 +210,10 @@ Open the generated `AGENTS.md` and:
   full security escort) and your tenancy/identity model;
 - if you copied the doc-base skeletons, **rename the `PROJECT_NAME` folder** to your project and point
   `DOC_BASE_PATH` at it.
+
+> **Not sure what to put in a `<<TODO>>`?** Don't guess alone: ask your AI agent (Claude Code or Codex)
+> to read your code and propose values, then confirm or correct them. This is the intended way to fill in
+> the configuration — it's by design.
 
 → Reference: [docs/02-configuration.md](docs/02-configuration.md).
 
@@ -246,12 +264,12 @@ from clearing.
 ## Repository layout
 
 ```
-skills/        15 tms-* skills (the pipeline + audit + refactoring)
+skills/        16 tms-* skills (bootstrap /tms-new + pipeline + audit + refactoring)
 agents/        5 mob roles (developer, tester, architect, security, reviewer)
 commands/      /tms-init onboarding command
 installer/     core config engine + the `npx tms-pipeline` wizard
-templates/     AGENTS/CLAUDE templates, pipeline forms, doc-base skeletons
-docs/          the full methodology + getting-started + configuration + doc-base
+templates/     AGENTS/CLAUDE templates, pipeline forms, doc-base skeletons, worked example
+docs/          the full methodology + getting-started + configuration + doc-base + under-the-hood stage walkthrough
 ```
 
 ---

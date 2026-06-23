@@ -17,13 +17,13 @@ Both run in CI on every push and PR. Please make them green before opening a PR.
 ## Repository layout
 
 ```
-skills/        15 tms-* skills (pipeline + audit + refactoring)
+skills/        16 tms-* skills (pipeline + audit + refactoring + bootstrap)
 agents/        5 mob roles
 commands/      /tms-init onboarding command
 installer/     core engine + the `npx tms-pipeline` wizard  (installer/test/ holds the tests)
 templates/     AGENTS/CLAUDE templates, pipeline forms, doc-base skeletons, worked example
 docs/          methodology + getting-started + configuration + doc-base (EN + .ru.md)
-scripts/       check-links.mjs and other dev tooling
+scripts/       check-links.mjs (relative-link checker)
 ```
 
 ## Docs are bilingual — Russian is canonical

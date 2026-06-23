@@ -24,6 +24,10 @@ multi-agent "mob" implementation and quality gates. tms-pipeline takes that foun
 into eight stages, adds a severity-rated design audit, a cost model for spawning agents, and explicit
 rules so discovered work is never lost.
 
+> **Human in the loop.** This is not an autopilot. At every stage you review the agent's output before it
+> proceeds: you don't hand off the work wholesale — you steer the agent and verify each step. This rule
+> runs as a through-line across every stage, from the ticket to the final code review.
+
 ---
 
 ## 2. The eight stages
@@ -35,7 +39,7 @@ confirmation (you can ask it to run end-to-end).
 | # | Stage | Skill | Output | What happens |
 |---|-------|-------|--------|--------------|
 | 00 | Ticket | `/tms-ticket` | `00_ticket.md` | Capture driver, scope, acceptance; confirm the task exists in the backlog; classify task mode. |
-| 01 | Research | `/tms-research` | `01_research.md` | Narrow the codebase to the facts that matter ("as-is"), via a bounded parallel search fan-out. No opinions, no refactor advice. |
+| 01 | Research | `/tms-research` | `01_research.md` | Narrow the codebase to the facts that matter right now ("as-is"): several agents search in parallel, the lead re-verifies. No opinions, no refactor advice. |
 | 02 | Design | `/tms-design` | `02_design.md` | Author the single design contract — the minimal sufficient change at the owning layer. Reviewed by a human before any code. |
 | 02b | Gap audit | `/tms-gap-audit` | `02b_gap_audit.md` | One bounded adversarial pass over the design, from a different reasoning lens, classifying gaps by severity. |
 | 03 | Delivery plan | `/tms-plan` | `03_delivery_plan.md` | Split the design into small, independently shippable waves; tag each with an escort profile. |
@@ -45,6 +49,9 @@ confirmation (you can ask it to run end-to-end).
 
 There is no brainstorm or ideation stage. Deciding *what* to build is your job, done your way; the
 pipeline starts once a task exists.
+
+→ A detailed walkthrough of each stage — which agents take part, on which models, and where exactly your
+check is — in [04-stages-deep-dive.md](04-stages-deep-dive.md).
 
 ### Staged execution
 If you start a task by ticket ID, the agent completes only the requested stage, then stops for
@@ -136,22 +143,29 @@ substantial tasks, not for fixing a typo.
 
 ## 5. How the multi-agent implementation actually runs (stage 04)
 
-The lead conversation does **not** write code. It writes wave briefs, dispatches agents, and enforces
-gates:
+The main chat agent (the "lead") does **not** write code itself. Its job is to hand out the work to a team
+of agents and make sure every piece passes the checks. One "wave" (a small, self-contained slice of the
+plan) goes like this:
 
-1. Classify the wave's escort profile (A/B/C) and record it.
-2. Dispatch the **Developer** agent with the wave brief (scope, files, acceptance).
-3. In parallel, dispatch the proving roles for that profile: **Tester** always; **Architect** for B/C;
-   **Security** for C; **Reviewer** always.
-4. The wave passes only if every spawned check is green (build/tests/types/lint, no design drift, no new
-   vulnerabilities, matches plan + acceptance).
-5. On failure, a focused fix agent addresses the specific findings; only the failed gates re-run.
-6. Advance to the next wave only after all gates pass.
+1. **The lead assesses how risky the wave is** — escort profile A, B, or C — and records the choice.
+2. **It dispatches a developer agent** with a clear brief: what to do, which files to touch, what counts
+   as done.
+3. **In parallel it spins up the proving roles** for that profile: tester — always; architect — on B and
+   C; security — on C; reviewer — always.
+4. **The wave passes only if every check is green:** the project builds, tests and types pass, the linter
+   is clean, the code hasn't drifted from the design, there are no new vulnerabilities, and everything
+   matches the plan and the acceptance criteria.
+5. **If something fails** — a separate agent fixes exactly those findings, and only the failed checks
+   re-run, not everything.
+6. **You advance to the next wave only after all the current wave's checks have passed.**
 
-This keeps each agent's context window lean (the lead stays high-level, workers go deep on one wave) and
-catches drift, regressions, and vulnerabilities *between* waves rather than at the end. Commits carry **no
-AI attribution** (a licensing constraint) and are never pushed automatically — the branch waits for human
-review and CI.
+Why this works. Each agent's context window stays lean (the lead holds the big picture, the workers go
+deep only on their own wave), and bugs, regressions, and vulnerabilities are caught *between* waves rather
+than at the very end, where they're expensive to fix.
+
+And here, too, you're in the loop: the lead shows you the result of each wave, and finished code does not
+move on by itself. The commit is created without any AI attribution (a licensing constraint) and is not
+pushed automatically — the branch waits for your review and a CI run.
 
 ---
 

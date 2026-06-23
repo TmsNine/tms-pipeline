@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "An opinionated AI-agent delivery pipeline: 8 staged skills with multi-agent mob implementation, severity-rated gap audit, cost-tiered escort profiles, and guaranteed follow-up/launch capture. Codex reads AGENTS.md natively.",
   "skills": [
+    "./skills/tms-new",
     "./skills/tms-ticket",
     "./skills/tms-research",
     "./skills/tms-design",

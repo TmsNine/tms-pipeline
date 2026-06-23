@@ -18,6 +18,7 @@
     "context-engineering"
   ],
   "skills": [
+    "./skills/tms-new",
     "./skills/tms-ticket",
     "./skills/tms-research",
     "./skills/tms-design",

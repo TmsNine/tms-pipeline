@@ -44,7 +44,8 @@ These need human judgement — they are the most important to get right:
   optional pointers (the last is the path to your design system / component library for UI projects);
   delete if not applicable.
 
-Claude or Codex can help you draft these by reading your codebase — just ask after onboarding.
+> Not sure what to put? Don't guess alone — ask your AI agent (Claude Code or Codex) to read your code
+> and propose the values, then confirm or correct them.
 
 ## Severity rubric
 
