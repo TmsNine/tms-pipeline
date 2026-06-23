@@ -44,6 +44,11 @@ The `npx` wizard asks a short list of questions (press Enter to accept each defa
 `AGENTS.md` and `.claude/CLAUDE.md` into your project. You can also run the onboarding from inside Claude
 Code with `/tms-init`.
 
+The wizard can also install the skill **files** for you: at the **"Install the tms-\* skills … Choose
+where"** step pick **1) Claude Code** and it copies `skills/`, `agents/`, and `commands/` into `~/.claude`
+(then restart Claude Code). That is an alternative to the two `/plugin` commands above — use one method
+or the other, not both, or you'll end up with duplicate skills.
+
 ### B. Methodology — adopt it by hand
 
 If you'd rather understand and wire it up yourself:

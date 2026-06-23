@@ -177,20 +177,22 @@ npx tms-pipeline
 ```
 
 ```text
-# 2a) Claude Code — поставить скиллы + агентов
+# 2a) Claude Code — поставить скиллы + агентов. Два способа, выберите ОДИН (чтобы не было дублей):
+#   (а) через маркетплейс плагинов:
 /plugin marketplace add TmsNine/tms-pipeline
 /plugin install tms-pipeline@tms-pipeline
 /reload-plugins
+#   (б) или пусть мастер скопирует их: на шаге «Install the tms-* skills … Choose where» выберите 1
+#       (Claude Code) → skills/agents/commands лягут в ~/.claude, затем перезапустите Claude Code.
 
 # 2b) Codex — читает AGENTS.md нативно. У Codex нет аналога /plugin install, поэтому скиллы/агентов
-#     кладут в ~/.codex. Мастер `npx tms-pipeline` предложит скопировать их автоматически, если вы
-#     выбрали Codex. Вручную:
+#     кладут в ~/.codex. На том же шаге мастера выберите 2 (Codex) — он скопирует их. Вручную:
 #       cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/
 #     Подробнее — docs/02-configuration.ru.md#codex
 ```
 
 > Мастер ставит только то, что вы выбрали: ответили «нет» на Claude Code — `.claude/CLAUDE.md` не
-> создаётся; ответили «нет» на Codex — `~/.codex` не трогается.
+> создаётся; шаг «Choose where» (1 Claude / 2 Codex / 3 оба / 0 пропустить) решает, куда лягут скиллы.
 
 ---
 

@@ -177,20 +177,22 @@ npx tms-pipeline
 ```
 
 ```text
-# 2a) Claude Code — install the skills + agents
+# 2a) Claude Code — install the skills + agents. Two ways, pick ONE (to avoid duplicate skills):
+#   (a) via the plugin marketplace:
 /plugin marketplace add TmsNine/tms-pipeline
 /plugin install tms-pipeline@tms-pipeline
 /reload-plugins
+#   (b) or let the wizard copy them in: at "Install the tms-* skills … Choose where" pick 1 (Claude
+#       Code) → skills/agents/commands go under ~/.claude, then restart Claude Code.
 
 # 2b) Codex — reads AGENTS.md natively. Codex has no /plugin install equivalent, so its skills/agents
-#     go under ~/.codex. The `npx tms-pipeline` wizard offers to copy them automatically if you pick
-#     Codex. Manually:
+#     go under ~/.codex. At the same wizard step pick 2 (Codex) and it copies them. Manually:
 #       cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/
 #     More: docs/02-configuration.md#codex
 ```
 
 > The wizard installs only what you select: answer "no" to Claude Code and no `.claude/CLAUDE.md` is
-> written; answer "no" to Codex and `~/.codex` is left untouched.
+> written; the "Choose where" step (1 Claude / 2 Codex / 3 both / 0 skip) controls where the skills land.
 
 ---
 

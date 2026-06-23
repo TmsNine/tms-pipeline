@@ -21,6 +21,10 @@ All notable changes to tms-pipeline are documented here. The format follows
 - `scripts/check-links.mjs` and an `npm run check:links` script.
 - CLI flags: `--help`, `--version`, `--dry-run`, and `--answers <file.json>` for non-interactive runs.
 - Wizard now installs Codex skills/agents into `~/.codex` (only when Codex is selected).
+- Wizard can also install the skills for **Claude Code via npx** (an alternative to `/plugin install`):
+  a "Choose where" step (1 Claude / 2 Codex / 3 both / 0 skip) copies `skills/`, `agents/`, and
+  `commands/` into `~/.claude` when you pick Claude. New engine option `copyClaudeAssets` (gated on
+  `useClaude`), exposed via `--answers` and covered by a test.
 - "In 30 seconds" summary and a prominent link to the worked example
   (`templates/example-task/ACME-101/`) in the README and getting-started docs.
 - `CONTRIBUTING.md`, `CHANGELOG.md`, issue templates, and a pull-request template.

@@ -2,6 +2,7 @@
 // `npx tms-pipeline` — a small, zero-dependency onboarding wizard.
 // Asks a short list of questions (Enter accepts the shown default; y/n for copy actions), then renders
 // AGENTS.md + .claude/CLAUDE.md and optionally copies the pipeline / docs-vault skeletons.
+// It can also install the tms-* skills for Claude Code (~/.claude) and/or Codex (~/.codex).
 // It NEVER overwrites an existing AGENTS.md / CLAUDE.md unless you pass --force.
 
 'use strict';
@@ -36,7 +37,8 @@ function printHelp() {
 
   It does NOT create a project or invent features — it assumes you already have a repo, a
   documentation base, and ideally a backlog. It renders AGENTS.md (+ .claude/CLAUDE.md for
-  Claude Code) and can lay down the pipeline / docs-vault skeletons and Codex assets.
+  Claude Code), can lay down the pipeline / docs-vault skeletons, and can install the tms-* skills
+  for Claude Code and/or Codex.
 
   Usage:
     npx tms-pipeline [options]
@@ -54,7 +56,8 @@ function printHelp() {
       "targetDir": "/abs/path/to/project",
       "answers": { "OUTPUT_LANGUAGE": "English", "PROJECT_ONE_LINER": "...", ... },
       "useClaude": true, "useCodex": true,
-      "copyPipeline": true, "copyDocsVault": false, "copyCodexAssets": true
+      "copyPipeline": true, "copyDocsVault": false,
+      "copyClaudeAssets": false, "copyCodexAssets": true
     }
 
   Docs:    https://github.com/TmsNine/tms-pipeline
@@ -117,6 +120,19 @@ async function askConfirm(c) {
   return raw === 'y' || raw === 'yes';
 }
 
+// Numeric selector for WHERE to install the skill files. Enter / anything else = skip.
+// For Claude Code this is the npx alternative to `/plugin install`; for Codex it is the only path.
+async function askInstallTarget() {
+  console.log('');
+  console.log('  Install the tms-* skills + agents now? Choose where:');
+  console.log('    1) Claude Code  ->  ~/.claude/skills, ~/.claude/agents, ~/.claude/commands');
+  console.log('    2) Codex        ->  ~/.codex/skills, ~/.codex/agents');
+  console.log('    3) Both');
+  console.log('    0) Skip  (for Claude Code you can instead run /plugin install)');
+  const raw = await prompt('  > ');
+  return ['1', '2', '3'].includes(raw) ? raw : '0';
+}
+
 // Build the config from a JSON answers file (non-interactive path used by /tms-init).
 function fromAnswersFile(file) {
   const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -133,6 +149,7 @@ function fromAnswersFile(file) {
     useCodex: confirm('useCodex', true),
     copyPipeline: confirm('copyPipeline', true),
     copyDocsVault: confirm('copyDocsVault', false),
+    copyClaudeAssets: confirm('copyClaudeAssets', false),
     copyCodexAssets: confirm('copyCodexAssets', false),
   };
 }
@@ -150,17 +167,20 @@ async function collectInteractive() {
   const confirms = {};
   for (const c of CONFIRMS) confirms[c.key] = await askConfirm(c);
 
-  // Only offer the Codex asset install when the user actually uses Codex.
+  // Install the skill FILES now, and for which tool? For Claude Code this is the npx alternative to
+  // `/plugin install`; for Codex it is the only install path.
+  let copyClaudeAssets = false;
   let copyCodexAssets = false;
-  if (confirms.useCodex) {
-    copyCodexAssets = await askConfirm({
-      prompt: 'Copy the tms-* skills + agents into ~/.codex now? (Codex has no /plugin install)',
-      default: true,
-    });
+  if (YES) {
+    copyCodexAssets = confirms.useCodex; // -y: preserve prior behavior (Codex copy on; Claude via plugin)
+  } else {
+    const choice = await askInstallTarget();
+    if (choice === '1' || choice === '3') copyClaudeAssets = true;
+    if (choice === '2' || choice === '3') copyCodexAssets = true;
   }
 
   rl.close();
-  return { targetDir, answers, ...confirms, copyCodexAssets };
+  return { targetDir, answers, ...confirms, copyClaudeAssets, copyCodexAssets };
 }
 
 async function main() {
@@ -177,6 +197,7 @@ async function main() {
     useCodex: cfg.useCodex,
     copyPipeline: cfg.copyPipeline,
     copyDocsVault: cfg.copyDocsVault,
+    copyClaudeAssets: cfg.copyClaudeAssets,
     copyCodexAssets: cfg.copyCodexAssets,
     force: FORCE,
     dryRun: DRY_RUN,
@@ -188,11 +209,13 @@ async function main() {
   console.log('  Done. Next steps:');
   console.log('    1. Open AGENTS.md and resolve any <<TODO: ...>> markers.');
   console.log('    2. If you copied docs-vault, rename the PROJECT_NAME folder to your project.');
-  if (cfg.useClaude) {
-    console.log('    3. Claude Code: /plugin marketplace add TmsNine/tms-pipeline → /plugin install tms-pipeline@tms-pipeline → /reload-plugins');
+  if (cfg.useClaude && cfg.copyClaudeAssets) {
+    console.log('    3. Claude Code: skills installed into ~/.claude — restart Claude Code to load them. Do NOT also /plugin install the same skills (avoid duplicates).');
+  } else if (cfg.useClaude) {
+    console.log('    3. Claude Code: /plugin marketplace add TmsNine/tms-pipeline → /plugin install tms-pipeline@tms-pipeline → /reload-plugins  (or re-run and pick install target 1).');
   }
   if (cfg.useCodex && !cfg.copyCodexAssets) {
-    console.log('    3. Codex: copy skills/ → ~/.codex/skills and agents/ → ~/.codex/agents (or re-run and accept the copy prompt).');
+    console.log('    3. Codex: copy skills/ → ~/.codex/skills and agents/ → ~/.codex/agents (or re-run and pick install target 2).');
   }
   console.log('    4. Start a task: /tms-ticket <your first ticket>');
   console.log('');

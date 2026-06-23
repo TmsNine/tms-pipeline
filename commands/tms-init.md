@@ -20,7 +20,9 @@ repo, a documentation base, and ideally a backlog. Say this plainly if the proje
    template?, copy the docs-vault skeletons?). Ask them in one compact batch (group them; don't drip one
    at a time). Do not hardcode or invent questions — if the file changes, your questions change with it.
    Also ask one more y/n when the user uses Codex: **copy the tms-\* skills + agents into ~/.codex now?**
-   (Codex has no `/plugin install` equivalent.)
+   (Codex has no `/plugin install` equivalent.) For Claude Code the skills are already loaded by the
+   plugin that provides this very command, so leave `copyClaudeAssets` false unless the user explicitly
+   wants the skills copied into `~/.claude` instead of using the plugin.
 
 3. **Generate the config by calling the shared engine — do NOT re-implement rendering.** Write the
    collected answers to a temp JSON file and run the canonical CLI so the output is byte-identical to
@@ -37,13 +39,15 @@ repo, a documentation base, and ideally a backlog. Say this plainly if the proje
      "targetDir": "<abs path to the project>",
      "answers": { "OUTPUT_LANGUAGE": "…", "PROJECT_ONE_LINER": "…", "…": "…" },
      "useClaude": true, "useCodex": true,
-     "copyPipeline": true, "copyDocsVault": false, "copyCodexAssets": true
+     "copyPipeline": true, "copyDocsVault": false,
+     "copyClaudeAssets": false, "copyCodexAssets": true
    }
    ```
 
    Run with `--dry-run` first if you want to preview the file list, then again without it. The engine
-   always writes `AGENTS.md`, writes `.claude/CLAUDE.md` only when `useClaude`, copies Codex assets only
-   when `useCodex` **and** `copyCodexAssets`, and never overwrites an existing AGENTS.md/CLAUDE.md unless
+   always writes `AGENTS.md`, writes `.claude/CLAUDE.md` only when `useClaude`, copies Claude assets only
+   when `useClaude` **and** `copyClaudeAssets`, copies Codex assets only when `useCodex` **and**
+   `copyCodexAssets`, and never overwrites an existing AGENTS.md/CLAUDE.md unless
    you pass `--force` (ask the user before forcing). Leaving rendering to the engine is mandatory — it is
    the only thing that guarantees `/tms-init` and the CLI never drift.
 

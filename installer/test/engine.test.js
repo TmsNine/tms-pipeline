@@ -1,6 +1,6 @@
 // Zero-dependency tests for the onboarding engine, run with `node --test`.
 // They lock in the safety promises the README makes (never overwrite without --force,
-// nothing ships as a raw {{TOKEN}}, Codex assets only when Codex is selected) and assert
+// nothing ships as a raw {{TOKEN}}, Codex/Claude assets only when that tool is selected) and assert
 // the four hardcoded version strings stay in sync.
 
 'use strict';
@@ -130,6 +130,25 @@ test('Codex assets are copied only when Codex is selected', () => {
   });
   assert.ok(!fs.existsSync(path.join(noCodex, '.codex')), 'no Codex dir when Codex not selected');
   assert.ok(results.some((r) => /skipped \(Codex not selected\)/.test(r.status)));
+});
+
+test('Claude assets are copied only when Claude is selected', () => {
+  const withClaude = tmp();
+  applyConfig({
+    targetDir: withClaude, answers: fullAnswers(), useClaude: true, useCodex: false,
+    copyClaudeAssets: true, claudeHome: path.join(withClaude, '.claude-home'),
+  });
+  assert.ok(fs.existsSync(path.join(withClaude, '.claude-home', 'skills')), 'skills copied');
+  assert.ok(fs.existsSync(path.join(withClaude, '.claude-home', 'agents')), 'agents copied');
+  assert.ok(fs.existsSync(path.join(withClaude, '.claude-home', 'commands')), 'commands copied');
+
+  const noClaude = tmp();
+  const results = applyConfig({
+    targetDir: noClaude, answers: fullAnswers(), useClaude: false, useCodex: true,
+    copyClaudeAssets: true, claudeHome: path.join(noClaude, '.claude-home'),
+  });
+  assert.ok(!fs.existsSync(path.join(noClaude, '.claude-home')), 'no Claude global dir when Claude not selected');
+  assert.ok(results.some((r) => /skipped \(Claude Code not selected\)/.test(r.status)));
 });
 
 test('copyPipeline lays down the pipeline template', () => {
