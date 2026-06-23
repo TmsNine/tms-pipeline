@@ -1,8 +1,11 @@
 #!/usr/bin/env node
-// `npx tms-pipeline` — a small, zero-dependency onboarding wizard.
-// Asks a short list of questions (Enter accepts the shown default; y/n for copy actions), then renders
-// AGENTS.md + .claude/CLAUDE.md and optionally copies the pipeline / docs-vault skeletons.
-// It can also install the tms-* skills for Claude Code (~/.claude) and/or Codex (~/.codex).
+// `npx tms-pipeline` — a THIN, zero-dependency installer.
+// It only does what must happen before an AI agent is in the loop:
+//   1. pick language (EN/RU) and the agent tool(s) you use;
+//   2. install the tms-* skill files (~/.claude and/or ~/.codex);
+//   3. drop a starter AGENTS.md (+ .claude/CLAUDE.md) — mostly <<TODO>> placeholders.
+// It does NOT interrogate you about the project (test commands, ticket format, doc paths, …).
+// That is the job of the agent-driven `/tms-init`, which reads your repo and fills AGENTS.md for you.
 // It NEVER overwrites an existing AGENTS.md / CLAUDE.md unless you pass --force.
 
 'use strict';
@@ -10,7 +13,7 @@
 const fs = require('fs');
 const readline = require('readline');
 const path = require('path');
-const { QUESTIONS, CONFIRMS } = require('../core/questions');
+const { QUESTIONS } = require('../core/questions');
 const { applyConfig } = require('../core/engine');
 const pkg = require('../../package.json');
 
@@ -20,6 +23,25 @@ const YES = argv.includes('--yes') || argv.includes('-y');
 const DRY_RUN = argv.includes('--dry-run');
 const HELP = argv.includes('--help') || argv.includes('-h');
 const VERSION = argv.includes('--version') || argv.includes('-v');
+
+// ── Colors (raw ANSI, zero-dependency). Disabled on a non-TTY or when NO_COLOR is set. ──
+const COLOR = process.stdout.isTTY && !process.env.NO_COLOR;
+const sgr = (n) => (COLOR ? `\x1b[${n}m` : '');
+const C = {
+  reset: sgr(0), bold: sgr(1), dim: sgr(2),
+  cyan: sgr(36), green: sgr(32), yellow: sgr(33), blue: sgr(34), gray: sgr(90),
+};
+const paint = (s, color) => `${color}${s}${C.reset}`;
+
+// ANSI Shadow "TMS" banner.
+const BANNER = [
+  '████████╗███╗   ███╗███████╗',
+  '╚══██╔══╝████╗ ████║██╔════╝',
+  '   ██║   ██╔████╔██║███████╗',
+  '   ██║   ██║╚██╔╝██║╚════██║',
+  '   ██║   ██║ ╚═╝ ██║███████║',
+  '   ╚═╝   ╚═╝     ╚═╝╚══════╝',
+];
 
 function flagValue(name) {
   // supports both `--answers file.json` and `--answers=file.json`
@@ -31,14 +53,51 @@ function flagValue(name) {
 }
 const ANSWERS_FILE = flagValue('--answers');
 
+// ── Localized wizard strings (EN/RU). Only the few prompts the thin installer still asks. ──
+const STRINGS = {
+  en: {
+    tagline: 'staged AI-agent delivery pipeline',
+    pickTools: 'Which agent tool(s) do you use?',
+    toolClaude: 'Claude Code', toolCodex: 'Codex', toolBoth: 'Both',
+    projectPath: 'Path to the project to set up',
+    installSkills: (where) => `Install the tms-* skill files now into ${where}?`,
+    skipHint: 'skip → for Claude Code you can instead run /plugin install',
+    applying: 'Applying', dryRunFor: 'Dry-run for',
+    done: 'Done. Next steps:',
+    step_init: 'Run  /tms-init  inside Claude Code / Codex — it reads your repo and fills AGENTS.md',
+    step_init2: '(test/build commands, paths, ticket format), asking you only about the gaps.',
+    step_claudeInstalled: 'Claude Code: skills are in ~/.claude — restart Claude Code to load them (don\'t also /plugin install).',
+    step_claudePlugin: 'Claude Code: /plugin marketplace add TmsNine/tms-pipeline → /plugin install tms-pipeline@tms-pipeline → /reload-plugins',
+    step_codex: 'Codex: re-run and accept the skill install, or: cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/',
+    step_task: 'Then start a task:  /tms-ticket <your first ticket>',
+    enterHint: 'Enter = default',
+  },
+  ru: {
+    tagline: 'стадийный конвейер доставки для AI-агентов',
+    pickTools: 'Какой агент-инструмент(ы) вы используете?',
+    toolClaude: 'Claude Code', toolCodex: 'Codex', toolBoth: 'Оба',
+    projectPath: 'Путь к проекту для настройки',
+    installSkills: (where) => `Установить файлы скиллов tms-* сейчас в ${where}?`,
+    skipHint: 'пропустить → для Claude Code можно вместо этого выполнить /plugin install',
+    applying: 'Применяю', dryRunFor: 'Тест (dry-run) для',
+    done: 'Готово. Дальше:',
+    step_init: 'Выполните  /tms-init  в Claude Code / Codex — он читает ваш репозиторий и заполняет AGENTS.md',
+    step_init2: '(команды тестов/сборки, пути, формат тикета), спрашивая только то, что не смог вывести.',
+    step_claudeInstalled: 'Claude Code: скиллы в ~/.claude — перезапустите Claude Code (не делайте ещё и /plugin install).',
+    step_claudePlugin: 'Claude Code: /plugin marketplace add TmsNine/tms-pipeline → /plugin install tms-pipeline@tms-pipeline → /reload-plugins',
+    step_codex: 'Codex: перезапустите и согласитесь на установку, или: cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/',
+    step_task: 'Затем запустите задачу:  /tms-ticket <первый тикет>',
+    enterHint: 'Enter = значение по умолчанию',
+  },
+};
+
 function printHelp() {
   console.log(`
-  tms-pipeline ${pkg.version} — onboard the delivery methodology onto an EXISTING project.
+  tms-pipeline ${pkg.version} — thin installer for the delivery methodology.
 
-  It does NOT create a project or invent features — it assumes you already have a repo, a
-  documentation base, and ideally a backlog. It renders AGENTS.md (+ .claude/CLAUDE.md for
-  Claude Code), can lay down the pipeline / docs-vault skeletons, and can install the tms-* skills
-  for Claude Code and/or Codex.
+  It installs the tms-* skills (~/.claude and/or ~/.codex) and drops a starter AGENTS.md
+  (+ .claude/CLAUDE.md). It does NOT interview you about the project — run the agent-driven
+  /tms-init afterward and it fills AGENTS.md by reading your repo.
 
   Usage:
     npx tms-pipeline [options]
@@ -54,10 +113,9 @@ function printHelp() {
   --answers JSON shape (all keys optional; missing ones fall back to defaults):
     {
       "targetDir": "/abs/path/to/project",
-      "answers": { "OUTPUT_LANGUAGE": "English", "PROJECT_ONE_LINER": "...", ... },
+      "answers": { "OUTPUT_LANGUAGE": "English", "DOC_BASE_PATH": "...", "TEST_CMD": "...", ... },
       "useClaude": true, "useCodex": true,
-      "copyPipeline": true, "copyDocsVault": false,
-      "copyClaudeAssets": false, "copyCodexAssets": true
+      "copyDocsVault": false, "copyClaudeAssets": false, "copyCodexAssets": true
     }
 
   Docs:    https://github.com/TmsNine/tms-pipeline
@@ -66,7 +124,6 @@ function printHelp() {
 }
 
 // Robust line reader that works for both an interactive TTY and piped/redirected stdin.
-// (A plain readline.question() chain drops lines when stdin is a fast pipe.)
 let rl = null;
 const queue = [];
 let pending = null;
@@ -95,42 +152,41 @@ async function prompt(text) {
 
 function banner() {
   console.log('');
-  console.log('  tms-pipeline — project onboarding');
-  console.log('  ---------------------------------');
-  console.log('  This sets up the delivery methodology ON TOP OF your existing project.');
-  console.log('  It does NOT create a project for you — you should already have a repo,');
-  console.log('  a documentation base, and ideally a backlog.');
-  console.log('  Press Enter to accept the [default] shown for each question.');
-  if (DRY_RUN) console.log('  (dry-run: nothing will be written to disk)');
+  for (const line of BANNER) console.log('  ' + paint(line, C.bold + C.cyan));
+  console.log('  ' + paint(STRINGS.en.tagline + '  ·  ' + STRINGS.ru.tagline, C.dim));
+  if (DRY_RUN) console.log('  ' + paint('(dry-run: nothing will be written to disk)', C.yellow));
   console.log('');
 }
 
-async function askText(q) {
-  if (YES) return q.default || '';
-  const suffix = q.default ? ` [${q.default}]` : ' []';
-  const raw = await prompt(`  ${q.prompt}${suffix}\n  > `);
-  return raw === '' ? (q.default || '') : raw;
+// Ask a free-text value with a shown [default].
+async function askText(label, def) {
+  if (YES) return def || '';
+  const suffix = def ? paint(` [${def}]`, C.dim) : '';
+  const raw = await prompt(`  ${paint(label, C.bold)}${suffix}\n  ${paint('>', C.cyan)} `);
+  return raw === '' ? (def || '') : raw;
 }
 
-async function askConfirm(c) {
-  if (YES) return c.default;
-  const def = c.default ? 'Y/n' : 'y/N';
-  const raw = (await prompt(`  ${c.prompt} (${def})\n  > `)).toLowerCase();
-  if (raw === '') return c.default;
+// Ask Y/n. Returns boolean.
+async function askYesNo(label, def) {
+  if (YES) return def;
+  const hint = def ? 'Y/n' : 'y/N';
+  const raw = (await prompt(`  ${paint(label, C.bold)} ${paint(`(${hint})`, C.dim)}\n  ${paint('>', C.cyan)} `)).toLowerCase();
+  if (raw === '') return def;
   return raw === 'y' || raw === 'yes';
 }
 
-// Numeric selector for WHERE to install the skill files. Enter / anything else = skip.
-// For Claude Code this is the npx alternative to `/plugin install`; for Codex it is the only path.
-async function askInstallTarget() {
+// Numeric menu. options = [{key,label,note}]; returns the chosen key (defaults to first).
+async function askMenu(title, options) {
+  if (YES) return options[0].key;
   console.log('');
-  console.log('  Install the tms-* skills + agents now? Choose where:');
-  console.log('    1) Claude Code  ->  ~/.claude/skills, ~/.claude/agents, ~/.claude/commands');
-  console.log('    2) Codex        ->  ~/.codex/skills, ~/.codex/agents');
-  console.log('    3) Both');
-  console.log('    0) Skip  (for Claude Code you can instead run /plugin install)');
-  const raw = await prompt('  > ');
-  return ['1', '2', '3'].includes(raw) ? raw : '0';
+  console.log('  ' + paint(title, C.bold));
+  for (const o of options) {
+    const note = o.note ? paint('  ' + o.note, C.dim) : '';
+    console.log(`    ${paint(o.key + ')', C.cyan)} ${o.label}${note}`);
+  }
+  const raw = await prompt(`  ${paint('>', C.cyan)} `);
+  const hit = options.find((o) => o.key === raw);
+  return hit ? hit.key : options[0].key;
 }
 
 // Build the config from a JSON answers file (non-interactive path used by /tms-init).
@@ -147,7 +203,7 @@ function fromAnswersFile(file) {
     answers,
     useClaude: confirm('useClaude', true),
     useCodex: confirm('useCodex', true),
-    copyPipeline: confirm('copyPipeline', true),
+    copyPipeline: confirm('copyPipeline', false),
     copyDocsVault: confirm('copyDocsVault', false),
     copyClaudeAssets: confirm('copyClaudeAssets', false),
     copyCodexAssets: confirm('copyCodexAssets', false),
@@ -158,29 +214,53 @@ async function collectInteractive() {
   banner();
   openReader();
 
-  const targetRaw = await askText({ prompt: 'Path to the project to configure', default: process.cwd() });
-  const targetDir = path.resolve(targetRaw);
+  // 1) Language first — drives both the wizard UI and OUTPUT_LANGUAGE in AGENTS.md.
+  const lang = await askMenu('Language / Язык', [
+    { key: '1', label: 'English' },
+    { key: '2', label: 'Русский' },
+  ]) === '2' ? 'ru' : 'en';
+  const S = STRINGS[lang];
+  if (!YES) console.log('  ' + paint(S.enterHint, C.dim));
 
-  const answers = {};
-  for (const q of QUESTIONS) answers[q.token] = await askText(q);
+  // 2) Which agent tool(s) — gates which config + which skill homes.
+  const toolKey = await askMenu(S.pickTools, [
+    { key: '1', label: S.toolClaude },
+    { key: '2', label: S.toolCodex },
+    { key: '3', label: S.toolBoth },
+  ]);
+  const useClaude = toolKey === '1' || toolKey === '3';
+  const useCodex = toolKey === '2' || toolKey === '3';
 
-  const confirms = {};
-  for (const c of CONFIRMS) confirms[c.key] = await askConfirm(c);
+  // 3) Where to write the starter AGENTS.md.
+  const targetDir = path.resolve(await askText(S.projectPath, process.cwd()));
 
-  // Install the skill FILES now, and for which tool? For Claude Code this is the npx alternative to
-  // `/plugin install`; for Codex it is the only install path.
+  // 4) Install the skill files now (the install-scope question — legitimately a terminal step).
+  const homes = [useClaude ? '~/.claude' : null, useCodex ? '~/.codex' : null].filter(Boolean).join(' + ');
   let copyClaudeAssets = false;
   let copyCodexAssets = false;
   if (YES) {
-    copyCodexAssets = confirms.useCodex; // -y: preserve prior behavior (Codex copy on; Claude via plugin)
+    copyCodexAssets = useCodex; // -y: Codex copy on; Claude left to /plugin install
   } else {
-    const choice = await askInstallTarget();
-    if (choice === '1' || choice === '3') copyClaudeAssets = true;
-    if (choice === '2' || choice === '3') copyCodexAssets = true;
+    console.log('  ' + paint(S.skipHint, C.dim));
+    if (await askYesNo(S.installSkills(homes || '~/.claude'), true)) {
+      copyClaudeAssets = useClaude;
+      copyCodexAssets = useCodex;
+    }
   }
 
   rl.close();
-  return { targetDir, answers, ...confirms, copyClaudeAssets, copyCodexAssets };
+  // The thin installer only knows the language. Everything else stays <<TODO>> until /tms-init.
+  return {
+    lang,
+    targetDir,
+    answers: { OUTPUT_LANGUAGE: lang === 'ru' ? 'Russian' : 'English' },
+    useClaude,
+    useCodex,
+    copyPipeline: false,
+    copyDocsVault: false,
+    copyClaudeAssets,
+    copyCodexAssets,
+  };
 }
 
 async function main() {
@@ -188,8 +268,9 @@ async function main() {
   if (VERSION) { console.log(pkg.version); return; }
 
   const cfg = ANSWERS_FILE ? fromAnswersFile(ANSWERS_FILE) : await collectInteractive();
+  const S = STRINGS[cfg.lang] || STRINGS.en;
 
-  console.log(`\n  ${DRY_RUN ? 'Dry-run for' : 'Applying configuration to'}:`, cfg.targetDir, '\n');
+  console.log(`\n  ${paint((DRY_RUN ? S.dryRunFor : S.applying) + ':', C.bold)} ${cfg.targetDir}\n`);
   const results = applyConfig({
     targetDir: cfg.targetDir,
     answers: cfg.answers,
@@ -203,25 +284,28 @@ async function main() {
     dryRun: DRY_RUN,
   });
 
-  for (const r of results) console.log(`    [${r.status}] ${r.path}`);
+  for (const r of results) {
+    const ok = /written|copied/.test(r.status);
+    console.log(`    ${paint('[' + r.status + ']', ok ? C.green : C.gray)} ${r.path}`);
+  }
 
   console.log('');
-  console.log('  Done. Next steps:');
-  console.log('    1. Open AGENTS.md and resolve any <<TODO: ...>> markers.');
-  console.log('    2. If you copied docs-vault, rename the PROJECT_NAME folder to your project.');
+  console.log('  ' + paint(S.done, C.bold + C.green));
+  console.log('    ' + paint('1.', C.cyan) + ' ' + paint(S.step_init, C.bold));
+  console.log('       ' + paint(S.step_init2, C.dim));
   if (cfg.useClaude && cfg.copyClaudeAssets) {
-    console.log('    3. Claude Code: skills installed into ~/.claude — restart Claude Code to load them. Do NOT also /plugin install the same skills (avoid duplicates).');
+    console.log('    ' + paint('2.', C.cyan) + ' ' + S.step_claudeInstalled);
   } else if (cfg.useClaude) {
-    console.log('    3. Claude Code: /plugin marketplace add TmsNine/tms-pipeline → /plugin install tms-pipeline@tms-pipeline → /reload-plugins  (or re-run and pick install target 1).');
+    console.log('    ' + paint('2.', C.cyan) + ' ' + S.step_claudePlugin);
   }
   if (cfg.useCodex && !cfg.copyCodexAssets) {
-    console.log('    3. Codex: copy skills/ → ~/.codex/skills and agents/ → ~/.codex/agents (or re-run and pick install target 2).');
+    console.log('    ' + paint('2.', C.cyan) + ' ' + S.step_codex);
   }
-  console.log('    4. Start a task: /tms-ticket <your first ticket>');
+  console.log('    ' + paint('3.', C.cyan) + ' ' + S.step_task);
   console.log('');
 }
 
 main().catch((err) => {
-  console.error('\n  tms-pipeline onboarding failed:', err.message, '\n');
+  console.error('\n  ' + paint('tms-pipeline install failed:', C.yellow), err.message, '\n');
   process.exit(1);
 });

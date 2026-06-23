@@ -157,6 +157,28 @@ test('copyPipeline lays down the pipeline template', () => {
   assert.ok(fs.existsSync(path.join(dir, 'docs', '_pipeline_template')));
 });
 
+test('docs-vault is written to DOC_BASE_PATH (absolute), not always into the repo', () => {
+  const dir = tmp();
+  const vault = tmp(); // an external doc base (e.g. an Obsidian vault outside the repo)
+  applyConfig({
+    targetDir: dir,
+    answers: { ...fullAnswers(), DOC_BASE_PATH: vault },
+    useClaude: true, useCodex: false, copyDocsVault: true,
+  });
+  assert.ok(fs.existsSync(path.join(vault, 'PROJECT_NAME')), 'vault skeleton lands in DOC_BASE_PATH');
+  assert.ok(!fs.existsSync(path.join(dir, 'docs', 'docs-vault')), 'vault is NOT dumped into repo/docs');
+});
+
+test('docs-vault honors a repo-relative DOC_BASE_PATH', () => {
+  const dir = tmp();
+  applyConfig({
+    targetDir: dir,
+    answers: { ...fullAnswers(), DOC_BASE_PATH: 'knowledge' },
+    useClaude: true, useCodex: false, copyDocsVault: true,
+  });
+  assert.ok(fs.existsSync(path.join(dir, 'knowledge', 'PROJECT_NAME')), 'relative path resolves under the project');
+});
+
 test('the four hardcoded version strings stay in sync', () => {
   const read = (p) => JSON.parse(fs.readFileSync(path.join(REPO_ROOT, p), 'utf8'));
   const pkgV = read('package.json').version;

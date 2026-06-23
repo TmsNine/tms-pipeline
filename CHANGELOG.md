@@ -28,8 +28,19 @@ All notable changes to tms-pipeline are documented here. The format follows
 - "In 30 seconds" summary and a prominent link to the worked example
   (`templates/example-task/ACME-101/`) in the README and getting-started docs.
 - `CONTRIBUTING.md`, `CHANGELOG.md`, issue templates, and a pull-request template.
+- `docs/05-manual-setup.md` (+ `.ru.md`): a "finish onboarding with your AI agent" tutorial with
+  ready-to-paste prompts for the deep judgement fields (Profile-C triggers, tenancy, migration policy,
+  doc-base hints) that `/tms-init` intentionally leaves as `<<TODO>>`.
 
 ### Changed
+- **Onboarding split into a thin installer + agent-driven setup** (matching the Superpowers/GSD
+  convention). `npx tms-pipeline` is now a thin installer: pick language (EN/RU) and tool(s), install the
+  skills, drop a starter `AGENTS.md` — it no longer interrogates you about test commands, ticket format,
+  or doc paths. Those move to `/tms-init`, which reads the repo and fills `AGENTS.md`, asking only about
+  gaps. Added an ANSI-Shadow "TMS" banner and colored, localized (EN/RU) terminal output.
+- **Fixed:** the docs-vault skeleton now lands at `DOC_BASE_PATH` (e.g. an external Obsidian/Notion
+  vault) instead of always being dumped into `repo/docs`. The terminal installer no longer copies the
+  per-task pipeline forms into the repo (the stage skills generate those per task).
 - `/tms-init` now calls the canonical engine via `--answers` instead of re-implementing template
   rendering, removing the duplicated question list and the drift risk between the two onboarding paths.
 - Russian is now the canonical language for docs; English files follow it. Russian docs rewritten to

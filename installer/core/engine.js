@@ -145,8 +145,12 @@ function applyConfig({
   }
 
   if (copyDocsVault) {
-    const dest = path.join(targetDir, 'docs', 'docs-vault');
-    results.push(copyDirSafe(path.join(TEMPLATES, 'docs-vault'), dest, 'docs-vault skeletons — rename the PROJECT_NAME folder', { dryRun }));
+    // Write the docs-vault skeleton to the user's documentation base (DOC_BASE_PATH), NOT always into
+    // the repo. The path may be absolute (an Obsidian/Notion vault outside the repo) or relative to the
+    // project. Default to docs/ only when no doc base was given.
+    const docBase = (answers.DOC_BASE_PATH && String(answers.DOC_BASE_PATH).trim()) || 'docs';
+    const dest = path.isAbsolute(docBase) ? docBase : path.join(targetDir, docBase);
+    results.push(copyDirSafe(path.join(TEMPLATES, 'docs-vault'), dest, 'docs-vault skeletons → DOC_BASE_PATH (rename the PROJECT_NAME folder)', { dryRun }));
   }
 
   // Claude Code: the npx alternative to `/plugin install` — copy skills/agents/commands into ~/.claude.

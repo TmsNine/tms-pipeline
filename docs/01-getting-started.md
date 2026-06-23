@@ -26,28 +26,32 @@ into place. Details in the [README](../README.md).
 
 Both are free and use the same decoupled core.
 
-### A. Turnkey — configure with the wizard
+### A. Turnkey — thin installer, then your agent
 
-For getting running quickly on your project:
+Onboarding has two halves on purpose: a **thin installer** that only places files, and an
+**agent-driven `/tms-init`** that fills the config by reading your repo.
 
 ```bash
-# 1. Onboard your project (renders AGENTS.md + .claude/CLAUDE.md, optionally lays down skeletons)
+# 1. Thin installer — pick language + tool(s), install the skills, drop a starter AGENTS.md.
+#    It does NOT ask about your project (test commands, ticket format, doc paths).
 npx tms-pipeline
-
-# 2. Install the skills/agents into Claude Code
+#    At the install step it can copy the skills into ~/.claude / ~/.codex. Alternatively, for
+#    Claude Code use the plugin marketplace (use ONE method, not both, to avoid duplicate skills):
 /plugin marketplace add TmsNine/tms-pipeline
 /plugin install tms-pipeline@tms-pipeline
 /reload-plugins
 ```
 
-The `npx` wizard asks a short list of questions (press Enter to accept each default) and writes a filled
-`AGENTS.md` and `.claude/CLAUDE.md` into your project. You can also run the onboarding from inside Claude
-Code with `/tms-init`.
+```text
+# 2. Inside Claude Code / Codex — finish setup by reading the repo:
+/tms-init
+```
 
-The wizard can also install the skill **files** for you: at the **"Install the tms-\* skills … Choose
-where"** step pick **1) Claude Code** and it copies `skills/`, `agents/`, and `commands/` into `~/.claude`
-(then restart Claude Code). That is an alternative to the two `/plugin` commands above — use one method
-or the other, not both, or you'll end up with duplicate skills.
+`/tms-init` scans your repository (test/build commands from `package.json`/CI, ticket-ID patterns from
+git history, existing docs and backlog) and **fills `AGENTS.md` for you**, asking only about the gaps it
+can't discover — chiefly where your documentation vault lives. For the few fields that need real
+judgement (Profile-C triggers, tenancy, migration policy), it points you to the guided
+[manual setup](05-manual-setup.md) with ready-to-paste prompts.
 
 ### B. Methodology — adopt it by hand
 

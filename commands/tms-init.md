@@ -1,63 +1,95 @@
 ---
-description: Onboard the tms-pipeline methodology onto an EXISTING project — generate AGENTS.md + CLAUDE.md and optionally lay down the pipeline / docs-vault skeletons.
+description: Agent-driven onboarding — read the repo and fill AGENTS.md by discovery, asking the user only about genuine gaps. The thin `npx tms-pipeline` installer placed the skills + a stub; this finishes the job.
 ---
 
-# /tms-init — onboard tms-pipeline onto this project
+# /tms-init — agent-driven onboarding
 
-You are configuring the tms-pipeline delivery methodology **on top of the user's existing project**.
-This does NOT create a project, invent features, or brainstorm scope — it assumes the user already has a
-repo, a documentation base, and ideally a backlog. Say this plainly if the project looks empty.
+Turn the **starter `AGENTS.md`** (the thin `npx tms-pipeline` installer drops one that is mostly
+`<<TODO>>`) into a real, filled config by **reading the repository** — asking the user only what you
+genuinely cannot discover. The terminal installer only placed skills + a stub; you are the other half.
 
-## What to do
+This onboards an **EXISTING** project. It does NOT create a product or invent features. If the repo
+looks empty (no source, no docs), say so and offer `/tms-new` instead.
 
-1. **Confirm prerequisites.** Briefly check the repo has source code and some documentation base. If there
-   is no backlog or doc base, tell the user this methodology expects one and offer to help create a
-   minimal backlog from the `templates/docs-vault` skeletons — but don't pretend to generate a product.
+## Principles
 
-2. **Collect the answers.** `installer/core/questions.js` in this plugin is the SINGLE source of truth
-   for the question list — **read that file** and ask exactly its `QUESTIONS` (with their defaults) and
-   its `CONFIRMS` (the y/n choices: **Do you use Claude Code?**, **Do you use Codex?**, copy the pipeline
-   template?, copy the docs-vault skeletons?). Ask them in one compact batch (group them; don't drip one
-   at a time). Do not hardcode or invent questions — if the file changes, your questions change with it.
-   Also ask one more y/n when the user uses Codex: **copy the tms-\* skills + agents into ~/.codex now?**
-   (Codex has no `/plugin install` equivalent.) For Claude Code the skills are already loaded by the
-   plugin that provides this very command, so leave `copyClaudeAssets` false unless the user explicitly
-   wants the skills copied into `~/.claude` instead of using the plugin.
+- **Discover first, ask second.** Never ask for something you can read from the repo.
+- **One compact batch** of questions for the true gaps, in the user's `OUTPUT_LANGUAGE`.
+- **Don't guess deep judgment calls.** Leave them as `<<TODO>>` and point to the tutorial rather than
+  inventing tenancy models, migration policies, or Profile-C triggers.
 
-3. **Generate the config by calling the shared engine — do NOT re-implement rendering.** Write the
-   collected answers to a temp JSON file and run the canonical CLI so the output is byte-identical to
-   `npx tms-pipeline`:
+## 1. Locate & confirm
 
-   ```bash
-   node <plugin-dir>/installer/cli/index.js --answers /tmp/tms-init-answers.json
-   ```
+- Find the repo root. Confirm there is source code and ideally a documentation base / backlog.
+- Read `AGENTS.md` if present (the stub you will fill). The canonical field list is
+  `installer/core/questions.js` in this plugin — read it (`QUESTIONS` + `DEFERRED_TOKENS`) so you know
+  every token `AGENTS.md` needs and which are meant to be deferred.
 
-   The JSON shape (all keys optional; missing ones fall back to the questions.js defaults):
+## 2. Scan the repo (discover — do NOT ask)
 
-   ```json
-   {
-     "targetDir": "<abs path to the project>",
-     "answers": { "OUTPUT_LANGUAGE": "…", "PROJECT_ONE_LINER": "…", "…": "…" },
-     "useClaude": true, "useCodex": true,
-     "copyPipeline": true, "copyDocsVault": false,
-     "copyClaudeAssets": false, "copyCodexAssets": true
-   }
-   ```
+Read in parallel where you can, and map findings to tokens:
 
-   Run with `--dry-run` first if you want to preview the file list, then again without it. The engine
-   always writes `AGENTS.md`, writes `.claude/CLAUDE.md` only when `useClaude`, copies Claude assets only
-   when `useClaude` **and** `copyClaudeAssets`, copies Codex assets only when `useCodex` **and**
-   `copyCodexAssets`, and never overwrites an existing AGENTS.md/CLAUDE.md unless
-   you pass `--force` (ask the user before forcing). Leaving rendering to the engine is mandatory — it is
-   the only thing that guarantees `/tms-init` and the CLI never drift.
+- **Validation commands** → `TEST_CMD` / `BUILD_CMD` / `LINT_CMD` / `TYPECHECK_CMD`. Read
+  `package.json` scripts, or `Makefile` / `pyproject.toml` / `Cargo.toml` / `go.mod`, and
+  `.github/workflows/*`. Prefer script names that actually exist; leave blank if there is none.
+- **Project one-liner + stack** → `PROJECT_ONE_LINER`. Draft it from the README / package metadata.
+- **Ticket-ID format** → `TICKET_ID_FORMAT`. Scan `git log` and existing docs/backlog for an ID pattern
+  (e.g. `ABC-123`). It is a **format example**, not an auto-numbering prefix — say so if the user asks.
+- **Backlog** → `BACKLOG_LOCATION`. Find the backlog file.
+- **Task folder pattern** → `TASK_FOLDER_PATTERN`. Infer, else default `docs/<TICKET-ID>/`.
+- **Doc base** → `DOC_BASE_PATH`. Detect an existing docs tree. Note: an **external vault**
+  (Obsidian/Notion) usually cannot be discovered from the repo — plan to ask for it.
 
-4. **Lay down skeletons (if chosen).** Copy `templates/pipeline/` to the task-folder root and/or
-   `templates/docs-vault/` into the doc base. Remind the user to rename the `PROJECT_NAME` folder.
+## 3. Confirm + fill gaps (one batch, user's language)
 
-5. **Report and hand off.** List what was written, name every remaining `<<TODO>>` the user must resolve
-   (especially `PROFILE_C_TRIGGERS`, `MIGRATION_POLICY`, and tenancy/identity details — these need human
-   judgement), and point them at the first real step: `/tms-ticket <their first ticket>`.
+Show a compact table of what you discovered (token → proposed value → source). Ask the user only to
+**confirm or correct**, plus the things you could not find — especially:
+
+- **`DOC_BASE_PATH`** — where their knowledge base / vault lives (an Obsidian/Notion path, or a path in
+  the repo). If they have none and want one, offer to create the skeleton (see step 4).
+- **`AUDIENCE_PROFILE`** — who reads the output (sets the tone/altitude). One short answer.
+
+Leave the deep judgment tokens — `PROFILE_C_TRIGGERS`, `PERSISTENCE_AND_TENANCY`, `MIGRATION_POLICY`,
+`LAUNCH_STAGE_MAPPING`, `TRACEABILITY_LOCATION`, `CODE_LAYOUT_HINT`, `DOC_INDEX_HINT`,
+`DESIGN_SYSTEM_HINT` — as `<<TODO>>` unless the user volunteers them. They are covered in step 5.
+
+## 4. Render via the engine (do NOT hand-write AGENTS.md)
+
+Write the assembled answers to a temp JSON and run the canonical engine so the output is byte-identical
+to `npx tms-pipeline`:
+
+```bash
+node <plugin-dir>/installer/cli/index.js --answers /tmp/tms-init-answers.json
+```
+
+JSON shape (all keys optional; missing ones fall back to the `questions.js` defaults):
+
+```json
+{
+  "targetDir": "<abs path to the project>",
+  "answers": { "OUTPUT_LANGUAGE": "…", "TEST_CMD": "…", "DOC_BASE_PATH": "…", "TICKET_ID_FORMAT": "…" },
+  "useClaude": true, "useCodex": true,
+  "copyDocsVault": false
+}
+```
+
+- Set `copyDocsVault: true` (together with `DOC_BASE_PATH`) **only** when the user has no doc base and
+  wants the skeleton. The engine writes the vault to `DOC_BASE_PATH` — an absolute Obsidian/Notion path
+  or a repo-relative path — **not** blindly into `repo/docs`.
+- Run with `--dry-run` first to preview the file list, then again for real.
+- Never pass `--force` without asking — it overwrites an existing `AGENTS.md` / `.claude/CLAUDE.md`.
+- Do **not** copy the per-task pipeline forms into the repo. The stage skills generate those documents
+  per task; a template copy in the user's repo is redundant.
+
+## 5. Report + hand off
+
+- List what was written and every remaining `<<TODO>>` the user must still resolve.
+- Point them to **`docs/05-manual-setup.md`** — a guided walkthrough with ready-to-paste prompts for the
+  deep judgment fields (Profile-C triggers, tenancy/identity, migration policy, doc structure). Offer to
+  do it now, one field at a time, reading the code with them.
+- Then the first real step: `/tms-ticket <their first ticket>`.
 
 ## Tone
-Match the user's `OUTPUT_LANGUAGE` and `AUDIENCE_PROFILE` as soon as you know them. Keep it short and
-practical — this is setup, not a lecture.
+
+Match `OUTPUT_LANGUAGE` and `AUDIENCE_PROFILE` as soon as you know them. Keep it short and practical —
+this is setup, not a lecture.
