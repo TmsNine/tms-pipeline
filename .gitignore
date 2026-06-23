@@ -1,3 +1,11 @@
 node_modules/
 .DS_Store
 *.log
+
+# Onboarding OUTPUT — this repo is the source package for the skills, not a project
+# configured with them. These are what `npx tms-pipeline` / `/tms-init` generate into a
+# user's project; they must never be committed here.
+/AGENTS.md
+/.claude/
+/docs/_pipeline_template/
+/docs/docs-vault/
