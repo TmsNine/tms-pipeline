@@ -17,8 +17,8 @@ Read THIS project's `AGENTS.md` / `CLAUDE.md` for project specifics: task-folder
 ## Method
 
 1. **Precondition:** `02_design.md` is approved. Else stop.
-2. **Perspective rotation.** The auditor must use a different reasoning context than the designer (if design was Codex → audit Claude, or vice versa; if same agent → close the "designer hat" output first, then explicitly switch to "auditor hat": treat the design as someone else's work, hunt blind spots across security / concurrency / UX / ops / data integrity / GDPR). One structured pass.
-3. **Classify each gap into exactly one class. No severity inflation** — Class A means "data loss / security breach / GDPR violation / duplicate production data / integrity violation / blocks launch", not "could be nicer":
+2. **Perspective rotation.** The auditor must use a different reasoning context than the designer (if design was Codex → audit Claude, or vice versa; if same agent → close the "designer hat" output first, then explicitly switch to "auditor hat": treat the design as someone else's work, hunt blind spots across security / concurrency / UX / ops / data integrity / privacy). One structured pass.
+3. **Classify each gap into exactly one class. No severity inflation** — Class A means "data loss / security breach / privacy violation / duplicate production data / integrity violation / blocks launch", not "could be nicer":
    - **A — Blocker:** MUST be fixed inline in `02_design.md` before `03`.
    - **B — Incident:** recoverable prod incident (stuck job, missed notification, edge-case UX, incomplete rollback). Fix in `02_design.md` or explicitly pass to `03` with a handling note.
    - **C — Polish:** UX roughness, incomplete i18n, missing metrics/runbook, unclear copy. Capture as **bundled** backlog tickets per project rules (bundle, don't shard).

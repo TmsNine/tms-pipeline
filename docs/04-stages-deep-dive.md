@@ -51,8 +51,8 @@ A few concepts you'll meet in every section:
 - **Who works.** This is where a team first appears:
   - **the lead (Opus)** formulates what to look for and where;
   - **4 parallel collector subagents on a cheap model (Sonnet; Haiku for simple file searches)** — each
-    combs its own "axis": the vertical execution path, horizontal neighbors, product documents, history,
-    and similar implementations;
+    combs its own "axis": the vertical execution path, horizontal siblings, product & lifecycle docs,
+    and prior art & history (recent tickets, git log, similar implementations);
   - then **the lead re-verifies** the findings itself.
 - **Input → Output.** `00_ticket.md` → an `01_research.md` file with facts, links to specific
   `file:line` locations, and a confidence note on each item.
