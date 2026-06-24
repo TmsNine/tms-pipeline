@@ -1,79 +1,129 @@
 # Configuration
 
-> How to tailor tms-pipeline to your project. The wizard (`npx tms-pipeline` / `/tms-init`) fills most of
-> this for you; this page is the reference for doing it by hand and for the values the wizard leaves as
-> `<<TODO>>`.
+> How to tailor tms-pipeline to your project.
+>
+> tms-pipeline is a discipline for AI agents: it takes one already-defined task from a ticket to
+> reviewed code, keeping the agent's context clean at each step. To do that for *your* project, the
+> agents need to know your rules: where tasks live, what language to write in, which commands check
+> your code. All of that lives in settings files, which is what this page is about.
+>
+> Most of the setup is done for you by the installer (`npx tms-pipeline`) and the `/tms-init` skill, a
+> command you give the agent so it reads your repo and fills in the settings itself. This page is for two
+> cases: when you want to configure something by hand, and for the values the installer deliberately
+> leaves blank (marked `<<TODO>>`, a placeholder waiting on your decision). The Russian version is
+> [02-configuration.ru.md](02-configuration.ru.md).
 
-## The canon: AGENTS.md + CLAUDE.md
+## About the tools: Claude Code and Codex
 
-The methodology reads your project specifics at runtime from two files:
+tms-pipeline runs on top of an AI tool: the program where you talk to the agent. Two are supported,
+**Claude Code** and **Codex**. You only need one of them, so pick the one you already use. The `AGENTS.md`
+file is shared by both; Claude Code additionally reads its own `.claude/CLAUDE.md`. The differences
+between the tools are gathered below, in [Codex parity](#codex).
 
-- **`AGENTS.md`** (repo root) — the shared canon, read by Codex natively and imported by Claude Code.
-- **`.claude/CLAUDE.md`** — Claude-Code-specific rules (the multi-agent implementation mob); it imports
-  `AGENTS.md` via `@./AGENTS.md`.
+## Where settings live: AGENTS.md and CLAUDE.md
 
-Start from `templates/AGENTS.template.md` and `templates/CLAUDE.template.md`. Replace every
-`{{PLACEHOLDER}}` and delete the `<!-- -->` / `« »` guidance notes (the wizard does this automatically).
+The agents don't hard-code your project's specifics — they read them on the fly from two settings files:
 
-## Values the wizard asks for
+- **`AGENTS.md`** (in the repo root) is your project's main settings file: where tasks live, what language
+  to write output in, your rules. This file is shared by both AI tools (Claude Code and Codex).
+- **`.claude/CLAUDE.md`** holds rules specific to one of the tools, Claude Code. In particular, the rules
+  for the mob: a group of role agents that write code together (during the implementation stage). This
+  file pulls in `AGENTS.md` with the line `@./AGENTS.md`, so everything you wrote in `AGENTS.md` applies
+  here too.
 
-| Placeholder | Meaning |
+Start from the templates `templates/AGENTS.template.md` and `templates/CLAUDE.template.md`. In each one,
+replace every `{{PLACEHOLDER}}` with your value and remove the `<!-- -->` / `« »` guidance notes (the
+installer does this for you if you run it).
+
+## Values the installer asks for
+
+The installer works these out with short questions and fills them in for you. The right-hand column says
+what each one affects.
+
+| Placeholder | What it does |
 |---|---|
-| `OUTPUT_LANGUAGE` | Language for everything the user reads. |
-| `AUDIENCE_PROFILE` | Who reads the output (e.g. non-technical owner vs senior engineer). |
-| `PROJECT_ONE_LINER` | What the project is + stack. |
-| `TASK_FOLDER_PATTERN` | Where per-task pipeline folders live (e.g. `docs/<TICKET-ID>/`). |
-| `DOC_BASE_PATH` | Path to your documentation base. |
-| `BACKLOG_LOCATION` | The backlog file (single source of truth for tasks). |
-| `TICKET_ID_FORMAT` | e.g. `PROJ-123`. |
-| `TEST_CMD` / `TYPECHECK_CMD` / `LINT_CMD` / `BUILD_CMD` | Your validation commands. |
-| `LAUNCH_PLAYBOOK_LOCATION` | Where pre-launch manual actions are tracked. |
+| `OUTPUT_LANGUAGE` | The language of everything the user reads (reports, documents). |
+| `AUDIENCE_PROFILE` | Who reads the output — this sets how much explanation to give (for example, a non-technical owner vs a senior engineer). |
+| `PROJECT_ONE_LINER` | What the project is and what stack it's built on. |
+| `TASK_FOLDER_PATTERN` | Where per-task folders live (for example, `docs/<TICKET-ID>/`). |
+| `DOC_BASE_PATH` | The path to your documentation base (a docs tree, a wiki, or an Obsidian vault). |
+| `BACKLOG_LOCATION` | The backlog file — the list of tasks treated as the main one. |
+| `TICKET_ID_FORMAT` | The format of a task ID, for example `PROJ-123`. |
+| `TEST_CMD` / `TYPECHECK_CMD` / `LINT_CMD` / `BUILD_CMD` | Your commands for checking code: tests, type check, linter, build. |
+| `LAUNCH_PLAYBOOK_LOCATION` | Where you track the manual actions to do before launch (the launch playbook). |
 
-## Values you fill in by hand (the wizard leaves these as `<<TODO>>`)
+## Values you fill in by hand (the installer leaves these as `<<TODO>>`)
 
-These need human judgement — they are the most important to get right:
+The installer doesn't guess these. They need your decision, and they are the ones it matters most to get
+right. In their place the installer leaves the marker `<<TODO>>` (a placeholder) so you notice it and
+fill it in.
 
-- **`PROFILE_C_TRIGGERS`** — the list of surfaces that force full (Security) escort during
-  implementation: your auth/authz model, tenant-scoping/identity resolution, trust-boundary input
-  validation, secrets/signing, payment surfaces, PII paths, and the exact module paths that house them.
-  This is what makes the cost model fit *your* risk profile.
-- **`PERSISTENCE_AND_TENANCY`** — how data is stored and how tenant/user identity is resolved and scoped.
-- **`MIGRATION_POLICY`** — how schema changes are made and registered (delete if you have no database).
-- **`LAUNCH_STAGE_MAPPING`** — which kind of manual action goes into which section of your launch playbook.
-- **`TRACEABILITY_LOCATION`**, **`CODE_LAYOUT_HINT`**, **`DOC_INDEX_HINT`**, **`DESIGN_SYSTEM_HINT`** —
-  optional pointers (the last is the path to your design system / component library for UI projects);
-  delete if not applicable.
+- **`PROFILE_C_TRIGGERS`** is the list of your riskiest code: the parts where it's easy to break something
+  important, so a task that touches them needs the full set of checks, including a security agent (escort
+  profile C, the maximum set of checkers). List the items below that apply to you, plus the exact paths
+  to the modules where they live:
+  - sign-in and authorization: who the user is and what they're allowed to do;
+  - separation by tenant (a tenant is a separate customer in a shared system; a single-user app has
+    none, so skip this one) and working out who is currently signed in;
+  - the trust boundary: the places where data arrives from outside and must be validated;
+  - secrets and signing;
+  - payment;
+  - paths where PII travels: a user's private details (name, email, phone).
 
-> Not sure what to put? Don't guess alone — ask your AI agent (Claude Code or Codex) to read your code
+  This list is what tunes the checks to *your* set of risks: for the code you list here, the agents will
+  know that stronger checking is needed.
+- **`PERSISTENCE_AND_TENANCY`** is how your data is stored, and how the system works out who the current
+  user or tenant is, so it doesn't mix up one party's data with another's.
+- **`MIGRATION_POLICY`** is how you make and record changes to the database schema (if you have no
+  database, delete this field).
+- **`LAUNCH_STAGE_MAPPING`** is which kind of manual action should go into which section of your launch
+  playbook.
+- **`TRACEABILITY_LOCATION`**, **`CODE_LAYOUT_HINT`**, **`DOC_INDEX_HINT`**, **`DESIGN_SYSTEM_HINT`** are
+  optional hints that help the agent find its way around your project (the last one is the path to your
+  design system or component library for UI projects). Delete any that don't apply to you.
+
+> Not sure what to put? Don't guess on your own — ask your agent (Claude Code or Codex) to read your code
 > and propose the values, then confirm or correct them.
 
-## Severity rubric
+## How serious a found problem is: Class A/B/C/D
 
-The gap-audit severity rubric (Class A/B/C/D) ships with sensible defaults in `AGENTS.md`. Adjust the
-Class A examples to your risk model (e.g. a private internal tool may drop compliance language; a
-multi-tenant SaaS should keep cross-tenant data exposure as Class A).
+At one stage of the pipeline (the gap audit), another agent looks for holes in the finished design with
+fresh, skeptical eyes, before any code is written. Each hole it finds goes into one of four classes by
+how serious it is: A (blocker), B (recoverable failure), C (small polish), D (theoretical). The rules for
+what counts as which class live in `AGENTS.md`, with sensible defaults.
+
+Adjust the Class A examples to your own set of risks. For example, a private internal tool might drop the
+compliance wording, while a multi-tenant SaaS (where one system holds many customers' data) should keep
+any data leak between tenants as Class A.
 
 <a name="codex"></a>
 ## Codex parity
 
-- Codex reads `AGENTS.md` natively — no separate import needed. The `.claude/CLAUDE.md` multi-agent rules
-  apply conceptually, but the `Agent`-tool dispatch wording is Claude-Code-specific.
-- The plugin manifest for Codex lives in `.codex-plugin/plugin.json`; for Claude Code it is
-  `.claude-plugin/plugin.json`.
-- Skills use the same `SKILL.md` format across both tools. Skill bodies are written tool-agnostically
-  (they describe the task, not a specific tool like Read/Write), because the tool names differ between
-  Claude Code and Codex.
-- Custom subagents: Claude Code reads agent definitions from `agents/` (and `~/.claude/agents/`); Codex
-  uses its own agents directory. The five mob roles in `agents/` are portable in content; place them
-  where each tool expects them.
+Here are the differences between Codex and Claude Code. If you use only one tool, read this section only
+when you switch to the other.
 
-### Installing the skills/agents for Codex
+- Codex reads `AGENTS.md` directly, so there's no need to pull it in separately. The mob rules from
+  `.claude/CLAUDE.md` apply in Codex by intent too, but the wording about handing out work through the
+  `Agent` tool is specific to Claude Code.
+- The plugin manifest file (it tells the tool which skills and commands exist) lives at
+  `.codex-plugin/plugin.json` for Codex and at `.claude-plugin/plugin.json` for Claude Code.
+- Skills in both tools use the same `SKILL.md` format. The skill texts themselves are written
+  independently of the tool (they describe the task, not a specific command like Read/Write), because the
+  command names differ between Claude Code and Codex.
+- Custom role agents: Claude Code reads their definitions from the `agents/` directory (and
+  `~/.claude/agents/`); Codex has its own directory for this. The mob has five roles (one file each in
+  `agents/`): the developer writes code, and the other four check it (tester, architect, security, and
+  reviewer, the same security agent that joins on escort profile C). The contents of these files don't
+  depend on the tool, so just place them where each tool expects them.
 
-Codex has no `/plugin install` equivalent, so the files go under `~/.codex`:
+### Installing the skills and agents for Codex
 
-- **Automatically:** run `npx tms-pipeline`, answer yes to "Do you use Codex?" and accept the copy prompt
-  — the wizard copies `skills/` → `~/.codex/skills/` and `agents/` → `~/.codex/agents/`. If you don't use
-  Codex, the wizard leaves `~/.codex` untouched.
-- **Manually:** `cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/`.
+Codex has no command like `/plugin install`, so the files need to go into `~/.codex` either by hand or
+semi-automatically:
 
-`AGENTS.md` stays in the project root (the wizard writes it) — Codex reads it natively.
+- **Semi-automatically:** run `npx tms-pipeline`, answer "yes" to the question "Do you use Codex?" and
+  agree to the copy. The installer then copies `skills/` → `~/.codex/skills/` and `agents/` →
+  `~/.codex/agents/`. If you don't use Codex, the installer leaves the `~/.codex` directory alone.
+- **By hand:** `cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/`.
+
+`AGENTS.md` stays in the project root either way (the installer writes it), and Codex reads it directly.
