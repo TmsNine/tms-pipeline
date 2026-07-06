@@ -1,7 +1,6 @@
 ---
 name: tms-audit-scope
 description: "Codebase-audit stage 1 — inventory the repo, cut it into audit zones sized for one clean context window each, and write the audit folder + manifest. First of the tms-audit-* pipeline (scope → sweep → triage → backlog). Use when the user invokes /tms-audit-scope or wants to start a full-codebase audit of everything that needs finishing/fixing."
-argument-hint: "[scope-slug]"
 allowed-tools:
   - Read
   - Write
@@ -34,7 +33,7 @@ tms-audit-backlog→ 02_backlog.md + backlog rows (after approval)
    Also **detect the repo's own static-analysis tools** — the ones that turn "dead/unused code" findings from LLM guesswork into verified facts: dead-code/unused-export (`knip`, `ts-prune`, `eslint --rule no-unused`), dependency/cycle (`depcheck`, `madge --circular`), typecheck (`tsc --noEmit`), the project's linter, and any test-coverage command. Check `package.json` scripts and installed binaries — do NOT install anything. Record which tools exist (and the exact command to run each) in `00_scope.md`; the sweep stage runs them per zone as grounded seeds for the finder.
 
 3. **Cut into zones.** A zone = a coherent surface small enough to audit thoroughly in ONE clean context window. Heuristics:
-   - one module/folder per zone by default (e.g. each `apps/api/src/modules/<x>/`, `apps/miniapp/src/components`, `apps/miniapp/src/pages`, the migrations dir, shared libs/`lib/`);
+   - one module/folder per zone by default (e.g. each `apps/api/src/modules/<x>/`, `apps/miniapp/src/components`, `apps/miniapp/src/pages`, `supabase/migrations`, shared libs/`lib/`);
    - split an oversized zone by sub-area until each is window-sized; merge tiny adjacent ones;
    - put cross-cutting concerns (auth/RLS/tenant-scoping libs) in their own zone — they deserve a focused sweep.
    Aim for zones a single sweep can cover without truncation, not the fewest possible.

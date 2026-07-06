@@ -122,8 +122,8 @@ Codex has no command like `/plugin install`, so the files need to go into `~/.co
 semi-automatically:
 
 - **Semi-automatically:** run `npx tms-pipeline`, answer "yes" to the question "Do you use Codex?" and
-  agree to the copy. The installer then copies `skills/` → `~/.codex/skills/` and `agents/` →
+  agree to the copy. The installer then copies `codex-skills/` → `~/.codex/skills/` and `agents/` →
   `~/.codex/agents/`. If you don't use Codex, the installer leaves the `~/.codex` directory alone.
-- **By hand:** `cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/`.
+- **By hand:** `cp -R codex-skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/`.
 
 `AGENTS.md` stays in the project root either way (the installer writes it), and Codex reads it directly.

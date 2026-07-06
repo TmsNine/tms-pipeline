@@ -1,10 +1,10 @@
 # Under the hood: a walkthrough of every stage
 
 > tms-pipeline is a discipline for AI agents: it takes one already-defined task from a ticket to
-> reviewed code, keeping the agent's context clean at every step. A task moves through **eight stages**.
-> They are numbered 00 to 06, but an extra stage, 02b (the gap audit), sits between 02 and 03 — which is
-> why it is eight, not seven. Of those eight, only one writes code (04, implementation); the other seven
-> each produce a text document (`.md`). Most of the pipeline is thinking on paper, not generating code.
+> reviewed code, keeping the agent's context clean at every step. A task moves through staged checkpoints:
+> the core 00-06 path, 02b gap audit, and 04b loop review. Only one stage writes code (04,
+> implementation); the others each produce a text document (`.md`). Most of the pipeline is thinking on
+> paper, not generating code.
 >
 > This page shows what actually happens at each stage: which agents work, on which models, what they take
 > in and hand back, and — above all — **where you fit in**. If the README answers "why", this page
@@ -208,7 +208,25 @@ around it.
   made it (the license requires this), and that commit is **not pushed to the server automatically**. The
   branch (a separate line of changes in git) waits while you look it over and run **CI** — that is, the
   server builds the project itself and runs all the tests after the code is pushed.
-- **When to go on.** After all the waves have passed — on to `05_test_report`.
+- **When to go on.** After all the waves have passed — on to `04b_loop_review`.
+
+---
+
+## Stage 04b — Loop review (`/tms-loop-review`)
+
+- **Purpose.** Independently review the implementation diff before the test report, fix confirmed
+  findings, and make the review evidence durable.
+- **Who works.** The lead plus fresh independent reviewer subagents. The reviewer context is kept separate
+  from the implementation context so it can inspect the diff without inheriting the implementer's
+  assumptions.
+- **Input → Output.** `02_design.md`, `03_delivery_plan.md`, `04_implementation.md`, and the resolved
+  implementation diff → `04b_loop_review.md`.
+- **What the loop does.** First it resolves what to review: uncommitted worktree changes, committed task
+  commits, or both. Then it runs a bounded review/fix/re-review loop until validation is green and the
+  latest independent reviewer either scores the result high enough or reports no actionable findings.
+- **Where you check.** You read the fixes, rejected/deferred findings, validation results, and final
+  acceptance signal. If the stage was skipped, the file must say why and where that review debt is tracked.
+- **When to go on.** After a PASS or an explicit operator skip — on to `05_test_report`.
 
 ---
 
@@ -257,13 +275,14 @@ around it.
 | 02b Audit | auditor (separate checking angle) | Opus | Sign off on the classes of the holes found |
 | 03 Plan | one lead | Opus | Check whether the agent invented anything extra |
 | 04 Implementation | mob: developer + tester + architect/security + reviewer | Opus (lead) + subordinate agents | Review the result; the final commit waits for you |
+| 04b Loop review | lead + independent reviewers | Opus / high-review model | Check the review evidence and fixes |
 | 05 Test | one lead | Opus | Make sure the user-visible part works |
 | 06 Review gate | lead + you | Opus + human | **Final review and merge decision** |
 
-> Beyond the eight stages there are separate skills for working with the codebase (a four-stage audit,
-> maintenance refactoring, a review loop). As a reminder: a skill is a command like `/tms-research` that
+> Beyond the delivery stages there are separate skills for working with the codebase (a four-stage audit
+> and maintenance refactoring). As a reminder: a skill is a command like `/tms-research` that
 > you give the agent to run one step. There is also the `/tms-new` skill — it helps you sort a new product
-> into its starter documents one time (a one-off initial setup, not one of the eight stages above). How
+> into its starter documents one time (a one-off initial setup, not one of the delivery stages above). How
 > all these skills are built is described in the skills themselves and in the
 > [methodology](00-methodology.md).
 </content>

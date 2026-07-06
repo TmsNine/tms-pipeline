@@ -1,8 +1,8 @@
 # Worked example — ACME-101
 
-A fully synthetic, anonymized walkthrough of one task through all eight stages, so you can see the format
-each stage produces before running it yourself. The "project" here is a fictional web app (`ACME`); none
-of it is real.
+A fully synthetic, anonymized walkthrough of one task through the pipeline stages, including the 04b loop
+review, so you can see the format each stage produces before running it yourself. The "project" here is a
+fictional web app (`ACME`); none of it is real.
 
 **Task:** add a "Export to CSV" button to the reports list page.
 

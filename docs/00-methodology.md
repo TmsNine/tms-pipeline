@@ -14,7 +14,8 @@ stays with you. For more on those boundaries, see "What this is / is NOT" in the
 A few terms will be useful throughout this document:
 
 - A **skill** is a command like `/tms-research` that you give the agent to run one step of the work. The
-  eight stages of the pipeline are eight such skills.
+  delivery pipeline is a sequence of stage skills, with `04b_loop_review` between implementation and the
+  test report.
 - The agent's **context window** is its working memory: everything it can see and hold at once. That
   memory is limited, and the more clutter in it, the worse the answer.
 - Your **documentation base** is where lasting knowledge about your product lives — a docs tree under
@@ -38,7 +39,7 @@ This idea has a well-known four-phase shape — **Research → Design → Planni
 implementation phase the code is worked on not by one agent but by a **mob**: a group of role agents
 working together, like pair programming but with several agents. Between pieces of work sit **gates**: the
 work does not move on until every check is green. tms-pipeline takes that foundation and hardens it into
-eight stages, adds a design audit that rates how serious each problem is, a way to avoid calling extra
+staged delivery, adds a design audit that rates how serious each problem is, a way to avoid calling extra
 checkers on simple tasks, and explicit rules so work discovered along the way is never lost.
 
 > **You review every step (human in the loop).** This is not an autopilot. At every stage you review the
@@ -47,15 +48,15 @@ checkers on simple tasks, and explicit rules so work discovered along the way is
 
 ---
 
-## 2. The eight stages
+## 2. The delivery stages
 
-There are eight stages. They are numbered 00 to 06, but an extra stage, 02b (the gap audit), sits between
-02 and 03 — which is why it is eight, not seven.
+There are eight core stages numbered 00 to 06, with 02b (the gap audit) between 02 and 03. A newer 04b
+stage, the loop review, runs after implementation and before the test report.
 
-It helps to see where the work goes up front: **most of the pipeline is thinking on paper.** Seven of the
-eight stages produce a text document (`.md`); only one — stage 04 (implementation) — writes the actual
-code. By the time the agent sits down to write code, the design has already been thought through, checked,
-and agreed in text.
+It helps to see where the work goes up front: **most of the pipeline is thinking on paper.** Every stage
+except 04 produces a text document (`.md`); only stage 04 (implementation) writes the actual code. By the
+time the agent sits down to write code, the design has already been thought through, checked, and agreed
+in text.
 
 Each stage produces exactly one durable document in the task folder (`docs/<TICKET-ID>/`, or wherever you
 set `TASK_FOLDER_PATTERN`). Stages run one at a time; by default the agent stops after each and waits for
@@ -75,6 +76,7 @@ a wave (section 3.2).
 | 02b | Gap audit | `/tms-gap-audit` | `02b_gap_audit.md` | One bounded pass in which a different agent looks at the design with fresh, skeptical eyes, hunts for holes, and sorts each one into a severity class. |
 | 03 | Delivery plan | `/tms-plan` | `03_delivery_plan.md` | Split the design into small, independently shippable waves; tag each with an escort profile. |
 | 04 | Implementation | `/tms-implement` | code + `04_implementation.md` | The mob: the lead hands out the work to a developer agent and checking agents wave by wave, not moving on until every check is green. The only stage where code appears. |
+| 04b | Loop review | `/tms-loop-review` | `04b_loop_review.md` | Resolve the task diff, run an independent review/fix loop, and record the acceptance signal before the test report. |
 | 05 | Test report | `/tms-test` | `05_test_report.md` | Validate the primary (user-visible) signal plus secondary signals (tests, types, lint, build). |
 | 06 | Review gate | `/tms-review` | `06_review_gate.md` | Check the implementation against the design contract; issue a verdict: go (ship), conditional_go (ship once conditions are met), or no-go (do not ship). |
 
@@ -197,7 +199,7 @@ process the task actually needs:
   the minimal code until the test turns green. The test is written at the level of the contract or of
   what the user sees.
 
-Feature work defaults to TDD-first; small work stays Direct. The full eight-stage machinery is for
+Feature work defaults to TDD-first; small work stays Direct. The full staged machinery is for
 substantial tasks, not for fixing a typo.
 
 ---

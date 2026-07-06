@@ -13,11 +13,13 @@
     "installer/",
     "templates/",
     "skills/",
+    "codex-skills/",
     "agents/",
     "commands/",
     "docs/",
     "README.md",
     "README.ru.md",
+    "AGENTS.md",
     "LICENSE"
   ],
   "engines": {

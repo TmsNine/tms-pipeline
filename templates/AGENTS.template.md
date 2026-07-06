@@ -78,21 +78,22 @@ This file applies to the whole repository unless a deeper `AGENTS.md` overrides 
   This is where governance, PRD/flows, architecture, and the backlog live. The tms-* skills read this
   path from here.»
 - The task pipeline folders live at: {{TASK_FOLDER_PATTERN}} «e.g. "docs/<TICKET-ID>/" — one folder per
-  task holding the 8 pipeline files.»
+  task holding the 9 pipeline files.»
 - The backlog (single source of truth for tasks) is: {{BACKLOG_LOCATION}}
 - The traceability / requirements map (if any) is: {{TRACEABILITY_LOCATION}} «delete if none.»
 - Ticket-ID format: {{TICKET_ID_FORMAT}} «e.g. "PROJ-123". Used everywhere a task is referenced.»
 
 ## Pipeline Execution
 
-The delivery pipeline has 8 stages, each producing one durable artifact in the task folder:
+The delivery pipeline has 9 durable artifacts in the task folder:
 `00_ticket` → `01_research` → `02_design` → `02b_gap_audit` → `03_delivery_plan` →
-`04_implementation` → `05_test_report` → `06_review_gate`.
+`04_implementation` → `04b_loop_review` → `05_test_report` → `06_review_gate`.
 
 - **Staged-execution rule:** if the user starts a task by ticket ID to work the pipeline, complete only
   the requested stage then stop for confirmation. Do not skip from research/design into coding, nor
-  from implementation into testing/review, without confirmation. If the user asks for end-to-end in one
-  go, proceed autonomously while updating the artifacts in order.
+  from implementation into testing/review, without confirmation. `04b_loop_review` sits between
+  implementation and the test report. If the user asks for end-to-end in one go, proceed autonomously
+  while updating the artifacts in order.
 - **Research/interview rule:** after `01_research`, decide whether a product/operational interview is
   useful before `02_design`. If research exposes meaningful product/ops/rollout/risk/UX/scope choices,
   ask the interview questions in chat (phrased per Operating Standard), before `02_design`. Do not write

@@ -121,6 +121,8 @@ test('Codex assets are copied only when Codex is selected', () => {
     copyCodexAssets: true, codexHome: path.join(withCodex, '.codex'),
   });
   assert.ok(fs.existsSync(path.join(withCodex, '.codex', 'skills')), 'skills copied');
+  assert.ok(fs.existsSync(path.join(withCodex, '.codex', 'skills', 'tms-00-ticket')), 'Codex-specific numbered skills copied');
+  assert.ok(!fs.existsSync(path.join(withCodex, '.codex', 'skills', 'tms-ticket')), 'Claude skill tree is not copied into Codex');
   assert.ok(fs.existsSync(path.join(withCodex, '.codex', 'agents')), 'agents copied');
 
   const noCodex = tmp();
@@ -139,6 +141,8 @@ test('Claude assets are copied only when Claude is selected', () => {
     copyClaudeAssets: true, claudeHome: path.join(withClaude, '.claude-home'),
   });
   assert.ok(fs.existsSync(path.join(withClaude, '.claude-home', 'skills')), 'skills copied');
+  assert.ok(fs.existsSync(path.join(withClaude, '.claude-home', 'skills', 'tms-ticket')), 'Claude skills copied');
+  assert.ok(!fs.existsSync(path.join(withClaude, '.claude-home', 'skills', 'tms-00-ticket')), 'Codex skill tree is not copied into Claude');
   assert.ok(fs.existsSync(path.join(withClaude, '.claude-home', 'agents')), 'agents copied');
   assert.ok(fs.existsSync(path.join(withClaude, '.claude-home', 'commands')), 'commands copied');
 
@@ -187,12 +191,16 @@ test('the four hardcoded version strings stay in sync', () => {
   assert.equal(read('.claude-plugin/marketplace.json').plugins[0].version, pkgV, 'marketplace.json');
 });
 
-test('plugin manifests list every skill on disk', () => {
-  const onDisk = fs.readdirSync(path.join(REPO_ROOT, 'skills'), { withFileTypes: true })
-    .filter((e) => e.isDirectory()).map((e) => e.name).sort();
-  for (const manifest of ['.claude-plugin/plugin.json', '.codex-plugin/plugin.json']) {
-    const listed = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, manifest), 'utf8'))
-      .skills.map((s) => s.replace('./skills/', '')).sort();
-    assert.deepEqual(listed, onDisk, `${manifest} skill list matches skills/ on disk`);
+test('plugin manifests list every skill on disk for their own tool tree', () => {
+  const cases = [
+    { manifest: '.claude-plugin/plugin.json', root: 'skills', prefix: './skills/' },
+    { manifest: '.codex-plugin/plugin.json', root: 'codex-skills', prefix: './codex-skills/' },
+  ];
+  for (const c of cases) {
+    const onDisk = fs.readdirSync(path.join(REPO_ROOT, c.root), { withFileTypes: true })
+      .filter((e) => e.isDirectory()).map((e) => e.name).sort();
+    const listed = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, c.manifest), 'utf8'))
+      .skills.map((s) => s.replace(c.prefix, '')).sort();
+    assert.deepEqual(listed, onDisk, `${c.manifest} skill list matches ${c.root}/ on disk`);
   }
 });

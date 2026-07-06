@@ -9,8 +9,14 @@ All notable changes to tms-pipeline are documented here. The format follows
 ### Added
 - `/tms-new` skill: a one-time guided bootstrap for a brand-new product (interview one question at a
   time, then lay down an MVP doc set + folder structure) — framed explicitly as setup, not a feature
-  brainstorm. Registered in both plugin manifests (skill count 15 → 16).
-- `docs/04-stages-deep-dive.md` (+ `.ru.md`): an under-the-hood walkthrough of all eight stages — which agents
+  brainstorm.
+- `codex-skills/`: a Codex-native skill tree with numbered stage names and Codex-specific execution
+  guidance, kept separate from the Claude Code `skills/` tree.
+- `/tms-loop-review`: stage `04b_loop_review`, the task-ID-based review/fix loop that resolves either
+  worktree or committed task diffs before `05_test_report`.
+- Public root `AGENTS.md` for this repository, adapted from battle-tested project rules but stripped of
+  private/customer-specific context for public reuse.
+- `docs/04-stages-deep-dive.md` (+ `.ru.md`): an under-the-hood walkthrough of the delivery stages — which agents
   run, on which model tiers, input/output, and where the human checkpoint is.
 - Human-in-the-loop is now an explicit through-line in the README and methodology (you review each
   stage's artifact before the agent proceeds).
@@ -20,7 +26,8 @@ All notable changes to tms-pipeline are documented here. The format follows
 - GitHub Actions CI running the tests and a relative-markdown-link check on Node 18/20/22.
 - `scripts/check-links.mjs` and an `npm run check:links` script.
 - CLI flags: `--help`, `--version`, `--dry-run`, and `--answers <file.json>` for non-interactive runs.
-- Wizard now installs Codex skills/agents into `~/.codex` (only when Codex is selected).
+- Wizard now installs Codex skills/agents into `~/.codex` from `codex-skills/` (only when Codex is
+  selected).
 - Wizard can also install the skills for **Claude Code via npx** (an alternative to `/plugin install`):
   a "Choose where" step (1 Claude / 2 Codex / 3 both / 0 skip) copies `skills/`, `agents/`, and
   `commands/` into `~/.claude` when you pick Claude. New engine option `copyClaudeAssets` (gated on

@@ -12,6 +12,8 @@ const { DEFERRED_TOKENS } = require('./questions');
 // Repo root = two levels up from installer/core/
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const TEMPLATES = path.join(REPO_ROOT, 'templates');
+const CLAUDE_SKILLS = path.join(REPO_ROOT, 'skills');
+const CODEX_SKILLS = path.join(REPO_ROOT, 'codex-skills');
 
 // Where Codex looks for globally-available skills and agents. Codex has no `/plugin install`
 // equivalent, so to make the tms-* skills available to Codex we copy them here.
@@ -102,7 +104,7 @@ function copyDirSafe(srcDir, destDir, label, { dryRun = false } = {}) {
  * @param {boolean} opts.copyDocsVault  copy the docs-vault skeletons into the project.
  * @param {boolean} opts.copyClaudeAssets copy skills/ + agents/ + commands/ into ~/.claude (npx alt to /plugin install).
  * @param {string}  opts.claudeHome     override the Claude home dir (defaults to ~/.claude; for tests).
- * @param {boolean} opts.copyCodexAssets copy skills/ + agents/ into ~/.codex (Codex has no plugin install).
+ * @param {boolean} opts.copyCodexAssets copy codex-skills/ + agents/ into ~/.codex (Codex has no plugin install).
  * @param {string}  opts.codexHome      override the Codex home dir (defaults to ~/.codex; for tests).
  * @param {boolean} opts.force          overwrite existing AGENTS.md / CLAUDE.md
  * @param {boolean} opts.dryRun         compute and report actions without writing anything
@@ -159,7 +161,7 @@ function applyConfig({
     if (!useClaude) {
       results.push({ path: claudeHome, status: 'skipped (Claude Code not selected)' });
     } else {
-      results.push(copyDirSafe(path.join(REPO_ROOT, 'skills'), path.join(claudeHome, 'skills'), 'Claude skills → ~/.claude/skills', { dryRun }));
+      results.push(copyDirSafe(CLAUDE_SKILLS, path.join(claudeHome, 'skills'), 'Claude skills → ~/.claude/skills', { dryRun }));
       results.push(copyDirSafe(path.join(REPO_ROOT, 'agents'), path.join(claudeHome, 'agents'), 'Claude agents → ~/.claude/agents', { dryRun }));
       results.push(copyDirSafe(path.join(REPO_ROOT, 'commands'), path.join(claudeHome, 'commands'), 'Claude commands → ~/.claude/commands', { dryRun }));
     }
@@ -171,7 +173,7 @@ function applyConfig({
     if (!useCodex) {
       results.push({ path: codexHome, status: 'skipped (Codex not selected)' });
     } else {
-      results.push(copyDirSafe(path.join(REPO_ROOT, 'skills'), path.join(codexHome, 'skills'), 'Codex skills → ~/.codex/skills', { dryRun }));
+      results.push(copyDirSafe(CODEX_SKILLS, path.join(codexHome, 'skills'), 'Codex skills → ~/.codex/skills', { dryRun }));
       results.push(copyDirSafe(path.join(REPO_ROOT, 'agents'), path.join(codexHome, 'agents'), 'Codex agents → ~/.codex/agents', { dryRun }));
     }
   }
@@ -179,4 +181,4 @@ function applyConfig({
   return results;
 }
 
-module.exports = { applyConfig, renderTemplate, stripGuidance, fillTokens, copyDir, REPO_ROOT, TEMPLATES, CODEX_HOME, CLAUDE_HOME };
+module.exports = { applyConfig, renderTemplate, stripGuidance, fillTokens, copyDir, REPO_ROOT, TEMPLATES, CLAUDE_SKILLS, CODEX_SKILLS, CODEX_HOME, CLAUDE_HOME };

@@ -1,7 +1,6 @@
 ---
 name: tms-research
 description: "Pipeline stage 01 — research the implementation, decide on a product interview, capture follow-ups"
-argument-hint: "<TASK-ID>"
 allowed-tools:
   - Read
   - Write
@@ -40,7 +39,7 @@ Dispatch **one sub-agent per angle, in parallel, on the cheap tier** (`model: so
 1. **Vertical path** — trace the feature's execution path end-to-end: caller/UI → route/guard → handler/service → contract → persistence/external system. Return the full chain with `file:line` at each hop.
 2. **Horizontal siblings** — adjacent surfaces that must stay consistent: sibling routes, similar components, shared services, schemas, serializers, tests, every UI state (loading/empty/error/success/disabled), and both producer + consumer of each contract.
 3. **Product & lifecycle docs** — the product docs / flows / state machines / PRD that govern this surface (locations from `AGENTS.md`). Return the governing rules and every place the code appears to contradict them.
-4. **Prior art & history** — recently closed/related backlog tickets (`grep` `<TICKET-ID>` rows by area/epic), `git log --oneline -- <area>`, and existing similar implementations worth reusing. This angle exists to kill false "never-built" verdicts and to verify ticket claims against what shipped under another name.
+4. **Prior art & history** — recently closed/related backlog tickets (`grep` `TF*-XXX` rows by area/epic), `git log --oneline -- <area>`, and existing similar implementations worth reusing. This angle exists to kill false "never-built" verdicts and to verify ticket claims against what shipped under another name.
 
 **Every search agent MUST return in exactly this shape** (state it in the brief):
 - **Findings** — each a one-line claim + evidence `file:line` (or doc path + section). No claim without a citation.
@@ -76,11 +75,3 @@ Move on only when the picture is whole, spot-verified, and internally consistent
 Any deferred work, future improvement, postponed scope, or spec gap discovered during research → consolidate into the project backlog per its rules **before the turn ends**: bundle, don't shard; check existing open bundles for the same surface/source/domain before creating a new one; the backlog row is a one-line index (details go in the ticket). Follow-ups left only in `01_research.md` are lost.
 
 Stop for confirmation before `02_design` (staged execution).
-
-## Closing — hand off in a clean context window
-
-After this stage's artifact is written and confirmed, the final message to the user MUST end with a clear hand-off telling them to start the next stage in a **fresh context window** (so the next stage gets only what it needs, not this stage's noise):
-
-> ✅ Stage 01_research complete. Start **02_design** in a clean context window:
-> - **Claude Code:** run `/clear`, then `/tms-design <TICKET-ID>`
-> - **Codex:** run `/clear` (or `/new`), then `/tms-design <TICKET-ID>`

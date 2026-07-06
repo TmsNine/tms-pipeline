@@ -1,7 +1,6 @@
 ---
 name: tms-test
 description: "Pipeline stage 05 — test report; validate primary (user-visible) + secondary signals"
-argument-hint: "<TASK-ID>"
 allowed-tools:
   - Read
   - Write
@@ -21,11 +20,3 @@ Read THIS project's `AGENTS.md` / `CLAUDE.md` for project specifics: task-folder
 3. Write `<task-folder>/05_test_report.md`: exact checks run and what they showed, `Primary signal status` (met / not met / partially validated), `Secondary signal status`. If validation cannot be run, say why and name the best available substitute signal.
 
 Stop for confirmation before `06_review_gate` (staged execution).
-
-## Closing — hand off in a clean context window
-
-After this stage's artifact is written and confirmed, the final message to the user MUST end with a clear hand-off telling them to start the next stage in a **fresh context window** (so the next stage gets only what it needs, not this stage's noise):
-
-> ✅ Stage 05_test_report complete. Start **06_review_gate** in a clean context window:
-> - **Claude Code:** run `/clear`, then `/tms-review <TICKET-ID>`
-> - **Codex:** run `/clear` (or `/new`), then `/tms-review <TICKET-ID>`

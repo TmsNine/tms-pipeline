@@ -1,7 +1,6 @@
 ---
 name: tms-design
 description: "Pipeline stage 02 — author the single design contract, minimal sufficient change, capture follow-ups"
-argument-hint: "<TASK-ID>"
 allowed-tools:
   - Read
   - Write
@@ -28,11 +27,3 @@ If the design exposes a genuinely open product/architecture tradeoff, present up
 Deferred work, future improvements, spec gaps, or architecture deltas discovered while designing → consolidate into the project backlog (or the owning product/architecture doc) per its rules **before the turn ends**: bundle, don't shard; check existing bundles first; backlog row = one-line index. Follow-ups left only in `02_design.md` are lost.
 
 Stop for confirmation before `02b_gap_audit` (staged execution).
-
-## Closing — hand off in a clean context window
-
-After this stage's artifact is written and confirmed, the final message to the user MUST end with a clear hand-off telling them to start the next stage in a **fresh context window** (so the next stage gets only what it needs, not this stage's noise):
-
-> ✅ Stage 02_design complete. Start **02b_gap_audit** in a clean context window:
-> - **Claude Code:** run `/clear`, then `/tms-gap-audit <TICKET-ID>`
-> - **Codex:** run `/clear` (or `/new`), then `/tms-gap-audit <TICKET-ID>`

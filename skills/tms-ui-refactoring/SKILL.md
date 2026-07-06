@@ -1,7 +1,6 @@
 ---
 name: tms-ui-refactoring
 description: "Deep UI refactor enforcing strict component ownership of visual styling — visual styles live inside reusable components, external code controls only layout composition. Use when the user invokes /tms-ui-refactoring or wants pages/screens/routes cleaned up so cosmetic overrides (style/className/utility classes) stop leaking from call sites."
-argument-hint: "[page/route or file path]"
 allowed-tools:
   - Read
   - Edit

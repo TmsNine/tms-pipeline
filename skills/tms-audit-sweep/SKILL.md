@@ -1,7 +1,6 @@
 ---
 name: tms-audit-sweep
 description: "Codebase-audit stage 2 — sweep ONE zone for findings using an adversarial finder↔skeptic duel (independent subagents), record only the findings that survive refutation. Run once per zone, each in a fresh context window; no arg = next pending zone from the manifest. Second of the tms-audit-* pipeline. Use when the user invokes /tms-audit-sweep."
-argument-hint: "[zone | next]"
 allowed-tools:
   - Read
   - Write

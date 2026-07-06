@@ -4,8 +4,8 @@ node_modules/
 
 # Onboarding OUTPUT — this repo is the source package for the skills, not a project
 # configured with them. These are what `npx tms-pipeline` / `/tms-init` generate into a
-# user's project; they must never be committed here.
-/AGENTS.md
+# user's project; they must never be committed here. The root AGENTS.md is maintained
+# manually as this public repo's own agent instructions.
 /.claude/
 /docs/_pipeline_template/
 /docs/docs-vault/

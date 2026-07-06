@@ -20,14 +20,14 @@ A few words you will meet below:
 
 Be clear up front about what tms-pipeline **is** and **is not**:
 
-- It **is** a process that carries one task through eight checking stages to code that is ready to merge.
+- It **is** a process that carries one task through staged checks to code that is ready to merge.
 - It **is not** a project generator: it does not invent features, build an app from nothing, or replace
   your product decisions. What to build is up to you.
 
-Most of the work happens on paper: seven of the eight stages produce a text document (`.md`) — a plan, a
-design, a report. Code appears in only one stage — 04 (implementation). For the full tour of all eight
-stages — see [the stages deep dive](04-stages-deep-dive.md); it also shows which agents and models run at
-each one.
+Most of the work happens on paper: every stage except 04 produces a text document (`.md`) — a plan, a
+design, a review loop, a report. Code appears in only one stage — 04 (implementation). For the full tour of
+the stages, see [the stages deep dive](04-stages-deep-dive.md); it also shows which agents and models run
+at each one.
 
 ## Prerequisites — read this first
 
@@ -123,16 +123,15 @@ care which tool they run in. Codex has no `/plugin install` equivalent, so its s
 looks for them — under `~/.codex`:
 
 - easiest: run `npx tms-pipeline`, choose Codex, and accept the copy prompt — the installer copies
-  `skills/` → `~/.codex/skills/` and `agents/` → `~/.codex/agents/`;
-- by hand: `cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/`.
+  `codex-skills/` → `~/.codex/skills/` and `agents/` → `~/.codex/agents/`;
+- by hand: `cp -R codex-skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/`.
 
 For the directory differences, see [configuration](02-configuration.md#codex).
 
 ## See a worked example
 
 [`templates/example-task/ACME-101/`](../templates/example-task/ACME-101/) holds a complete synthetic run
-of one task through all eight stages. The stages are numbered 00 to 06, but an extra stage, 02b (the gap
-audit), sits between 02 and 03 — which is why there are eight, not seven:
+of one task through the staged pipeline, including the 04b loop review:
 
 - `00_ticket.md` — the ticket (the task statement);
 - `01_research.md` — research;
@@ -140,6 +139,7 @@ audit), sits between 02 and 03 — which is why there are eight, not seven:
 - `02b_gap_audit.md` — gap audit;
 - `03_delivery_plan.md` — delivery plan;
 - `04_implementation.md` — implementation (the only stage where code appears);
+- `04b_loop_review.md` — independent review/fix loop;
 - `05_test_report.md` — test report;
 - `06_review_gate.md` — final review.
 

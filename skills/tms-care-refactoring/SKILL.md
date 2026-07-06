@@ -1,7 +1,6 @@
 ---
 name: tms-care-refactoring
 description: "Pragmatic maintenance refactor — make code easier to change without altering behavior. Discovery, scoped scope proposal, challenge checkpoint, characterization tests, minimal implementation, validation. A valid result is 'no changes needed'. Use when the user invokes /tms-care-refactoring or asks to make a codebase safer/clearer/more consistent without changing behavior."
-argument-hint: "[scope or file path]"
 allowed-tools:
   - Read
   - Edit

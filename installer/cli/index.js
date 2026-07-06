@@ -69,7 +69,7 @@ const STRINGS = {
     step_init2: '(test/build commands, paths, ticket format), asking you only about the gaps.',
     step_claudeInstalled: 'Claude Code: skills are in ~/.claude — restart Claude Code to load them (don\'t also /plugin install).',
     step_claudePlugin: 'Claude Code: /plugin marketplace add TmsNine/tms-pipeline → /plugin install tms-pipeline@tms-pipeline → /reload-plugins',
-    step_codex: 'Codex: re-run and accept the skill install, or: cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/',
+    step_codex: 'Codex: re-run and accept the skill install, or: cp -R codex-skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/',
     step_task: 'Then start a task:  /tms-ticket <your first ticket>',
     enterHint: 'Enter = default',
   },
@@ -86,7 +86,7 @@ const STRINGS = {
     step_init2: '(команды тестов/сборки, пути, формат тикета), спрашивая только то, что не смог вывести.',
     step_claudeInstalled: 'Claude Code: скиллы в ~/.claude — перезапустите Claude Code (не делайте ещё и /plugin install).',
     step_claudePlugin: 'Claude Code: /plugin marketplace add TmsNine/tms-pipeline → /plugin install tms-pipeline@tms-pipeline → /reload-plugins',
-    step_codex: 'Codex: перезапустите и согласитесь на установку, или: cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/',
+    step_codex: 'Codex: перезапустите и согласитесь на установку, или: cp -R codex-skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/',
     step_task: 'Затем запустите задачу:  /tms-ticket <первый тикет>',
     enterHint: 'Enter = значение по умолчанию',
   },
@@ -120,7 +120,7 @@ function printHelp() {
     }
 
   Docs:    https://github.com/TmsNine/tms-pipeline
-  Example: templates/example-task/ACME-101/ — a full task run through all 8 stages.
+  Example: templates/example-task/ACME-101/ — a full task run through the staged pipeline.
 `);
 }
 

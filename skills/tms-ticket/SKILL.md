@@ -1,7 +1,6 @@
 ---
 name: tms-ticket
 description: "Pipeline stage 00 — create the task ticket and folder, confirm preconditions, classify task mode"
-argument-hint: "<TASK-ID>"
 allowed-tools:
   - Read
   - Write
@@ -21,11 +20,3 @@ This skill carries the universal method. Read THIS project's `AGENTS.md` / `CLAU
 3. **Classify the task mode**: `Direct` (cosmetic/copy/obvious local edit, no runtime change) / `Investigation` (root cause unclear) / `TDD-first` (behavior, logic, contracts, auth, persistence, validation, routing). Default to `TDD-first` unless clearly `Direct`.
 
 Stop for confirmation before `01_research` (staged execution), unless the user asked to go end-to-end.
-
-## Closing — hand off in a clean context window
-
-After this stage's artifact is written and confirmed, the final message to the user MUST end with a clear hand-off telling them to start the next stage in a **fresh context window** (so the next stage gets only what it needs, not this stage's noise):
-
-> ✅ Stage 00_ticket complete. Start **01_research** in a clean context window:
-> - **Claude Code:** run `/clear`, then `/tms-research <TICKET-ID>`
-> - **Codex:** run `/clear` (or `/new`), then `/tms-research <TICKET-ID>`

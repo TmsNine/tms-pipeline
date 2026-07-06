@@ -1,7 +1,6 @@
 ---
 name: tms-implement
 description: "Pipeline stage 04 — mandatory multi-agent mob implementation with wave-by-wave gates, follow-up + launch capture"
-argument-hint: "<TASK-ID>"
 allowed-tools:
   - Read
   - Write
@@ -30,6 +29,10 @@ Read THIS project's `AGENTS.md` / `CLAUDE.md` for project specifics: task-folder
    - Architect (B/C): no design drift from `02_design.md` / `03_delivery_plan.md`.
    - Security (C): no new vulnerabilities (auth, input validation, OWASP, tenant scoping, secret leakage).
    - Reviewer: matches plan + acceptance criteria.
+
+   **Two token levers on every dispatch:**
+   - **① Model tiering** (pass `model` per `Agent` call): Tester → `haiku` (mechanical build/test/type/lint, no judgement — cheap tier even on Profile C); Reviewer → `haiku` for a plain acceptance checklist, session default only when acceptance is nuanced; Developer → session default, drop to `sonnet`/`haiku` on a purely mechanical wave; **Architect and Security stay top-tier — never downgrade the judgement roles.**
+   - **② Read-once, brief-many:** proving roles must not re-explore the wave's files from scratch (that reads the same code 2–5×). From the Developer's return (or one scout read) hand each proving agent a distilled brief — exact paths + line ranges, what changed, the one thing to confirm — not "go read the module." They re-read only the narrow spot they must independently verify. Prefer the `Explore` subagent over `general-purpose` for any search step.
 4. **Wave passes only if every spawned check is green.** On failure: spawn a focused fix agent with the specific findings, re-run only the failed gates. Do not advance.
 5. **Escalate, never downgrade:** if a Minimal/Standard wave surfaces a Profile-C trigger mid-wave, spawn the missing Security (and Architect) agent before passing the gate.
 6. Keep lead context lean (target ≥20% headroom); split a wave into sub-waves if it overloads. Write `04_implementation.md` as you go.
@@ -46,12 +49,4 @@ After all waves pass their gates, create the commit(s). **NEVER** add `Co-Author
 
 ## Closing summary
 
-Name which backlog bundles received which follow-ups (with IDs) and which launch-playbook document received which manual item (with migration numbers if any). Then stop for confirmation before `05_test_report` (staged execution).
-
-## Closing — hand off in a clean context window
-
-After this stage's artifact is written and confirmed, the final message to the user MUST end with a clear hand-off telling them to start the next stage in a **fresh context window** (so the next stage gets only what it needs, not this stage's noise):
-
-> ✅ Stage 04_implementation complete. Start **05_test_report** in a clean context window:
-> - **Claude Code:** run `/clear`, then `/tms-test <TICKET-ID>`
-> - **Codex:** run `/clear` (or `/new`), then `/tms-test <TICKET-ID>`
+Name which backlog bundles received which follow-ups (with IDs) and which launch-playbook document received which manual item (with migration numbers if any). Then stop for confirmation before `04b_loop_review` (staged execution). `04b` runs the independent loop code review on Profile B/C waves; the operator may consciously skip it, deferring the deep review to the next full-project audit (see `tms-loop-code-review`).

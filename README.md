@@ -32,7 +32,7 @@ a person reviews every step).
   don't delegate the work wholesale — you steer the agent and verify each step.
 - **What it isn't.** It does not generate a product, invent features for you, or act as a "magic button."
 - **One command.** `npx tms-pipeline` sets the process up on top of your **existing** repo.
-- **See it live.** [A full task run through all 8 steps →](templates/example-task/ACME-101/) — a synthetic
+- **See it live.** [A full task run through the staged pipeline →](templates/example-task/ACME-101/) — a synthetic
   task from `00_ticket.md` to `06_review_gate.md`, so you can see each step's format before you start.
 - **Under the hood.** [How each step works: which agents, on which models, and why →](docs/04-stages-deep-dive.md)
 
@@ -115,20 +115,20 @@ project's standards. Quality depends on how clean a context the agent gets at ea
 
 ---
 
-## The eight steps
+## The pipeline steps
 
 ```
-00_ticket → 01_research → 02_design → 02b_gap_audit → 03_delivery_plan → 04_implementation → 05_test_report → 06_review_gate
+00_ticket → 01_research → 02_design → 02b_gap_audit → 03_delivery_plan → 04_implementation → 04b_loop_review → 05_test_report → 06_review_gate
 ```
 
 ```mermaid
 flowchart LR
   T["00 ticket"] --> R["01 research"] --> D["02 design"] --> G["02b gap audit"]
-  G --> P["03 plan"] --> I["04 implement"] --> TE["05 test"] --> RG["06 review gate"]
+  G --> P["03 plan"] --> I["04 implement"] --> L["04b loop review"] --> TE["05 test"] --> RG["06 review gate"]
 ```
 
-There are eight steps. They are numbered 00 to 06, but an extra step, 02b (the gap audit), sits between 02
-and 03 — which is why it is eight, not seven.
+There are eight core steps from 00 to 06, plus the 04b loop review that sits after implementation and
+before the test report. Step 02b (the gap audit) sits between 02 and 03.
 
 Each step creates one document in the task folder and, by default, stops so you can confirm the move to the
 next one. At that stop you read the step's document, review it, and correct it if needed before the agent
@@ -146,6 +146,7 @@ them in full on the next pages:
 | 02b Gap audit | `/tms-gap-audit` | One bounded pass where a different agent looks at the design with fresh, skeptical eyes, hunts for holes, and rates each one by severity. |
 | 03 Plan | `/tms-plan` | Splits the work into small finished slices — "waves"; for each, it sets an escort profile (how many checking agents to call). |
 | 04 Implement | `/tms-implement` | A mob — a group of role agents: the lead hands out the work to subordinates and writes no code itself; work goes wave by wave, with checkpoints (gates) between them. |
+| 04b Loop review | `/tms-loop-review` | Independently reviews the implementation diff, fixes actionable findings, and records the review loop. |
 | 05 Test | `/tms-test` | Validates the primary (user-visible) signal + secondary ones. |
 | 06 Review gate | `/tms-review` | Checks the result against the design contract and returns a verdict: go (ship), conditional_go (ship once conditions are met), no-go (do not ship). |
 
@@ -226,7 +227,7 @@ npx tms-pipeline
 
 # 2b) Codex — reads AGENTS.md natively. Codex has no /plugin install equivalent, so its skills/agents
 #     go in ~/.codex. At the same installer step pick 2 (Codex) and it copies them. By hand:
-#       cp -R skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/
+#       cp -R codex-skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/
 #     More: docs/02-configuration.md#codex
 ```
 
@@ -271,6 +272,7 @@ Pick a task from your backlog and walk all the steps. The agent does one step an
 /tms-gap-audit ACME-123     → writes 02b_gap_audit.md (A/B/C/D gaps; Class A fixed into the design)
 /tms-plan      ACME-123     → writes 03_delivery_plan.md (waves + escort profiles)
 /tms-implement ACME-123     → writes 04_implementation.md (multi-agent mob, gated wave by wave)
+/tms-loop-review ACME-123   → writes 04b_loop_review.md (independent review/fix loop)
 /tms-test      ACME-123     → writes 05_test_report.md (primary + secondary signals)
 /tms-review    ACME-123     → writes 06_review_gate.md (go / conditional_go / no-go)
 ```
@@ -311,7 +313,8 @@ gain from clearing it.
 ## Repository layout
 
 ```
-skills/        16 tms-* skills (the /tms-new setup + the process + audit + refactoring)
+skills/        Claude Code tms-* skills (setup + process + audit + refactoring)
+codex-skills/  Codex tms-* skills with Codex-native names and instructions
 agents/        5 mob roles (developer, tester, architect, security, reviewer)
 commands/      the /tms-init onboarding command
 installer/     the core config engine + the `npx tms-pipeline` installer
