@@ -59,9 +59,10 @@ right. In their place the installer leaves the marker `<<TODO>>` (a placeholder)
 fill it in.
 
 - **`PROFILE_C_TRIGGERS`** is the list of your riskiest code: the parts where it's easy to break something
-  important, so a task that touches them needs the full set of checks, including a security agent (escort
-  profile C, the maximum set of checkers). List the items below that apply to you, plus the exact paths
-  to the modules where they live:
+  important, so a task that touches them needs Profile R/C handling and a deeper independent 04b review.
+  The placeholder name is kept for compatibility with older templates, but the meaning is risk and review
+  depth, not "always run every checker during implementation." List the items below that apply to you,
+  plus the exact paths to the modules where they live:
   - sign-in and authorization: who the user is and what they're allowed to do;
   - separation by tenant (a tenant is a separate customer in a shared system; a single-user app has
     none, so skip this one) and working out who is currently signed in;
@@ -102,19 +103,21 @@ any data leak between tenants as Class A.
 Here are the differences between Codex and Claude Code. If you use only one tool, read this section only
 when you switch to the other.
 
-- Codex reads `AGENTS.md` directly, so there's no need to pull it in separately. The mob rules from
-  `.claude/CLAUDE.md` apply in Codex by intent too, but the wording about handing out work through the
-  `Agent` tool is specific to Claude Code.
+- Codex reads `AGENTS.md` directly, so there's no need to pull it in separately.
 - The plugin manifest file (it tells the tool which skills and commands exist) lives at
   `.codex-plugin/plugin.json` for Codex and at `.claude-plugin/plugin.json` for Claude Code.
-- Skills in both tools use the same `SKILL.md` format. The skill texts themselves are written
-  independently of the tool (they describe the task, not a specific command like Read/Write), because the
-  command names differ between Claude Code and Codex.
-- Custom role agents: Claude Code reads their definitions from the `agents/` directory (and
-  `~/.claude/agents/`); Codex has its own directory for this. The mob has five roles (one file each in
-  `agents/`): the developer writes code, and the other four check it (tester, architect, security, and
-  reviewer, the same security agent that joins on escort profile C). The contents of these files don't
-  depend on the tool, so just place them where each tool expects them.
+- Skills in both tools use `SKILL.md`, but this repo keeps two trees: `skills/` for Claude Code and
+  `codex-skills/` for Codex. They carry the same methodology, but they are not byte-for-byte identical:
+  Codex uses numbered stage names and Codex-native wording.
+- The biggest workflow difference is stage 04. Claude Code may use the classic multi-agent mob
+  implementation. Codex defaults to mono/main-agent implementation with explicit role self-checks, then
+  relies on the independent `04b_loop_review` stage as the quality backstop.
+- The wave profile in Codex is a risk/review-depth signal, not simply a list of subagents to launch while
+  coding. Bounded work can stay main-agent-only in 04; risk-heavy work gets deeper 04b; maximum-risk work
+  may still use the full classic multi-agent implementation when the operator deliberately chooses it.
+- Custom role agents live in `agents/`. Claude Code reads them from `agents/` or `~/.claude/agents/`;
+  Codex can use the same role definitions where its local setup supports them. The role names remain
+  useful even when Codex runs 04 mono: they describe the self-checks the main agent must record.
 
 ### Installing the skills and agents for Codex
 

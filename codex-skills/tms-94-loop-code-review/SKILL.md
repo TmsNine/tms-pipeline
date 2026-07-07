@@ -33,7 +33,7 @@ This skill runs in two modes:
 - Standalone, invoked via /tms-loop-code-review on the active change set.
 - Pipeline stage `04b_loop_review`, immediately after `04_implementation` and before `05_test_report`, over that task's implementation diff. It sits before the independent `06_review_gate`: the loop fixes code, then `06` judges design conformance independently. The loop must not become the gate — a reviewer that fixed code cannot also be the final independent sign-off.
 
-Conditional by escort profile (primary cost lever): run the full loop only when the implementation waves were Profile B or C (real business logic, contracts, auth, RLS, payments, PII). For Profile A work (renames, copy, styling, docs, test-only, non-behavioural refactor) skip the loop; the standard `06_review_gate` suffices. Record the skip reason.
+In pipeline mode, stage `04b_loop_review` is the default next stage after every `04_implementation`. Do not skip it merely because a wave was small. Scale the depth by the current M/E/R/C risk profile instead: Profile M gets a narrow independent diff review, Profile E gets evidence-aware review, Profile R gets a stronger risk-focused loop, and Profile C can use the full classic iterative depth.
 
 Operator may consciously skip: the user may explicitly skip stage `04b` for any task (for example, no token budget now) and proceed to `05_test_report`. A skip is not a silent gap. Write `docs/<TASK-ID>/04b_loop_review.md` with status SKIPPED, the reason, and a deferral marker that this task's deep code review is owed to the next full-project audit (`tms-audit-*`). The periodic project audit sweeps all committed code, so a skipped task is in scope there by construction; the marker makes the debt explicit.
 
@@ -243,9 +243,10 @@ Do not fork or forward the current parent context.
 - If `multi_agent_v1.spawn_agent` is not visible, use tool discovery for `spawn_agent` / multi-agent tools before declaring the loop unavailable.
 - Spawn each scoring reviewer with `spawn_agent`, `agent_type: "default"`, and `fork_context: false`. **Never** set `fork_context: true` for a scoring pass — that would inherit parent context and break independence.
 - Model tier by reviewed surface:
-  - Profile B / ordinary business logic: `model: "gpt-5.5"`, `reasoning_effort: "high"`.
-  - Profile C / auth, RLS, payments, PII, migrations, queues, lifecycle/state machines, or prior reviewer disagreement: `model: "gpt-5.5"`, `reasoning_effort: "xhigh"`.
-  - Profile A should usually be skipped by the pipeline policy; if the user explicitly demands a loop anyway, `gpt-5.3-codex-spark` high is acceptable unless hidden security-sensitive changes appear.
+  - Profile M / bounded low-risk diff: `model: "gpt-5.4"` or the cheapest reviewer capable of independent judgement, `reasoning_effort: "high"`.
+  - Profile E / evidence-heavy but low-judgement support: `gpt-5.4-mini` may gather maps, but scoring review still uses an independent reviewer capable of judgement.
+  - Profile R / ordinary business logic, contracts, auth, RLS, payments, PII, migrations, queues, lifecycle/state machines, or prior reviewer disagreement: `model: "gpt-5.5"`, `reasoning_effort: "high"` or `"xhigh"` for security/privacy/payment/data-integrity risk.
+  - Profile C / maximum cost-of-error or heavy prior findings: `model: "gpt-5.5"`, `reasoning_effort: "xhigh"`.
 - Pass only a self-contained reviewer prompt (see template below). Do not include parent-thread analysis, implementation rationale, suspected issues, proposed fixes, previous reviewer output, or summaries of the main process's reasoning.
 
 Create the reviewer with a clean context and provide only a self-contained review task containing:

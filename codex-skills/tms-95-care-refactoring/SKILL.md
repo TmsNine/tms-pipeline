@@ -32,7 +32,7 @@ Understand the project before proposing changes:
 3. Inspect current diffs and avoid touching unrelated modified files.
 4. Identify the owning layer for the behavior under review.
 
-When broad code discovery is needed and subagents are available, delegate repository search to an `explorer` subagent. Use `gpt-5.3-codex-spark` high for compact evidence maps, bumping to `gpt-5.4` high only for cross-module archaeology or evidence that requires interpretation. Ask for `path:line`, symbol or route name, relevant snippet or signature, and why it matters. Verify critical findings before editing.
+When broad code discovery is needed and subagents are available, delegate repository search to an `explorer` subagent. Use `gpt-5.4-mini` high for compact evidence maps, bumping to `gpt-5.4` high only for cross-module archaeology or evidence that requires interpretation. Ask for `path:line`, symbol or route name, relevant snippet or signature, and why it matters. Verify critical findings before editing.
 
 ## Refactor Candidates
 

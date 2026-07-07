@@ -1,7 +1,7 @@
 {
   "name": "tms-pipeline",
   "version": "0.1.0",
-  "description": "An opinionated AI-agent delivery pipeline for Claude Code and Codex: staged skills + multi-agent mob implementation, severity-rated gap audit, cost-tiered escort profiles, and follow-up/launch capture.",
+  "description": "An opinionated AI-agent delivery pipeline for Claude Code and Codex: staged skills, severity-rated gap audit, risk-profiled implementation, mandatory 04b diff review, and follow-up/launch capture.",
   "bin": {
     "tms-pipeline": "installer/cli/index.js"
   },

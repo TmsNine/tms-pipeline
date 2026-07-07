@@ -8,4 +8,4 @@ fictional web app (`ACME`); none of it is real.
 
 Read the files in order (`00_ticket.md` → `06_review_gate.md`). Notice how each stage's output becomes
 the input for the next, how the gap audit classifies findings by severity, and how the implementation is
-split into escort-profiled waves.
+split into risk-profiled waves with independent 04b review depth.

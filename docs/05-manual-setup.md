@@ -49,18 +49,17 @@ Baseline context so the research and design stages don't start blind.
 > two-sentence `PROJECT_ONE_LINER`: what the product is, who it's for, and the core stack. Facts
 > only."
 
-## 3. `PROFILE_C_TRIGGERS` — when a task needs the strictest checkers
+## 3. `PROFILE_C_TRIGGERS` — when a task needs risk handling and deeper review
 
-Every piece of work (a wave) gets an escort profile: how many checking agents to bring in. A is the
-minimum (developer, tester, reviewer), B adds the architect, C adds security. So Profile C runs the
-strictest checks, with both a security agent and an architect agent on the wave. Here you define what
-makes a task high-risk **in your domain**, so the pipeline only pulls in Profile C when it's actually
-needed.
+Every piece of work (a wave) gets a risk profile. In Codex, ordinary stage 04 work usually stays with the
+main agent and explicit self-check roles; the independent quality backstop is stage 04b, where a fresh
+reviewer checks the actual diff. Here you define what makes a task high-risk **in your domain**, so the
+pipeline knows when to use Profile R/C and make 04b more demanding.
 
-> **Prompt:** "Based on this codebase, list the concrete conditions that should turn on the
-> high-risk 'Profile C' escort — for example: touches authentication/authorization, payments, users'
-> private data (PII), separation between tenants, migrations, public API contracts, money math. Give
-> me a short list tailored to what this project actually has, not generic advice."
+> **Prompt:** "Based on this codebase, list the concrete conditions that should turn on Profile R/C risk
+> handling and deeper 04b review — for example: touches authentication/authorization, payments, users'
+> private data (PII), separation between tenants, migrations, public API contracts, money math. Give me a
+> short list tailored to what this project actually has, not generic advice."
 
 ## 4. `PERSISTENCE_AND_TENANCY` — data model and isolation rules
 

@@ -10,7 +10,7 @@
 # tms-pipeline
 
 **tms-pipeline is a discipline for AI agents: it takes one already-defined task from a ticket to reviewed code, keeping the agent's context clean at every step.**
-The work is split into eight steps. You run each step as a separate command to the agent (such a command is
+The work is split into nine durable artifacts. You run each stage as a separate command to the agent (such a command is
 called a *skill* here — for example, `/tms-research`). The call at every step stays yours: the agent does
 one step, you check it, and only then do you move on (this is the "human in the loop" principle —
 a person reviews every step).
@@ -21,12 +21,12 @@ a person reviews every step).
 
 ## In short
 
-- **What it is.** An eight-step process that takes **one already-defined** task from a ticket to reviewed
+- **What it is.** A nine-artifact process that takes **one already-defined** task from a ticket to reviewed
   code. The core idea: at each step the agent holds in mind only what it needs right now.
   (The agent has a limited working memory — its *context window*; the more clutter in it, the worse the answer.)
-- **The real work is thinking on paper.** Seven of the eight steps produce a text document (`.md`). Code
-  appears in only one step — 04 (implementation). You work everything out in text first, and write code
-  only after that.
+- **The real work is thinking on paper.** All nine durable artifacts are text documents (`.md`). The main
+  code change is written alongside 04 (implementation), and 04b may make review fixes against the actual
+  diff. You work everything out in text first, and write code only after that.
 - **You stay at the center the whole time (a person reviews every step).** This is not "set a task and walk
   away": after each step the agent stops, you check what it did, and only then launch the next one. You
   don't delegate the work wholesale — you steer the agent and verify each step.
@@ -62,7 +62,7 @@ starting structure, but filling them with real product decisions is your job.
 
 tms-pipeline expects you to already have a documentation base and at least one task in the backlog — it
 takes defined tasks to code, it doesn't invent the product. If you're starting from nothing, do this
-**one-time initial setup** to reach the starting line. This is a one-off step, not one of the eight steps
+**one-time initial setup** to reach the starting line. This is a one-off setup activity, not one of the nine stages
 of the process and not an automated brainstorm: you define the product; the agent only asks questions and
 sorts your answers into documents.
 
@@ -127,8 +127,8 @@ flowchart LR
   G --> P["03 plan"] --> I["04 implement"] --> L["04b loop review"] --> TE["05 test"] --> RG["06 review gate"]
 ```
 
-There are eight core steps from 00 to 06, plus the 04b loop review that sits after implementation and
-before the test report. Step 02b (the gap audit) sits between 02 and 03.
+There are nine durable artifacts in the normal chain. Step 02b (the gap audit) sits between design and
+planning; step 04b (the loop review) sits between implementation and the test report.
 
 Each step creates one document in the task folder and, by default, stops so you can confirm the move to the
 next one. At that stop you read the step's document, review it, and correct it if needed before the agent
@@ -144,9 +144,9 @@ them in full on the next pages:
 | 01 Research | `/tms-research` | Narrows the codebase to facts ("how it is now") through a bounded parallel search. |
 | 02 Design | `/tms-design` | Writes the design contract — a description of the change agreed up front, which the code is later checked against; the change is the smallest one that does the job, reviewed before any code. |
 | 02b Gap audit | `/tms-gap-audit` | One bounded pass where a different agent looks at the design with fresh, skeptical eyes, hunts for holes, and rates each one by severity. |
-| 03 Plan | `/tms-plan` | Splits the work into small finished slices — "waves"; for each, it sets an escort profile (how many checking agents to call). |
-| 04 Implement | `/tms-implement` | A mob — a group of role agents: the lead hands out the work to subordinates and writes no code itself; work goes wave by wave, with checkpoints (gates) between them. |
-| 04b Loop review | `/tms-loop-review` | Independently reviews the implementation diff, fixes actionable findings, and records the review loop. |
+| 03 Plan | `/tms-plan` | Splits the work into small finished slices — "waves"; for each, it sets a risk profile and the depth of review needed after implementation. |
+| 04 Implement | `/tms-implement` | Writes the code wave by wave. In Codex this defaults to one main agent with explicit role self-checks; maximum-risk work can still use the full classic mob. |
+| 04b Loop review | `/tms-loop-review` | Independently reviews the implementation diff, fixes actionable findings, and records the review loop before the test report. |
 | 05 Test | `/tms-test` | Validates the primary (user-visible) signal + secondary ones. |
 | 06 Review gate | `/tms-review` | Checks the result against the design contract and returns a verdict: go (ship), conditional_go (ship once conditions are met), no-go (do not ship). |
 
@@ -166,13 +166,14 @@ iterative **review loop** (`/tms-loop-code-review`).
    wrote it. Each hole found goes in one class: **A** (blocker), **B** (recoverable failure), **C** (small
    polish), or **D** (theoretical). There are explicit rules against inflating the list and criteria for
    when to stop. A wrong design gets fixed in text, not in code.
-2. **Escort profiles — a way to avoid calling extra checkers.** An escort profile is how many checking
-   agents to bring onto a wave. Each implementation wave gets a profile: **A** (the minimum: developer,
-   tester, reviewer), **B** (+ architect), or **C** (+ security). Full escort is reserved for the parts of
-   the code where it's easy to break something important: sign-in and authorization, keeping one customer's
-   data separate from another's, payments, users' private data. Which parts are risky is something *you*
-   define. Heavy review only kicks in where it pays off; "run everything to be safe" is explicitly
-   discouraged.
+2. **Risk profiles that decide where quality is bought.** Each implementation wave gets a risk profile:
+   **M** for small bounded work, **E** when cheap evidence gathering is useful, **R** when the touched
+   surface needs strong independent review, and **C** when full classic multi-agent implementation is
+   deliberately allowed. In Codex, ordinary stage 04 work stays with the main agent and explicit
+   self-check roles; the expensive independence moves to 04b, where a fresh reviewer checks the actual
+   diff. Risky waves carry a concrete handoff seed from 03 into 04 and 04b: invariants, required proof,
+   owner layer, failure signal, and the adjacent surfaces to search. Heavy review only kicks in where it
+   pays off; "run everything to be safe" is explicitly discouraged.
 3. **Nothing found gets lost.** Deferred items found along the way (follow-ups), documentation drift, and
    manual pre-launch actions are captured by a hard rule. Each finding has a table for where to send it: to
    the backlog (the list of future tasks), to the source document, to the launch playbook (the list of
@@ -249,9 +250,9 @@ and can copy the blank templates for the process documents and the documentation
 Open the generated `AGENTS.md` and:
 
 - resolve the `<<TODO: ...>>` markers (these are intentional placeholders in the settings file that you
-  fill in for your project) — first of all **`PROFILE_C_TRIGGERS`** (which parts of the code need the full
-  set of checking agents including security) and your access model: does the system have separate customers
-  whose data must not be mixed (tenants), and how it determines who is in front of the system;
+  fill in for your project) — first of all **`PROFILE_C_TRIGGERS`** (which parts of the code should trigger
+  Profile R/C risk handling and deeper 04b review) and your access model: does the system have separate
+  customers whose data must not be mixed (tenants), and how it determines who is in front of the system;
 - if you copied the blank documentation-base templates, **rename the `PROJECT_NAME` folder** to your
   project's name and put the path in `DOC_BASE_PATH`.
 
@@ -270,8 +271,8 @@ Pick a task from your backlog and walk all the steps. The agent does one step an
 /tms-research  ACME-123     → writes 01_research.md   (the facts; may interview you)
 /tms-design    ACME-123     → writes 02_design.md     (the design contract — you review it)
 /tms-gap-audit ACME-123     → writes 02b_gap_audit.md (A/B/C/D gaps; Class A fixed into the design)
-/tms-plan      ACME-123     → writes 03_delivery_plan.md (waves + escort profiles)
-/tms-implement ACME-123     → writes 04_implementation.md (multi-agent mob, gated wave by wave)
+/tms-plan      ACME-123     → writes 03_delivery_plan.md (waves + risk profiles)
+/tms-implement ACME-123     → writes 04_implementation.md (implementation log + self-checks)
 /tms-loop-review ACME-123   → writes 04b_loop_review.md (independent review/fix loop)
 /tms-test      ACME-123     → writes 05_test_report.md (primary + secondary signals)
 /tms-review    ACME-123     → writes 06_review_gate.md (go / conditional_go / no-go)
@@ -337,12 +338,12 @@ This project synthesizes and builds on the work of others:
   ideas by [di.sukharev](https://www.instagram.com/di.sukharev/) and turned into skills here.
 - **The `AGENTS.md` canon** — parts draw on the `AGENTS.md` format and conventions by **Boris Cherny**.
 
-Everything else (the extension to eight steps, the gap audit with severity ratings, the escort profiles,
-the capture of follow-ups and manual pre-launch actions, and the packaging itself) is original to this
-project.
+Everything else (the extension to nine durable artifacts, the gap audit with severity ratings, the risk
+profiles and 04b review loop, the capture of follow-ups and manual pre-launch actions, and the packaging
+itself) is original to this project.
 
 ## License
 
 [Apache-2.0](LICENSE). Free to use and adapt. Treat the process as a living thing — change the step names,
-the conditions for full escort, and the prompts to fit your team's culture; what matters is the principle:
-control the context at every step.
+the risk triggers, and the prompts to fit your team's culture; what matters is the principle: control the
+context at every step and put independent review where it checks the real result.

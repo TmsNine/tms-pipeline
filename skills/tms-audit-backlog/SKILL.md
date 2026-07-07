@@ -14,7 +14,7 @@ allowed-tools:
 
 Commit the approved triage into durable work items. This is the only audit stage that edits the backlog and launch playbook — so it runs only AFTER the user has reviewed and approved `01_triage.md`.
 
-Read THIS project's `AGENTS.md` / `CLAUDE.md` for: the backlog location and row format (the row is an index, not storage — one line, `See docs/TF2-XXX/`), the Future Work Capture rules, bundle-don't-shard / consolidation and ID-numbering rules, the ticket-folder convention, the Pre-Launch Manual Action Capture rules and launch-playbook paths, and the output language.
+Read THIS project's `AGENTS.md` / `CLAUDE.md` for: the backlog location and row format (the row is an index, not storage — one line, `See docs/TASK-XXX/`), the Future Work Capture rules, bundle-don't-shard / consolidation and ID-numbering rules, the ticket-folder convention, the Pre-Launch Manual Action Capture rules and launch-playbook paths, and the output language.
 
 ## Method
 
@@ -24,14 +24,14 @@ Read THIS project's `AGENTS.md` / `CLAUDE.md` for: the backlog location and row 
 
 3. **Fold before creating.** For each surviving bundle: check existing open backlog bundles for the same epic/surface/driver. If it fits, **edit** that bundle's ticket and row (extend composition, update driver, add `Absorbs:`/`(formerly …)` tags per project rules) rather than adding a new row.
 
-4. **Create new bundled tickets** for the rest, per project rules: create `docs/TF2-XXX/00_ticket.md` with the full Composition (sub-items, `file:line`, driver refs, and `Source: docs/AUDIT-<date>/`); add exactly **one** backlog row per bundle (≤ one line, short phrase + priority + `See docs/TF2-XXX/`); keep the table in strict numeric ID order. Bundle ID = lowest free / lowest among merged, per the project's numbering rule.
+4. **Create new bundled tickets** for the rest, per project rules: create `docs/TASK-XXX/00_ticket.md` with the full Composition (sub-items, `file:line`, driver refs, and `Source: docs/AUDIT-<date>/`); add exactly **one** backlog row per bundle (≤ one line, short phrase + priority + `See docs/TASK-XXX/`); keep the table in strict numeric ID order. Bundle ID = lowest free / lowest among merged, per the project's numbering rule.
 
 5. **Blockers get their own priority.** Real Class A/B findings are registered at their true priority (Must/Should), not buried inside a Could-priority polish bundle.
 
 6. **Route manual actions.** Any pre-launch manual action surfaced by the audit (apply migration, run a smoke, set an env key, external config) → the launch playbook document matching its stage, written so a non-programmer can execute it (exact steps, commands/SQL, pass criterion). Do not leave it only in `02_backlog.md`.
 
-7. **Write `02_backlog.md`:** a record of exactly what landed where — every TF2-XXX created or updated with its path, which findings map to which ticket, what was dropped and why, and which launch-playbook docs received which manual items.
+7. **Write `02_backlog.md`:** a record of exactly what landed where — every TASK-XXX created or updated with its path, which findings map to which ticket, what was dropped and why, and which launch-playbook docs received which manual items.
 
 ## Closing
 
-Report (project's output language) per the project's conversation contract: list the TF2-XXX IDs + paths created/updated, the launch-playbook items added (with migration numbers if any), what was dropped, and any remaining blockers needing attention. Never end with "recorded in 02_backlog.md" as the only signal — name the concrete backlog IDs and paths.
+Report (project's output language) per the project's conversation contract: list the TASK-XXX IDs + paths created/updated, the launch-playbook items added (with migration numbers if any), what was dropped, and any remaining blockers needing attention. Never end with "recorded in 02_backlog.md" as the only signal — name the concrete backlog IDs and paths.

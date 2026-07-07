@@ -33,7 +33,7 @@ Use when the implementation surface is bounded, the design/plan is clear, tests 
 
 ### Profile E — Evidence-assisted
 
-Use when the main uncertainty is finding code evidence. Spark/explorer may be used for read-only evidence lookup (`path:line`, symbol, snippet, why it matters), but product decisions, architecture calls, security/privacy/payment judgement, and final artifacts remain with the main agent.
+Use when the main uncertainty is finding code evidence. `gpt-5.4-mini` explorer may be used for read-only evidence lookup (`path:line`, symbol, snippet, why it matters), but product decisions, architecture calls, security/privacy/payment judgement, and final artifacts remain with the main agent.
 
 ### Profile R — Risk review required
 
@@ -68,6 +68,33 @@ Risk prompts:
 
 Passing a risk-bearing wave requires every invariant to be mapped to evidence. An invariant can be satisfied by a test, a static migration smoke, a real launch check, or a documented no-code rationale, but it cannot disappear between `03_delivery_plan` and `04_implementation`.
 
+## Risk-Surface Sweep Before 04b Handoff
+
+For Profile R/C waves, do a bounded local sweep before closing stage 04. This is still mono/main-agent work, not independent review. The goal is to reduce obvious misses before 04b, not to certify the implementation.
+
+Use the risk-handoff seed from `03_delivery_plan.md` plus the actual diff to search for:
+
+- sibling routes/resolvers/services that make the same permission, tenant, money, lifecycle, or identity decision outside the newly changed owner layer;
+- direct risky reads such as `payload.schoolRole`, `schoolId`, `studentId`, `teacherId`, `user_id`, `status`, `onboarding_status`, payment/payroll identifiers, free-text notification content, or migration constraint names, depending on the task;
+- test harnesses/mocks/fixtures that still model the old contract and would make neighboring suites fail or hide regressions;
+- producer/consumer or read/write paths not named in the plan but directly coupled to the changed contract.
+
+Record what was searched and what was found in `04_implementation.md`. If a search finds a relevant adjacent surface, either align it in 04 or explicitly list it for 04b stress-test. Do not turn this sweep into open-ended auditing; stop when the planned risky symbols and directly coupled surfaces have been checked.
+
+## Pre-04b Adversarial Self-Review
+
+Before closing stage 04 for any Profile R/C task, run one bounded adversarial self-review using the same invariant table from `03_delivery_plan.md`. This is still mono/main-agent work and does not replace independent 04b.
+
+For each invariant, check and record:
+
+- the required proof/test was actually added or the no-code proof is explicit;
+- the owner layer owns the decision, with no duplicate fallback in a child/leaf layer;
+- the failure signal would be observable in tests, SQL smoke, launch checks, logs, or user-visible behavior;
+- directly coupled routes/resolvers/services/tests/mocks from the risk search map were inspected;
+- any defect found in this pass was fixed before stage 04 closed.
+
+If this self-review finds a systemic miss across multiple invariants, do a short 04 hardening pass before writing the final 04 handoff. Do not punt obvious author-found defects to 04b just because 04b exists.
+
 ## Per-Wave Loop
 
 1. Read `03_delivery_plan.md`, take the next unfinished wave in listed order, confirm scope and acceptance, and record the wave profile. Verify the previous wave is recorded as passed before doing any work on this one.
@@ -79,15 +106,31 @@ Passing a risk-bearing wave requires every invariant to be mapped to evidence. A
 7. Run the **Security / Privacy / Money self-check** when relevant: tenant scope, `schoolId`/JWT provenance, role guard, trust-boundary validation, PII/audit, payment/payroll semantics, external effects.
 8. Run the **Reviewer self-check**: compare the wave diff to `02_design.md` and `03_delivery_plan.md`; look for missed invariants, races, unsafe fallbacks, and missing tests.
 9. If any self-check fails, fix at the owning layer and rerun the relevant checks. Do not advance on red.
-10. Write/update `docs/<TASK-ID>/04_implementation.md` as the stage proceeds: wave profile, risk ledger, self-check roles applied, files changed, validation, failures/fixes, follow-ups, launch items, and what 04b must independently stress-test.
+10. Write/update `docs/<TASK-ID>/04_implementation.md` as the stage proceeds: wave profile, risk ledger, risk-surface sweep notes, self-check roles applied, files changed, validation, failures/fixes, follow-ups, launch items, and what 04b must independently stress-test.
 
 ## Context And Token Discipline
 
 - Use the previous artifact as the task source of truth; avoid re-reading the whole project unless the wave needs it.
-- Default to mono/main-agent implementation. Use Spark/explorer only for bounded evidence lookup.
+- Default to mono/main-agent implementation. Use `gpt-5.4-mini` explorer only for bounded evidence lookup.
 - Break oversized waves into smaller sub-waves instead of doing vague large edits.
 - Do not pre-scout or pre-implement later waves while the active wave is still open.
 - Keep `04_implementation.md` dense: outcome by wave, evidence, checks, follow-ups, launch actions, residual risk. Do not re-tell the whole project.
+
+## 04b Handoff (mandatory before closing stage 04)
+
+Before the final stage-04 summary, add a compact `04b handoff` section to `docs/<TASK-ID>/04_implementation.md`. This handoff is an **author's risk map**, not proof of completeness. It exists to make 04b faster and sharper, while explicitly remaining untrusted until 04b audits it.
+
+Include:
+
+- resolved task-owned file list and, if committed, the commit/range that 04b should inspect;
+- wave/profile summary and the dangerous invariants by wave;
+- exact searches/risk-surface sweeps performed in 04 and their results;
+- pre-04b adversarial self-review result: invariant table status, defects found/fixed, and any invariant intentionally left for 04b to stress-test;
+- adjacent routes/resolvers/services/tests/mocks checked or intentionally not checked, with the reason;
+- validation commands and remaining manual/launch checks;
+- reviewer stress-test prompts: what 04b must try to break, including any surfaces the author thinks are probably safe.
+
+Do not claim the handoff is exhaustive. Phrase it as: "author risk map for 04b to verify and complete". If stage 04 skipped a plausible adjacent surface because it seemed out of scope, name it so 04b can decide independently whether to pull it in.
 
 ## Closing (mandatory — BOTH, before the turn ends)
 
@@ -97,8 +140,13 @@ Passing a risk-bearing wave requires every invariant to be mapped to evidence. A
 
 ## Commit rules
 
-After all waves pass, create the commit(s) only when the user or project flow explicitly asks for commits. NEVER add `Co-Authored-By:` or any AI/agent attribution. Do not push automatically — the branch waits for human review and CI.
+After all waves pass and stage-04 validation is green, create a task-scoped implementation commit by default, unless the user or project instructions explicitly say not to commit. This keeps later `04b` work reviewable from a clean window and avoids accumulating an unrelated dirty tree.
+
+- Stage only files that clearly belong to `<TASK-ID>`: implementation changes, tests, migrations, `docs/<TASK-ID>/04_implementation.md`, and any required backlog / launch-playbook updates from this stage.
+- Do not stage unrelated user changes. If the worktree contains mixed unrelated edits and the task-owned subset is ambiguous, leave the commit unmade, report the exact dirty paths, and ask for a decision.
+- Use a concise task-prefixed message, for example `<TASK-ID>: implement <short scope>`.
+- NEVER add `Co-Authored-By:` or any AI/agent attribution. Do not push automatically — the branch waits for human review and CI.
 
 ## Closing summary
 
-Name the stage-04 mode, profile per wave, self-check roles applied, which backlog bundles received follow-ups (with IDs), and which launch-playbook document received which manual item (with migration numbers if any). Stop for confirmation before `04b_loop_review`. `04b` is the independent loop code-review-and-fix stage and is the default next step for every task.
+Name the stage-04 mode, profile per wave, self-check roles applied, the 04b handoff status, which backlog bundles received follow-ups (with IDs), and which launch-playbook document received which manual item (with migration numbers if any). Stop for confirmation before `04b_loop_review`. `04b` is the independent loop code-review-and-fix stage and is the default next step for every task.

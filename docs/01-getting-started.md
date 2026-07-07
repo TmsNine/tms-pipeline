@@ -24,10 +24,16 @@ Be clear up front about what tms-pipeline **is** and **is not**:
 - It **is not** a project generator: it does not invent features, build an app from nothing, or replace
   your product decisions. What to build is up to you.
 
-Most of the work happens on paper: every stage except 04 produces a text document (`.md`) — a plan, a
-design, a review loop, a report. Code appears in only one stage — 04 (implementation). For the full tour of
+Most of the work happens on paper: every stage produces a text document (`.md`) — a plan, a design, a
+review loop, a report. The main code change is written in 04 (implementation), and 04b may make review
+fixes against the actual diff. For the full tour of
 the stages, see [the stages deep dive](04-stages-deep-dive.md); it also shows which agents and models run
 at each one.
+
+One detail matters for Codex: implementation and independent review are separate stages. Stage 04 keeps
+the coding context focused; stage 04b then reviews the actual diff with a fresh independent reviewer. That
+is why the pipeline can be cheaper than a full coding mob on ordinary work without dropping the quality
+gate.
 
 ## Prerequisites — read this first
 

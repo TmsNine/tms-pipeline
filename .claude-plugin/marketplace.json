@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "tms-pipeline",
-  "description": "The tms-pipeline delivery methodology — staged skills + multi-agent implementation for an existing project.",
+  "description": "The tms-pipeline delivery methodology — staged skills, risk-profiled implementation, and independent 04b review for an existing project.",
   "owner": {
     "name": "TmsNine"
   },
@@ -9,7 +9,7 @@
     {
       "name": "tms-pipeline",
       "source": ".",
-      "description": "8-stage AI-agent delivery pipeline with multi-agent mob implementation, severity-rated gap audit, cost-tiered escort profiles, and follow-up/launch capture.",
+      "description": "9-artifact AI-agent delivery pipeline with severity-rated gap audit, risk-profiled implementation, independent 04b review, and follow-up/launch capture.",
       "version": "0.1.0",
       "category": "development"
     }

@@ -7,7 +7,7 @@ description: "Run pipeline stage 06 (review gate) for a backlog task in a projec
 
 Read THIS project's `AGENTS.md` (Codex reads it natively) for specifics: task-folder path, launch-playbook location, output language.
 
-> **Model tier.** The review gate is judgement, not mechanical reporting. Use `gpt-5.4` high for straightforward closure. Use `gpt-5.5` high/xhigh when the task touched auth/RLS/payments/PII, migrations, lifecycle/state machines, queues, or when `05_test_report.md` contains partial validation / `conditional_go` conditions. Spark (`gpt-5.3-codex-spark`) is acceptable only for locating evidence or summarizing known checks, not for the final verdict.
+> **Model tier.** The review gate is judgement, not mechanical reporting. Use `gpt-5.4` high for straightforward closure. Use `gpt-5.5` high/xhigh when the task touched auth/RLS/payments/PII, migrations, lifecycle/state machines, queues, or when `05_test_report.md` contains partial validation / `conditional_go` conditions. `gpt-5.4-mini` is acceptable only for locating evidence or summarizing known checks, not for the final verdict.
 
 ## Method
 
@@ -19,5 +19,8 @@ Read THIS project's `AGENTS.md` (Codex reads it natively) for specifics: task-fo
 6. **Close the task in the external delivery docs (mandatory on `go` / `conditional_go`).** The review gate is not finished when `06_review_gate.md` is written — the task must also be marked done where the project tracks status, otherwise the backlog still shows it open. Read `AGENTS.md` for which external doc owns task status (backlog / roadmap / sprint plan) and where it lives.
 
    **The backlog row is an index, not a storage location — keep it to ONE short line (≤200 chars).** Set status to `Done` / `Done (conditional_go)` (or leave open on `no-go`) with: the date, the verdict, a ≤1-line plain-language phrase of *what shipped* (actually delivered scope, not the original ticket wording if it was narrowed), and a `См. docs/<TASK-ID>/` pointer. **Do NOT paste the review summary, sub-item lists, migration numbers, condition lists, file paths, or follow-up chains into the backlog row.** That full detail already lives in `06_review_gate.md` (verdict + conditions) and in the launch playbook (manual steps). On `no-go`, leave the task open and note in one line what blocks closure.
+7. **Create the closing task commit by default on `go` / `conditional_go`.** After `06_review_gate.md`, external delivery docs, launch-playbook entries, and any remaining task artifacts are updated, create a task-scoped final commit unless the user or project instructions explicitly say not to commit. This commit should capture the closure state that otherwise leaves the tree dirty: `05_test_report.md`, `06_review_gate.md`, external backlog/status edits, launch-playbook updates, and any earlier task-owned files still uncommitted.
 
-The final summary must name which external doc was updated and to what status.
+   Stage only files that clearly belong to `<TASK-ID>`. Never stage unrelated user changes, generated noise, or neighboring task edits. If the worktree contains mixed unrelated changes and the task-owned subset is ambiguous, do not guess: leave the commit unmade, report the exact dirty paths, and ask for a decision. Use a concise task-prefixed message, for example `<TASK-ID>: close pipeline task`. Never push automatically and never add `Co-Authored-By:` or any AI/agent attribution.
+
+The final summary must name which external doc was updated and to what status, whether the closing commit was created, and if not, which paths prevented an unambiguous task-scoped commit.

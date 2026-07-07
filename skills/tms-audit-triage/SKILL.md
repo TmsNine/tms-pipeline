@@ -31,7 +31,7 @@ Read THIS project's `AGENTS.md` / `CLAUDE.md` for: the severity rubric (Class A/
 
 6. **Propose bundles (bundle-don't-shard).** Group findings into bundled tickets per the project's grouping criteria (same surface / review domain / driver / escort profile; 2–7 sub-items each). Before inventing a bundle, check existing open backlog bundles to fold into. Do NOT bundle across priorities or unrelated epics. Treat real **Class A/B blockers separately** — they are urgent standalone items, not buried inside a Could-priority polish bundle. Each proposed bundle gets a draft ID, driver line, sub-item composition (with `file:line`), and suggested priority (Class C polish → default `Could`).
 
-7. **Write `01_triage.md`:** counts by Class; the deduped full finding list (each with its confidence and class rationale, ranked by confidence within class); Class A/B blockers highlighted at the top with their empirical evidence; the proposed bundles (draft ID, driver, composition, priority, "fold into existing TF2-XXX?" notes); completeness notes and any recommended re-sweeps.
+7. **Write `01_triage.md`:** counts by Class; the deduped full finding list (each with its confidence and class rationale, ranked by confidence within class); Class A/B blockers highlighted at the top with their empirical evidence; the proposed bundles (draft ID, driver, composition, priority, "fold into existing TASK-XXX?" notes); completeness notes and any recommended re-sweeps.
 
 ## Closing
 

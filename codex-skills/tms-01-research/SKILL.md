@@ -18,7 +18,7 @@ A user invocation of this skill/stage is explicit authorization to use the subag
 ## Model Tiers
 
 - Lead synthesis: use the current strong model. Use high/xhigh when the task touches auth, RLS, payments, PII, lifecycle state machines, migrations, queues, or cross-module contracts.
-- Evidence gatherers: `agent_type: "explorer"`, `model: "gpt-5.3-codex-spark"`, `reasoning_effort: "high"` by default. If Spark is unavailable, use the cheapest available Codex 5.3-class explorer. Bump one gatherer to `gpt-5.4` / `"high"` only for complex code archaeology, heavily coupled surfaces, or evidence that must be interpreted rather than merely located.
+- Evidence gatherers: `agent_type: "explorer"`, `model: "gpt-5.4-mini"`, `reasoning_effort: "high"` by default. If `gpt-5.4-mini` is unavailable, use the cheapest available small Codex explorer. Bump one gatherer to `gpt-5.4` / `"high"` only for complex code archaeology, heavily coupled surfaces, or evidence that must be interpreted rather than merely located.
 - Never use cheap gatherer conclusions directly as design truth. Reopen and verify the cited evidence in the lead session.
 
 ## Phase 1 — Frame The Search

@@ -61,8 +61,9 @@ Use `rg --files` for discovery instead of assuming this list is exhaustive.
 - `.codex-plugin/plugin.json` must list every directory under `codex-skills/`.
 - If adding, renaming, or removing a skill, update manifests and run the tests that enforce manifest/disk
   parity.
-- Validate skill frontmatter after edits. The current validator rejects unsupported keys such as
-  `argument-hint`; keep descriptions free of schema-breaking syntax.
+- Validate skill frontmatter after edits. The current package validator rejects unsupported keys such as
+  `argument-hint`; keep descriptions and frontmatter free of schema-breaking syntax even if a local
+  runtime copy contains extra UI metadata.
 - Keep `agents/openai.yaml` metadata in each skill directory when present.
 
 ## Pipeline Methodology Canon

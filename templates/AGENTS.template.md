@@ -229,11 +229,30 @@ typecheck, lint, build, logs). No ceremony for simple local tasks.
   visual overrides; for different treatment prefer existing semantic props → the smallest reusable
   semantic prop → a local feature-level wrapper. Don't bypass established primitives with ad hoc surfaces.
 
-## Multi-Agent Implementation Triggers (Profile C — full escort)
+## Stage 04 / 04b Risk Profiles
 
-Stage `04_implementation` runs as a multi-agent "mob" (see CLAUDE.md). The heaviest escort
-(Architect + Security review) is reserved for waves that hit any of these triggers. **List YOUR
-project's Profile-C triggers here** — keep generic patterns, add your stack's specifics:
+Stage `04_implementation` may run differently by tool. Codex defaults to mono/main-agent implementation:
+the main agent implements wave by wave and records explicit self-checks. Claude Code may use the classic
+multi-agent mob described in `CLAUDE.md`. In both tools, `04b_loop_review` is the independent review/fix
+stage after implementation.
+
+Profiles describe the wave's risk and the depth of 04b, not just how many subagents to launch while
+coding:
+
+- **Profile M — Mono / bounded:** clear design and plan, limited surface, available tests, small blast
+  radius. Stage 04 can stay main-agent-only; 04b still runs a narrow independent diff review.
+- **Profile E — Evidence-assisted:** broad code evidence is needed. Use cheap explorer/search help for
+  path/line evidence, but keep product, architecture, security/privacy/payment judgement with the main
+  agent.
+- **Profile R — Risk review required:** touches money, roles, tenant scope, PII/privacy, migrations,
+  lifecycle/state machines, queues/jobs, outbox/messaging, external integrations, or meaningful
+  user-facing business logic. Stage 04 may still be mono/main-agent; 04b must stress-test the risky
+  surface.
+- **Profile C — Full classic allowed:** maximum cost of error. Full multi-agent implementation inside 04
+  is allowed when the operator deliberately chooses the heavier mode.
+
+Choose the profile by the most dangerous touched risk, not by the average size of the diff. **List YOUR
+project's Profile-R/C triggers here** — keep generic patterns, add your stack's specifics:
 {{PROFILE_C_TRIGGERS}}
 «e.g.:
   - touches authentication, authorization, session/token issuance, or role/capability logic
@@ -244,6 +263,10 @@ project's Profile-C triggers here** — keep generic patterns, add your stack's 
   - touches PII handling or cross-tenant data access paths
   - adds/modifies code under <your auth/identity/tenant-scoping module paths>
 »
+
+In `04_implementation.md`, record the stage-04 mode, profile per wave, self-check roles applied
+(Developer / Tester / Architect / Security-Privacy-Money / Reviewer), validation, follow-ups, launch
+actions, and what `04b_loop_review` must independently stress-test.
 
 ## Database / Schema Migration Policy
 
@@ -317,9 +340,11 @@ can be transferred manually — never leave the action only in chat.
 - Keep ad-hoc investigation artifacts out of the repo root (use `./.scratch/` or a tool-owned dir).
 - Don't weaken auth, permissions, validation, encryption, rate limits, or auditability to ease a task.
 - Don't manually edit generated files unless the repo requires it — update the source and run the generator.
-- Don't stage, commit, amend, rebase, reset, stash, push, or delete files unless explicitly asked.
-  **Never** add `Co-Authored-By:` or any AI/agent attribution to commit messages (legal/licensing
-  constraint); after all work passes, create the commit(s) but don't push automatically.
+- Don't stage, commit, amend, rebase, reset, stash, push, or delete files unless the active pipeline
+  skill explicitly requires a task-scoped commit at a successful stage boundary, or the user explicitly
+  asks. **Never** add `Co-Authored-By:` or any AI/agent attribution to commit messages
+  (legal/licensing constraint); create only commits whose file set clearly belongs to the task, and don't
+  push automatically.
 
 ## Decision Rules
 

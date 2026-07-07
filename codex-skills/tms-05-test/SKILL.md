@@ -7,7 +7,7 @@ description: "Run pipeline stage 05 (test report) for a backlog task in a projec
 
 Read THIS project's `AGENTS.md` (Codex reads it natively) for specifics: task-folder path, test runner/scripts, output language. In Codex shell sessions do not assume JS tooling is on PATH (prefer `PATH="/opt/homebrew/bin:$HOME/.bun/bin:$PATH"`).
 
-> **Model tier.** This is mostly mechanical validation and report writing. Use `gpt-5.3-codex-spark` medium when the task is to run known checks and summarize pass/fail. Use `gpt-5.4`/`gpt-5.5` high only when failures require root-cause analysis across auth/RLS/payments/PII/contracts or when the primary user-visible signal is ambiguous.
+> **Model tier.** This is mostly mechanical validation and report writing. Use `gpt-5.4-mini` medium when the task is to run known checks and summarize pass/fail. Use `gpt-5.4`/`gpt-5.5` high only when failures require root-cause analysis across auth/RLS/payments/PII/contracts or when the primary user-visible signal is ambiguous.
 
 ## Method
 

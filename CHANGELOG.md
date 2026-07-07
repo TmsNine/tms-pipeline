@@ -40,6 +40,13 @@ All notable changes to tms-pipeline are documented here. The format follows
   doc-base hints) that `/tms-init` intentionally leaves as `<<TODO>>`.
 
 ### Changed
+- Public docs and templates now explain the Codex-oriented stage `04`/`04b` split: focused
+  main-agent implementation with explicit self-check roles, followed by mandatory independent review over
+  the actual diff. Delivery plans now teach risk profiles `M/E/R/C` instead of the old A/B/C escort model.
+- Codex pipeline skills now use `gpt-5.4-mini` for cheap evidence/model-tier slots, add structured
+  risk-handoff seeds from `03` to `04`, require pre-04b risk-surface sweeps and author handoffs in `04`,
+  make `04b` audit that handoff before trusting it, and create task-scoped commits by default at
+  successful `04`, `04b`, and `06` boundaries.
 - **Onboarding split into a thin installer + agent-driven setup** (matching the Superpowers/GSD
   convention). `npx tms-pipeline` is now a thin installer: pick language (EN/RU) and tool(s), install the
   skills, drop a starter `AGENTS.md` — it no longer interrogates you about test commands, ticket format,

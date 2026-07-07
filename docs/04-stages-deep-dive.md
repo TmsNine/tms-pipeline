@@ -33,23 +33,20 @@ around it.
   once: your request, the files it has read, its earlier answers. The window is limited in size, and the
   more clutter it holds, the worse the agent reasons — it loses the early instructions and starts to get
   confused. So the pipeline tries to give each agent only what that step needs, and nothing more.
-- **The main agent (the lead).** The agent in your chat — the one you talk to. It runs on a strong model
-  (Opus). It makes the decisions, pulls the result together, and judges what is correct. During
-  implementation the lead **writes no code itself**: it hands the work out to subordinate agents and makes
-  sure they pass every check.
-- **Role agents (subagents).** The subordinate agents the lead starts for one specific, narrow task. Often
-  on cheaper models (Sonnet, sometimes Haiku) — this saves money and tokens where the full power isn't
-  needed. Each of these agents has its own clean context window: it sees only its own brief, not the whole
-  conversation.
-- **Escort profile (A / B / C).** How many checking agents to call for one piece of work. A is the minimum
-  (developer + tester + reviewer), B adds the architect, C adds security. By default the pipeline picks
-  the cheapest profile the rules allow, so a simple task doesn't drag in extra checkers.
+- **The main agent (the lead).** The agent in your chat — the one you talk to. It makes the decisions,
+  pulls the result together, and judges what is correct. In Codex, stage 04 usually stays with this main
+  agent; the discipline comes from explicit self-check roles plus the independent 04b review.
+- **Role agents (subagents).** Separate agents the lead can start for narrow evidence gathering,
+  challenge, or independent review. Each has its own clean context window: it sees only its brief, not the
+  whole conversation.
+- **Risk profile (M / E / R / C).** How risky a wave is and therefore how much help or independent review
+  it needs. M is bounded mono work, E allows evidence lookup, R requires focused independent review, and C
+  allows the full classic multi-agent implementation for maximum-risk work.
 - **You check every step (human in the loop).** The core idea: after each stage the agent stops, and you
   review the result before going on. You don't hand off the work wholesale — you steer the agent.
 
-> The specific model names (Opus / Sonnet / Haiku) are the current defaults in the skills; they can be
-> changed. The point of the split is money: the strong (and expensive) model is needed where you have to
-> reason and check, while gathering facts can go to the cheap models.
+> The specific model names in the skills can change. The stable principle is the split of work: cheap
+> models can gather evidence; high-judgement work and independent review use stronger reasoning.
 
 ---
 
@@ -81,8 +78,8 @@ around it.
 - **Purpose.** Narrow a huge codebase down to the facts that matter for this particular task. Don't spend
   tokens on "the whole project", and don't carry information noise into the later stages.
 - **Who works.** This is where a team of agents first appears:
-  - **the lead (Opus)** decides what to look for and where;
-  - **4 subordinate collector agents on a cheap model (Sonnet; Haiku for simple file searches)** work in
+  - **the lead on a strong reasoning model** decides what to look for and where;
+  - **4 subordinate collector agents on a cheap evidence model** work in
     parallel. Each one covers a different corner of the code, so that together they cover the task from
     every side without overlapping:
     - one follows the **execution path top to bottom** — how a request travels through the system from
@@ -169,10 +166,11 @@ around it.
   better than one huge task whole.
 - **Who works.** The lead.
 - **Input → Output.** `02_design.md` (with the blockers folded in) → an `03_delivery_plan.md` file: a list
-  of waves, and **each wave has its own escort profile A/B/C** (how many checkers to call for that wave)
-  and the reason for the choice.
+  of waves, and **each wave has its own risk profile M/E/R/C** with the reason for the choice.
 - **What the agent does.** Divides the work into finished units, notes for each which files will be
-  created or changed, and how risky it is — which is where the escort profile comes from.
+  created or changed, what the main agent must self-check in 04, and how deep 04b must be. For Profile
+  R/C waves it also writes a structured 04 risk-handoff seed: invariant, required proof/test, owner layer,
+  failure signal, and the adjacent search map 04 must check before handoff.
 - **Where you check.** You check whether the agent invented anything extra: is the plan split logically,
   did entities, files, or layers appear that weren't in the approved design? (Agents sometimes confidently
   write in things the task doesn't actually contain — that's what to catch.)
@@ -182,51 +180,56 @@ around it.
 
 ## Stage 04 — Implementation (`/tms-implement`)
 
-- **Purpose.** Write the code per the approved plan, checking it with several agents at every step.
-- **Who works.** A group of agents — this is the **mob**: several role agents that work on the code
-  together (like pair programming, but with several agents). **The lead writes no code itself** — it hands
-  the work out to subordinate agents and holds the gates (checkpoints the work cannot pass until every
-  check has passed). For each wave it starts agents in the roles it needs:
-  - **the developer** — writes the code;
-  - **the tester** — builds the project, runs the tests, the type check, and the linter (the automatic
-    code-style check);
-  - **the architect** (on profiles B and C) — makes sure the code hasn't drifted from the design;
-  - **security** (on profile C) — looks for vulnerabilities, data leaks, injections;
-  - **the reviewer** — checks the result against the plan and the acceptance criteria.
-
-  How many roles are actually active depends on the wave's escort profile: A runs three (developer, tester,
-  reviewer), B adds the architect, C adds security on top.
+- **Purpose.** Write the code per the approved plan while keeping the implementation context small enough
+  to reason about.
+- **Who works.** In Codex, the default is the main agent. It implements the wave itself, then explicitly
+  runs the role checks that used to be spread across a coding mob: developer, tester, architect, security /
+  privacy / money, and reviewer. A full classic mob inside 04 is still allowed for Profile C work, but it
+  is an intentional heavy mode, not the default.
 - **Input → Output.** `03_delivery_plan.md` → code in the repository + an `04_implementation.md` file (a
   log of the waves).
-- **What the team does (one wave).** The lead sets the profile → starts the developer → **in parallel**
-  starts the checkers for the profile → the wave passes only if **all** the checks pass. If something
-  fails — a separate agent fixes exactly those findings, and only the failed checks are re-run, not
-  everything. You move to the next wave only after all of the current one's checks have passed. Because the
-  work is split this way, no agent's context window overflows: it holds only its own wave in memory.
+- **What the main agent does (one wave).** It reads the plan for the current wave only → implements the
+  smallest coherent change → runs targeted tests/checks → verifies architecture, contracts, security,
+  privacy, money, and launch implications when relevant → records what passed and what 04b must
+  stress-test. On Profile R/C waves it also performs a bounded risk-surface sweep, checks the invariant
+  table adversarially, and writes a compact 04b handoff as an author risk map for the independent reviewer
+  to verify. The next wave starts only after the current wave is locally coherent.
 - **Where you check.** The lead shows you the result wave by wave. At the end the code **does not move on
-  by itself**. A commit is created (a recorded batch of changes in git), but without any mention that an AI
-  made it (the license requires this), and that commit is **not pushed to the server automatically**. The
-  branch (a separate line of changes in git) waits while you look it over and run **CI** — that is, the
-  server builds the project itself and runs all the tests after the code is pushed.
+  by itself**. A task-scoped commit is created by default when validation is green and the changed files
+  clearly belong to the task, but without any mention that an AI made it (the license requires this), and
+  that commit is **not pushed to the server automatically**. If the worktree mixes unrelated edits and the
+  task boundary is unclear, the agent stops and reports the exact paths instead of staging a guess.
 - **When to go on.** After all the waves have passed — on to `04b_loop_review`.
+
+Why stage 04 works this way in Codex. Multi-agent implementation is expensive because every role has to
+read enough context to act. On bounded work, it is usually cheaper and clearer for one main agent to keep
+the implementation thread intact, then let 04b inspect the finished diff independently. The quality check
+is not removed; it is moved to the stage where there is concrete code to review.
 
 ---
 
 ## Stage 04b — Loop review (`/tms-loop-review`)
 
 - **Purpose.** Independently review the implementation diff before the test report, fix confirmed
-  findings, and make the review evidence durable.
+  findings, and make the review evidence durable. This is the quality backstop for the cheaper default 04.
 - **Who works.** The lead plus fresh independent reviewer subagents. The reviewer context is kept separate
   from the implementation context so it can inspect the diff without inheriting the implementer's
   assumptions.
 - **Input → Output.** `02_design.md`, `03_delivery_plan.md`, `04_implementation.md`, and the resolved
   implementation diff → `04b_loop_review.md`.
 - **What the loop does.** First it resolves what to review: uncommitted worktree changes, committed task
-  commits, or both. Then it runs a bounded review/fix/re-review loop until validation is green and the
-  latest independent reviewer either scores the result high enough or reports no actionable findings.
+  commits, or both. Then it audits the 04b handoff instead of trusting it: the reviewer checks whether the
+  claimed files, invariants, tests, mocks, and adjacent decision paths actually cover the diff. It then
+  runs a bounded review/fix/re-review loop until validation is green and the latest independent reviewer
+  either scores the result high enough or reports no actionable findings. The depth scales by risk: small
+  tasks get a narrow diff review, ordinary features get fix + re-review, and risk-heavy work gets the
+  classic iterative loop with broad first-reviewer coverage. If the loop exposes repeated blocker-like
+  defects, it can switch to a repeat-04 remediation cycle instead of applying endless tiny patches.
 - **Where you check.** You read the fixes, rejected/deferred findings, validation results, and final
   acceptance signal. If the stage was skipped, the file must say why and where that review debt is tracked.
-- **When to go on.** After a PASS or an explicit operator skip — on to `05_test_report`.
+- **When to go on.** After a PASS or an explicit operator skip — on to `05_test_report`. If 04b changed
+  task-owned files and the final review accepted the result with validation green, it creates its own
+  task-scoped review-fix commit by default.
 
 ---
 
@@ -253,10 +256,14 @@ around it.
 - **Input → Output.** The implementation + `02_design.md` → an `06_review_gate.md` file with a verdict:
   **go** (safe to merge) / **conditional_go** (you can, but do the listed conditions first) / **no-go**
   (you can't).
-- **What the agent does.** Matches what was done against the design and the acceptance criteria, and
-  writes out the discrepancies and conditions. If `conditional_go` is the verdict, the conditions go into
-  the launch playbook (a separate list of mandatory manual steps to do before shipping) — so they don't
-  get lost.
+- **What the agent does.** Matches what was done against the design and the acceptance criteria, checks
+  the 04b status and validation evidence, and writes out the discrepancies and conditions. If 04b already
+  accepted the implementation, 06 does not repeat a full 04b-style code review; it verifies design
+  conformance and launch readiness. If `conditional_go` is the verdict, the conditions go into the launch
+  playbook (a separate list of mandatory manual steps to do before shipping) — so they don't get lost.
+- **Closing commit.** On `go` or `conditional_go`, the agent also records the final task state in a
+  task-scoped closing commit by default: test report, review gate, external backlog/status row, and launch
+  playbook entries. It skips the commit if unrelated dirty files make the task boundary ambiguous.
 - **Where you check.** This is the last human gate: you read the verdict, run your own CI/CD, and make the
   final decision on merging.
 - **When to go on.** The task is closed. Everything found along the way but not done now is already sorted
@@ -269,15 +276,15 @@ around it.
 
 | Stage | Agent team | Models | Your control point |
 |---|---|---|---|
-| 00 Ticket | one lead | Opus | Confirm the task and scope |
-| 01 Research | lead + 4 collectors | Opus + Sonnet/Haiku | Answer the interview (if asked) |
-| 02 Design | one lead | Opus | **Review and correct the design** |
-| 02b Audit | auditor (separate checking angle) | Opus | Sign off on the classes of the holes found |
-| 03 Plan | one lead | Opus | Check whether the agent invented anything extra |
-| 04 Implementation | mob: developer + tester + architect/security + reviewer | Opus (lead) + subordinate agents | Review the result; the final commit waits for you |
-| 04b Loop review | lead + independent reviewers | Opus / high-review model | Check the review evidence and fixes |
-| 05 Test | one lead | Opus | Make sure the user-visible part works |
-| 06 Review gate | lead + you | Opus + human | **Final review and merge decision** |
+| 00 Ticket | one lead | strong enough for scope judgement | Confirm the task and scope |
+| 01 Research | lead + 4 collectors | strong lead + cheap evidence collectors (`gpt-5.4-mini` in current Codex skills) | Answer the interview (if asked) |
+| 02 Design | one lead | strong design/reasoning model | **Review and correct the design** |
+| 02b Audit | auditor (separate checking angle) | strong risk-judgement model | Sign off on the classes of the holes found |
+| 03 Plan | one lead | cheaper planning tier unless risk ambiguity remains | Check whether the agent invented anything extra |
+| 04 Implementation | Codex default: one main agent with role self-checks; full mob only for deliberate maximum-risk work | strong implementation model + focused evidence helpers when useful | Review the implementation log and what 04b must stress-test |
+| 04b Loop review | lead + independent reviewers | strong independent review model; deeper tier for security/privacy/payment/data risks | Check the review evidence and fixes |
+| 05 Test | one lead | cheap validation/reporting tier unless failures need diagnosis | Make sure the user-visible part works |
+| 06 Review gate | lead + you | strong judgement model + human | **Final review and merge decision** |
 
 > Beyond the delivery stages there are separate skills for working with the codebase (a four-stage audit
 > and maintenance refactoring). As a reminder: a skill is a command like `/tms-research` that
