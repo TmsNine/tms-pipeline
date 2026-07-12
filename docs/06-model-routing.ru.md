@@ -15,7 +15,7 @@ OpenAI описывает текущую линейку так: **GPT-5.6 Sol** 
 подтверждает выбранную роль или модель, скилл не должен делать вид, что выбор применён: записывайте
 `actual model = runtime-selected/unknown`.
 
-## Рекомендуемый маршрут
+## Рекомендуемый маршрут Codex
 
 | Стадия / работа | По умолчанию | Когда усиливать | Зачем |
 |---|---|---|---|
@@ -32,6 +32,24 @@ OpenAI описывает текущую линейку так: **GPT-5.6 Sol** 
 | 05 Test report | Luna medium | Terra high для непонятных падений; Sol high для R/C-диагностики | Известные команды и компактный pass/fail дешевы; root-cause judgement — нет. |
 | 06 Review gate | Terra high для обычного `go` | Sol high/xhigh для `conditional_go`, `no-go`, R/C, неполной валидации или ручных гейтов | Финальный вердикт нельзя отдавать дешёвому суммаризатору. |
 | Полный codebase audit | Terra для карт зон; Terra/Sol для finder/skeptic по риску | Ultra — только для осознанной не-scoring синтеза действительно независимых зон | Один огромный контекст хуже нескольких независимых зон с проверяемыми находками. |
+
+## Маршрут ролей Claude Code
+
+Claude aliases — tool-native defaults, а не утверждение, что они напрямую равны Sol/Terra/Luna:
+
+| Stage-04 роль / профиль | Default | Усиление и evidence |
+|---|---|---|
+| M | Lead реализует inline | Coding subagent не нужен; записать модель lead, если runtime её показывает |
+| E | Lead inline; один bounded Architect/evidence pass + Tester | Architect `opus`, Tester `sonnet`; judgement при необходимости усиливать per invocation |
+| R | Developer `sonnet`, Tester `sonnet`, Reviewer `sonnet`; нужные Architect/Security `opus` | Записать preferred, configured и actual model; неизвестное остаётся `runtime-selected/unknown` |
+| C | Полный набор ролей | Architect/Security оставить на `opus`; Reviewer обязательно запустить с strongest-available per-invocation override |
+
+Agent-файлы также задают tool allowlists и permission declarations. Claude Code может переопределить модель
+через environment или per-invocation selection; документированный приоритет модели: environment →
+invocation → agent frontmatter → main conversation. `permissionMode` применяется у скопированных
+project/user agents, но игнорируется у plugin-shipped agents, поэтому plugin-run должен записывать
+parent/runtime permission evidence. Нельзя утверждать, что настройка применена, только потому что значение
+записано во frontmatter. Источник: [официальная документация Claude Code о subagents](https://code.claude.com/docs/en/sub-agents).
 
 ## Жёсткие ограничения
 

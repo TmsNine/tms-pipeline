@@ -15,7 +15,7 @@ Model names and availability may vary by Codex host and account. If the runtime 
 or model was selected, the skill must not claim enforcement; record
 `actual model = runtime-selected/unknown`.
 
-## Recommended route
+## Codex recommended route
 
 | Stage / work | Default | Escalate when | Why |
 |---|---|---|---|
@@ -32,6 +32,23 @@ or model was selected, the skill must not claim enforcement; record
 | 05 Test report | Luna medium | Terra high for ambiguous failures; Sol high for R/C diagnosis | Known commands and compact pass/fail reporting are cheap; root-cause judgement is not. |
 | 06 Review gate | Terra high for straightforward `go` | Sol high/xhigh for `conditional_go`, `no-go`, R/C, partial validation, or manual gates | A cheap summarizer must not issue the final verdict. |
 | Full codebase audit | Terra for zone maps; Terra/Sol finder and skeptic by risk | Ultra only for deliberate non-scoring synthesis of genuinely independent zones | Several independent zones beat one undifferentiated giant context. |
+
+## Claude Code role route
+
+Claude aliases are tool-native defaults, not direct quality equivalents of Sol/Terra/Luna:
+
+| Stage-04 role / profile | Default | Escalation and evidence |
+|---|---|---|
+| M | Lead implements inline | No coding subagent; record lead model when exposed |
+| E | Lead inline; one bounded Architect/evidence pass + Tester | Architect `opus`, Tester `sonnet`; strengthen judgement per invocation when needed |
+| R | Developer `sonnet`, Tester `sonnet`, Reviewer `sonnet`; triggered Architect/Security `opus` | Record preferred, configured and actual model; unknown stays `runtime-selected/unknown` |
+| C | Full role set | Keep Architect/Security on `opus`; Reviewer must use a per-invocation strongest-available model override |
+
+Agent files also set tool allowlists and permission declarations. Claude Code may override model choice
+through environment or a per-invocation selection; its documented model precedence is environment →
+invocation → agent frontmatter → main conversation. `permissionMode` applies to copied project/user agents
+but is ignored for plugin-shipped agents, so plugin runs must record parent/runtime permission evidence.
+Never claim enforcement merely because frontmatter contains a value. Source: [official Claude Code subagent documentation](https://code.claude.com/docs/en/sub-agents).
 
 ## Hard constraints
 

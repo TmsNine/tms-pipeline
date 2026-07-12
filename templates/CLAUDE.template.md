@@ -12,30 +12,30 @@
 
 Everything shared lives in `AGENTS.md`. This file contains only Claude Code-specific execution rules.
 
-## Stage 04 — Mandatory Multi-Agent Execution
+## Stage 04 — Profile-Aware Execution
 
-When running `04_implementation`, use Claude Code's `Agent` tool as a coding mob. The lead orchestrates and does not write production code directly. Skip this only when the user explicitly requests inline implementation or no subagents.
+Use the approved M/E/R/C profile to choose execution depth. Bounded work stays with the lead; risk-heavy work receives real proving-role separation. Do not run a full mob merely for ceremony, and do not silently downgrade R/C to save context.
 
-This rule applies to stage 04 only. Stage 01 may use the bounded read-only evidence fan-out defined by `tms-research`; design and final judgement remain with the lead.
+Stage 01 may still use the bounded read-only evidence fan-out defined by `tms-research`; design and final judgement remain with the lead.
 
 ### Roles
 
-1. **Developer** — implements one approved wave at the owning layer.
+1. **Developer** — implements one approved R/C wave at the owning layer.
 2. **Tester/Builder** — runs the smallest meaningful validation and reports exact results.
 3. **Architect** — checks design/plan fit, owner layer, contracts, and coupled paths.
 4. **Security / Privacy / Money** — checks auth, tenant scope, trust boundaries, PII, external effects, and money semantics.
 5. **Reviewer** — checks the wave against acceptance criteria without editing.
 
-The lead writes self-contained briefs, dispatches Agents, verifies findings, and decides each gate.
+The lead remains the single integration owner, writes self-contained briefs, verifies findings, and decides each local gate.
 
 ### M/E/R/C profiles
 
 Use the profile already approved in `03_delivery_plan.md`; do not replace it with an agent-count label.
 
-- **M — Mechanical/bounded:** Developer + Tester + Reviewer; narrow 04b.
-- **E — Evidence-heavy:** add bounded Explorer/Architect evidence where completeness matters; standard 04b.
-- **R — Risk review required:** add Architect and Security/Privacy/Money; risk-focused 04b.
-- **C — Classic maximum-risk:** full role set, strongest judgement models, broad author risk sweep, and broad first-pass plus fresh final 04b reviewer.
+- **M — Mechanical/bounded:** lead implements inline and performs local Developer/Tester/Reviewer self-checks; no coding mob; narrow 04b.
+- **E — Evidence-heavy:** lead implements inline; one bounded read-only Architect/evidence pass and Tester isolate search/log volume; standard 04b.
+- **R — Risk review required:** Developer + Tester plus every triggered Architect/Security role and a stage-04 Reviewer; risk-focused 04b.
+- **C — Classic maximum-risk:** full role set, strongest judgement models, a mandatory strongest-available per-invocation Reviewer override, broad author risk sweep, and broad first-pass plus fresh final 04b reviewer.
 
 Choose by the most dangerous touched risk, not average diff size. Escalate when the implementation exposes a stronger trigger; record an append-only X-ID instead of silently relabelling history.
 
@@ -43,12 +43,12 @@ Choose by the most dangerous touched risk, not average diff size. Escalate when 
 
 For every wave:
 
-1. Give Developer the approved scope, files, acceptance, profile, R-IDs, and required validation.
-2. Dispatch the profile's proving roles in parallel where independent.
-3. Use cheap tiers only for mechanical command execution and evidence maps. Keep architecture, security, privacy, money, lifecycle, and final review on the strongest appropriate tier. Never use Fast mode.
-4. Give proving roles a compact path/line/change brief; they independently reread only the evidence they must verify.
-5. Verify and batch genuine findings at the owning layer.
-6. Pass only after acceptance, applicable proving roles, and changed-surface validation are green.
+1. Resolve profile, scope, acceptance, R-IDs and validation before editing.
+2. Keep the lead as integration owner; use the lead as code owner for M/E and Developer as code owner for R/C.
+3. Give every subagent a compact brief: task/wave, profile, `base_sha`, exact paths/diff, current fingerprint, R-IDs, neutral acceptance/invariants, allowed actions, evidence required, and not-in-scope items.
+4. Use Sonnet defaults for Developer/Tester/Reviewer and Opus for Architect/Security; Profile C must override Reviewer per invocation to the strongest available judgement model. Record preferred/configured/actual model and permission evidence; use `runtime-selected/unknown` when runtime does not expose the result. `permissionMode` frontmatter applies to copied project/user agents but is ignored for plugin-shipped agents, which must record parent/runtime permission evidence instead.
+5. Verify and batch genuine findings at the owning layer; rerun affected validation after fixes.
+6. Pass only after acceptance, applicable proving roles, and changed-surface validation are green. Never use Fast mode.
 
 Record R/X/V ledgers, task-owned paths, implementation/package fingerprints, and the 04b author handoff in `04_implementation.md`.
 

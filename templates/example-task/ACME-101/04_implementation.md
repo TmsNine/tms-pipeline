@@ -40,6 +40,7 @@ docs/ACME-101/06_review_gate.md
 
 ### Wave 1 — CSV helper + shared query/columns
 - Profile: R — shared query + CSV injection surface
+- Integration owner: lead; code owner: Developer agent.
 - Status: pass
 - What was done: extracted `buildReportsQuery`; added `toCsv()` with RFC-4180 escaping and formula-injection
   neutralization (cells leading with `= + - @` prefixed with `'`).
@@ -52,8 +53,17 @@ docs/ACME-101/06_review_gate.md
 - Validation: CSV unit tests pass, including escaping and formula-injection cases.
 - 04b must stress-test: CSV escaping/injection handling and list/export query parity.
 
+| Role | Self-check / dispatched | Preferred model | Configured/default | Actual | Permission source/evidence |
+|---|---|---|---|---|---|
+| Developer | dispatched | Sonnet | `sonnet` | `runtime-selected/unknown` | copied project agent: `acceptEdits`; parent override unknown |
+| Tester | dispatched | Sonnet | `sonnet` | `runtime-selected/unknown` | copied project agent: `dontAsk`; parent override unknown |
+| Architect | dispatched | Opus | `opus` | `runtime-selected/unknown` | copied project agent: `plan`; parent override unknown |
+| Security / Privacy / Money | dispatched | Opus | `opus` | `runtime-selected/unknown` | copied project agent: `plan`; parent override unknown |
+| Reviewer | dispatched | Sonnet | `sonnet` | `runtime-selected/unknown` | copied project agent: `plan`; parent override unknown |
+
 ### Wave 2 — Export endpoint
 - Profile: R — data-access path that must enforce org scoping
+- Integration owner: lead; code owner: Developer agent.
 - Status: pass
 - What was done: `GET /api/reports/export.csv` reusing the shared query with `req.user.orgId`; 10k cap +
   truncation note row.
@@ -68,6 +78,7 @@ docs/ACME-101/06_review_gate.md
 
 ### Wave 3 — Frontend button + toast
 - Profile: M — UI wiring, no new data flow
+- Integration owner and code owner: lead inline; no coding mob.
 - Status: pass
 - What changed: `web/src/pages/ReportsList.tsx`.
 - Self-check roles covered: Developer / Tester / Reviewer

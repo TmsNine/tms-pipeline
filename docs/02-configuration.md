@@ -26,8 +26,8 @@ The agents don't hard-code your project's specifics — they read them on the fl
 
 - **`AGENTS.md`** (in the repo root) is your project's main settings file: where tasks live, what language
   to write output in, your rules. This file is shared by both AI tools (Claude Code and Codex).
-- **`.claude/CLAUDE.md`** holds rules specific to one of the tools, Claude Code. In particular, the rules
-  for the mob: a group of role agents that write code together (during the implementation stage). This
+- **`.claude/CLAUDE.md`** holds rules specific to one of the tools, Claude Code. In particular, it maps
+  M/E/R/C profiles to inline work, bounded evidence/test help, or real proving-role mobs. This
   file pulls in `AGENTS.md` with the line `@./AGENTS.md`, so everything you wrote in `AGENTS.md` applies
   here too.
 
@@ -109,15 +109,18 @@ when you switch to the other.
 - Skills in both tools use `SKILL.md`, but this repo keeps two trees: `skills/` for Claude Code and
   `codex-skills/` for Codex. They carry the same methodology, but they are not byte-for-byte identical:
   Codex uses numbered stage names and Codex-native wording.
-- The biggest workflow difference is stage 04. Claude Code may use the classic multi-agent mob
-  implementation. Codex defaults to mono/main-agent implementation with explicit role self-checks, then
-  relies on the independent `04b_loop_review` stage as the quality backstop.
+- The biggest workflow difference is stage 04. Claude Code is profile-aware: M stays inline, E uses
+  bounded evidence/test help, and R/C uses real proving-role separation. Codex defaults to mono/main-agent
+  implementation with explicit role self-checks. Both rely on independent `04b_loop_review` for acceptance.
 - The wave profile in Codex is a risk/review-depth signal, not simply a list of subagents to launch while
   coding. Bounded work can stay main-agent-only in 04; risk-heavy work gets deeper 04b; maximum-risk work
   may still use the full classic multi-agent implementation when the operator deliberately chooses it.
 - Tool-native role agents use separate trees: Claude Markdown roles live in `agents/`; Codex TOML roles
   live in `codex-agents/`. The shared `tms_*` role intent stays aligned even though the file formats and
-  model controls differ.
+  model controls differ. Claude agent files declare `model` and `permissionMode`, while stage 04 records
+  actual/runtime-selected evidence instead of assuming those declarations were enforced. `permissionMode`
+  works when the files are copied into project/user agent scope, but Claude Code ignores it for agents
+  loaded directly from a plugin; plugin runs therefore record parent/runtime permission evidence.
 
 ### Installing the skills and agents for Codex
 

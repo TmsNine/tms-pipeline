@@ -45,6 +45,11 @@ All notable changes to tms-pipeline are documented here. The format follows
   design gap audit, and R/C risk review.
 
 ### Changed
+- Claude stage 04 is now profile-aware instead of always running a coding mob: M stays inline, E uses
+  bounded evidence/test help, R always dispatches Developer/Tester/Reviewer plus triggered specialist
+  roles, and C keeps the full strongest role set. Claude role agents now declare tool-native model and
+  permission settings, while artifacts distinguish copied-agent defaults from plugin-ignored permission
+  fields and record actual or `runtime-selected/unknown` evidence.
 - Public docs and templates now explain the Codex-oriented stage `04`/`04b` split: focused
   main-agent implementation with explicit self-check roles, followed by mandatory independent review over
   the actual diff. Delivery plans now teach risk profiles `M/E/R/C` instead of the old A/B/C escort model.

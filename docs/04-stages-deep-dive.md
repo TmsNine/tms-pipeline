@@ -183,10 +183,10 @@ around it.
 
 - **Purpose.** Write the code per the approved plan while keeping the implementation context small enough
   to reason about.
-- **Who works.** In Codex, the default is the main agent. It implements the wave itself, then explicitly
-  runs the role checks that used to be spread across a coding mob: developer, tester, architect, security /
-  privacy / money, and reviewer. A full classic mob inside 04 is still allowed for Profile C work, but it
-  is an intentional heavy mode, not the default.
+- **Who works.** In Codex, the main agent normally implements and performs explicit role self-checks. In
+  Claude, M stays with the lead, E uses one bounded Architect/evidence pass plus Tester, R always dispatches
+  Developer/Tester/Reviewer plus the triggered Architect/Security roles, and C uses the full set. One integration
+  owner remains responsible for each wave.
 - **Input → Output.** `03_delivery_plan.md` → code in the repository + an `04_implementation.md` file (a
   log of the waves).
 - **What the main agent does (one wave).** It reads the plan for the current wave only → implements the
@@ -202,10 +202,10 @@ around it.
   04b, stage-05 testing, and one closing commit after successful 06.
 - **When to go on.** After all the waves have passed — on to `04b_loop_review`.
 
-Why stage 04 works this way in Codex. Multi-agent implementation is expensive because every role has to
-read enough context to act. On bounded work, it is usually cheaper and clearer for one main agent to keep
-the implementation thread intact, then let 04b inspect the finished diff independently. The quality check
-is not removed; it is moved to the stage where there is concrete code to review.
+Why stage 04 works this way. Multi-agent implementation is expensive because every role has to rebuild
+enough context to act. Bounded M/E work preserves one implementation thread; Claude buys real proving-role
+separation for R/C, where the failure cost justifies it. In every profile, 04b still inspects the finished
+diff independently.
 
 ---
 
@@ -284,7 +284,7 @@ is not removed; it is moved to the stage where there is concrete code to review.
 | 02 Design | one lead | strong design/reasoning model | **Review and correct the design** |
 | 02b Audit | auditor (separate checking angle) | strong risk-judgement model | Sign off on the classes of the holes found |
 | 03 Plan | one lead | cheaper planning tier unless risk ambiguity remains | Check whether the agent invented anything extra |
-| 04 Implementation | Codex default: one main agent with role self-checks; full mob only for deliberate maximum-risk work | strong implementation model + focused evidence helpers when useful | Review the implementation log and what 04b must stress-test |
+| 04 Implementation | Codex main-agent by default; Claude M inline, E bounded help, R/C proving roles | strong implementation owner + profile-scaled evidence/judgement roles | Review the implementation log and what 04b must stress-test |
 | 04b Loop review | lead + independent reviewers | strong independent review model; deeper tier for security/privacy/payment/data risks | Check the review evidence and fixes |
 | 05 Test | one lead | cheap validation/reporting tier unless failures need diagnosis | Make sure the user-visible part works |
 | 06 Review gate | lead + you | strong judgement model + human | **Final review and merge decision** |

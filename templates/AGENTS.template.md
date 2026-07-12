@@ -232,9 +232,9 @@ typecheck, lint, build, logs). No ceremony for simple local tasks.
 ## Stage 04 / 04b Risk Profiles
 
 Stage `04_implementation` may run differently by tool. Codex defaults to mono/main-agent implementation:
-the main agent implements wave by wave and records explicit self-checks. Claude Code may use the classic
-multi-agent mob described in `CLAUDE.md`. In both tools, `04b_loop_review` is the independent review/fix
-stage after implementation.
+the main agent implements wave by wave and records explicit self-checks. Claude Code uses the profile-aware
+route in `CLAUDE.md`: M inline, E with bounded evidence/test help, and real proving-role mobs for R/C. In
+both tools, `04b_loop_review` is the independent review/fix stage after implementation.
 
 Profiles describe the wave's risk and the depth of 04b, not just how many subagents to launch while
 coding:
@@ -246,10 +246,10 @@ coding:
   agent.
 - **Profile R — Risk review required:** touches money, roles, tenant scope, PII/privacy, migrations,
   lifecycle/state machines, queues/jobs, outbox/messaging, external integrations, or meaningful
-  user-facing business logic. Stage 04 may still be mono/main-agent; 04b must stress-test the risky
-  surface.
-- **Profile C — Full classic allowed:** maximum cost of error. Full multi-agent implementation inside 04
-  is allowed when the operator deliberately chooses the heavier mode.
+  user-facing business logic. Claude stage 04 uses mandatory base roles plus triggered specialist proving
+  roles; 04b stress-tests the risky surface independently.
+- **Profile C — Full classic required in Claude:** maximum cost of error. Claude uses the full role set;
+  Codex may deliberately choose its exceptional heavy multi-agent mode.
 
 Choose the profile by the most dangerous touched risk, not by the average size of the diff. **List YOUR
 project's Profile-R/C triggers here** — keep generic patterns, add your stack's specifics:
@@ -264,9 +264,9 @@ project's Profile-R/C triggers here** — keep generic patterns, add your stack'
   - adds/modifies code under <your auth/identity/tenant-scoping module paths>
 »
 
-In `04_implementation.md`, record the stage-04 mode, profile per wave, self-check roles applied
-(Developer / Tester / Architect / Security-Privacy-Money / Reviewer), validation, follow-ups, launch
-actions, and what `04b_loop_review` must independently stress-test.
+In `04_implementation.md`, record the stage-04 mode, profile per wave, integration owner, self-check or
+dispatched roles, preferred/configured/actual model evidence, validation, follow-ups, launch actions, and
+what `04b_loop_review` must independently stress-test.
 
 ### Atomic 04b and the single closing commit
 

@@ -8,7 +8,7 @@ Date: [DATE]
 ## Waves
 Each wave is the smallest coherent unit that can be implemented and proven on its own.
 Tag each wave with its risk profile:
-M = mono/bounded · E = evidence-assisted · R = risk review required · C = full classic allowed.
+M = mono/bounded · E = evidence-assisted · R = risk review required · C = maximum risk.
 State what 04b must stress-test for that wave.
 
 ### Wave 1 — [name]  ·  Profile: [M/E/R/C] — [trigger reason]

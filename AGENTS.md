@@ -75,9 +75,9 @@ The public pipeline currently has 9 durable task artifacts:
 `04_implementation` → `04b_loop_review` → `05_test_report` → `06_review_gate`.
 
 - `04b_loop_review` is the independent review/fix loop between implementation and the test report.
-- Stage 04 may differ by tool. Codex defaults to mono/main-agent implementation with explicit self-checks;
-  Claude Code may use the classic multi-agent mob wording. Stage 04b remains the independent quality
-  backstop.
+- Stage 04 is profile-aware in both tools. Codex defaults to mono/main-agent implementation with explicit
+  self-checks; Claude Code keeps M inline, uses bounded evidence/test help for E, and reserves real
+  proving-role mobs for R/C. Stage 04b remains the independent quality backstop.
 - Keep templates, examples, README, methodology docs, deep-dive docs, and skills consistent with this
   9-artifact chain.
 - When changing process semantics, update the skill text first, then the docs/templates that teach it.

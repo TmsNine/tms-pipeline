@@ -145,7 +145,7 @@ them in full on the next pages:
 | 02 Design | `/tms-design` | Writes the design contract — a description of the change agreed up front, which the code is later checked against; the change is the smallest one that does the job, reviewed before any code. |
 | 02b Gap audit | `/tms-gap-audit` | One bounded pass where a different agent looks at the design with fresh, skeptical eyes, hunts for holes, and rates each one by severity. |
 | 03 Plan | `/tms-plan` | Splits the work into small finished slices — "waves"; for each, it sets a risk profile and the depth of review needed after implementation. |
-| 04 Implement | `/tms-implement` | Writes the code wave by wave. In Codex this defaults to one main agent with explicit role self-checks; maximum-risk work can still use the full classic mob. |
+| 04 Implement | `/tms-implement` | Writes code wave by wave. Codex defaults to one main agent; Claude keeps M inline, adds bounded help for E, and uses real proving-role mobs for R/C. |
 | 04b Loop review | `/tms-loop-review` | Independently reviews the implementation diff, fixes actionable findings, and records the review loop before the test report. |
 | 05 Test | `/tms-test` | Validates the primary (user-visible) signal + secondary ones. |
 | 06 Review gate | `/tms-review` | Checks the result against the design contract and returns a verdict: go (ship), conditional_go (ship once conditions are met), no-go (do not ship). |
@@ -316,7 +316,7 @@ gain from clearing it.
 ```
 skills/        Claude Code tms-* skills (setup + process + audit + refactoring)
 codex-skills/  Codex tms-* skills with Codex-native names and instructions
-agents/        5 mob roles (developer, tester, architect, security, reviewer)
+agents/        5 Claude proving roles (developer, tester, architect, security, reviewer)
 codex-agents/  5 Codex TOML roles (explorer, validator, reviewer, gap auditor, risk reviewer)
 commands/      the /tms-init onboarding command
 installer/     the core config engine + the `npx tms-pipeline` installer
