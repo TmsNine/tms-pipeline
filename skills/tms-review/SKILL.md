@@ -1,6 +1,6 @@
 ---
 name: tms-review
-description: "Pipeline stage 06 — review gate; verify implementation against the design contract, issue go/no-go"
+description: "Pipeline stage 06 — review gate; verify the implementation against the design contract, require an exact 04b PASS, issue go/conditional_go/no-go, sync external status, and create one task-scoped closing commit"
 allowed-tools:
   - Read
   - Write
@@ -11,16 +11,22 @@ allowed-tools:
 
 Run pipeline stage **06_review_gate** for `$1`.
 
-Read THIS project's `AGENTS.md` / `CLAUDE.md` for project specifics: task-folder path, launch-playbook location, output language.
+Read THIS project's `AGENTS.md` / `CLAUDE.md` for task paths, external delivery/status documents, launch playbook, output language, and Git safety rules.
+
+For fingerprints, read and run the canonical helper from the sibling `../tms-implement/references/task-fingerprint.mjs`. Require helper version `tms-task-fingerprint-v1`; never recreate the hash with an ad-hoc command.
 
 ## Method
 
-1. **Verify the implementation against the design contract.** This stage is implementation-vs-design — distinct from `02b_gap_audit` (design-vs-risks) and from human peer review. Check against `02_design.md` and the acceptance criteria in `03_delivery_plan.md`.
-2. **Confirm:** acceptance criteria met; no design drift; change-surface triggers handled (contracts producer+consumer, auth, async idempotency, persistence read+write paths); validation evidence present (`05_test_report.md`); documentation aligned; follow-ups consolidated into the backlog and pre-launch manual actions captured in the launch playbook. A task is NOT done if the visible symptom is gone but the same mechanic stays structurally inconsistent across coupled layers.
-3. **Verdict:** `go` / `conditional_go` (name the manual condition explicitly and ensure it is recorded in the launch playbook, not just here) / `no-go` with reasons and the best next experiment.
-4. Write `<task-folder>/06_review_gate.md` with the checks, evidence pointers, and verdict.
-5. **Close the task in the external delivery docs (mandatory on `go` / `conditional_go`).** The review gate is not finished when `06_review_gate.md` is written — the task must also be marked done where the project tracks status, otherwise the backlog still shows it open. Read `AGENTS.md` for which external doc owns task status (backlog / roadmap / sprint plan) and where it lives.
+1. Start from `02_design.md`, `03_delivery_plan.md`, `04_implementation.md`, `04b_loop_review.md`, and `05_test_report.md`. Do not redo a full 04b review when the accepted evidence is current.
+2. Verify implementation against the design contract and acceptance criteria.
+3. Require the normalized 04b field to be exactly `PASS`. `NOT_ACCEPTED`, `SKIPPED`, `NEEDS_REMEDIATION`, and `BLOCKED` cannot receive `go` or `conditional_go`, regardless of optimistic prose elsewhere.
+4. Derive the complete changed-path set from Git state (`git diff --name-only -z --no-renames <base_sha> --` plus `git ls-files --others --exclude-standard -z`), classify every path as task-owned or unrelated, and fail closed on ambiguity/overlap. `--no-renames` is mandatory so a rename remains source deletion + destination addition before and after staging. Materialize the observed task-owned set and require exact equality with the package manifest through the helper's `--observed` input. Recalculate implementation/package fingerprints in `worktree` mode and require the implementation hash to match accepted 04b and fresh stage-05 evidence.
+5. Confirm R/X ledgers, V-ID evidence, coupled contracts/read-write paths, docs, follow-ups, and pre-launch manual actions. A task is not done when only the visible symptom is gone but the owning mechanic remains inconsistent.
+6. Issue `go`, `conditional_go` with explicit launch conditions, or `no-go` with reasons and the best next experiment. Write `docs/$1/06_review_gate.md` with closing-commit eligibility, but never a future commit SHA: a commit cannot contain its own final SHA.
+7. Before a successful verdict is complete, update and reread the external backlog/status and launch-playbook entries named by the project. If mandatory external sync cannot be verified, stage 06 is `BLOCKED`.
+8. On `go` or `conditional_go`, create exactly one closing task commit containing all and only repo-local task-owned changes from stages 00–06. Stage only manifest paths with unambiguous ownership. Derive the staged set with `git diff --cached --name-only -z --no-renames <base_sha> --`, require exact equality with the package manifest through `--observed`, then run the helper in `index` mode and require the staged package hash to equal the pre-stage `worktree` package hash. A `no-go`, `BLOCKED`, failed external sync, path-set/fingerprint mismatch, ambiguous ownership, or unrelated staged content forbids the commit. Report the actual SHA after success in chat or another external status surface; do not edit the committed review artifact merely to insert it. Never push automatically and never add AI attribution.
+9. Add a compact `Pipeline metrics` block: profile; waves; review/fix rounds; A/B/C/D findings; remediation cycles; validation freshness; fingerprint match; primary signal; manual gates; available time/subagent/token data; verdict.
 
-   **The backlog row is an index, not a storage location — keep it to ONE short line (≤200 chars).** Set status to `Done` / `Done (conditional_go)` (or leave open on `no-go`) with: the date, the verdict, a ≤1-line plain-language phrase of *what shipped* (actually delivered scope, not the original ticket wording if it was narrowed), and a `См. docs/<TASK-ID>/` pointer. **Do NOT paste the review summary, sub-item lists, migration numbers, condition lists, file paths, or follow-up chains into the backlog row.** That full detail already lives in `06_review_gate.md` (verdict + conditions) and in the launch playbook (manual steps) — duplicating it into the backlog is what bloats it into an unreadable wall of text. If a row is creeping past one line, the surplus belongs in `06_review_gate.md`, linked. **Ignore the verbose multi-sentence rows that some legacy closed tasks contain — they are the anti-pattern this rule corrects, not a template to replicate.** On `no-go`, leave the task open and note in one line what blocks closure.
+## Closing
 
-   Per the conversation contract, the final user-facing summary must name which external doc was updated and to what status.
+Name the verdict, exact 04b status, external documents updated and reread, remaining launch conditions, and whether the single closing commit was created.

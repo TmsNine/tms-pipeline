@@ -7,6 +7,8 @@ description: "Run pipeline stage 00 (ticket) for a backlog task in a project tha
 
 This carries the universal method. Read THIS project's `AGENTS.md` first (Codex reads it natively) for specifics: task-folder convention, backlog and traceability locations, source-of-truth docs, output language.
 
+> **Model tier.** Prefer Luna medium for this bounded indexing/classification stage; fall back to Terra medium or `gpt-5.4-mini` medium. Never use Fast mode. Escalate only when preconditions expose a real product/risk decision.
+
 ## Method
 
 1. **Confirm preconditions.** The item exists in the backlog and is the exact target. Traceability points to the right product/architecture sources. Open questions are resolved or flagged as blockers.

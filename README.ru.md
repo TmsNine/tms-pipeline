@@ -15,7 +15,7 @@
 один шаг — вы его проверяете, и только потом идёте дальше (это и есть принцип «человек проверяет каждый
 шаг», по-английски human in the loop).
 
-🇬🇧 [Read in English](README.md) · 📖 [Полная методология](docs/00-methodology.ru.md) · 🚀 [Старт](docs/01-getting-started.ru.md)
+🇬🇧 [Read in English](README.md) · 📖 [Полная методология](docs/00-methodology.ru.md) · 🚀 [Старт](docs/01-getting-started.ru.md) · 🧭 [Маршрутизатор моделей](docs/06-model-routing.ru.md)
 
 ---
 
@@ -171,8 +171,8 @@ flowchart LR
    затронутая поверхность требует сильного независимого ревью, и **C** когда осознанно разрешён полный
    classic multi-agent режим. В Codex обычная стадия 04 остаётся у основного агента с явными self-check
    ролями; дорогая независимость переносится в 04b, где свежий ревьюер проверяет реальный diff.
-   Рискованные волны несут конкретный handoff seed из 03 в 04 и 04b: invariants, required proof, owner
-   layer, failure signal и соседние поверхности для поиска. Ревью включается только там, где оно
+   Stage 03 ведёт единый canonical risk ledger для 04 и 04b: стабильные R-ID, invariants, required proof,
+   owner layer, failure signal, owning wave и соседние поверхности для поиска. Ревью включается только там, где оно
    окупается; «включить всё на всякий случай» прямо не приветствуется.
 3. **Найденное не теряется.** Отложенные пункты, найденные по ходу (follow-up), расхождения в документации
    и ручные действия перед запуском фиксируются по жёсткому правилу. Для каждой находки есть таблица: куда
@@ -230,7 +230,7 @@ npx tms-pipeline
 
 # 2b) Codex — читает AGENTS.md нативно. У Codex нет аналога /plugin install, поэтому скиллы/агентов
 #     кладут в ~/.codex. На том же шаге мастера выберите 2 (Codex) — он скопирует их. Вручную:
-#       cp -R codex-skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/
+#       cp -R codex-skills/* ~/.codex/skills/ && cp -R codex-agents/* ~/.codex/agents/
 #     Подробнее — docs/02-configuration.ru.md#codex
 ```
 
@@ -321,10 +321,11 @@ npx tms-pipeline
 skills/        скиллы tms-* для Claude Code (подготовка + процесс + аудит + рефакторинг)
 codex-skills/  скиллы tms-* для Codex с Codex-native именами и инструкциями
 agents/        5 ролей mob (разработчик, тестировщик, архитектор, безопасник, ревьюер)
+codex-agents/  5 TOML-ролей Codex (explorer, validator, reviewer, gap auditor, risk reviewer)
 commands/      команда онбординга /tms-init
 installer/     ядро движка настройки + мастер-установщик `npx tms-pipeline`
 templates/     шаблоны AGENTS/CLAUDE, формы документов процесса, пустые заготовки базы документации, пример задачи
-docs/          методология + старт + конфигурация + база документации + разбор шагов «под капотом»
+docs/          методология + старт/конфигурация + разбор стадий + памятка по моделям
 ```
 
 ---

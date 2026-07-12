@@ -7,7 +7,7 @@ description: "Run pipeline stage 02b (bounded gap audit) for a backlog task in a
 
 ONE bounded structured pass over the approved design — not an open-ended review. Read THIS project's `AGENTS.md` (Codex reads it natively) for specifics: task-folder path, WHERE Class C bundles must land in the backlog, severity examples, output language.
 
-> **Model tier.** This stage is risk judgement. Use the current strong model; use high/xhigh when the design touches auth/RLS/payments/PII, migrations, lifecycle/state machines, queues, tenant isolation, or GDPR. `gpt-5.4-mini` is acceptable only for quick evidence lookup, not for the final gap classification.
+> **Model tier.** Prefer the global `tms_gap_auditor` role / Sol high, and Sol xhigh when the design touches auth/RLS/payments/PII/migrations/lifecycle/queues/tenant isolation/GDPR; fallback `gpt-5.5`. Terra medium (fallback `gpt-5.4-mini`) is acceptable only for quick evidence lookup, never final classification. If role/model selection is not enforceable, use a fresh read-only prompt and record actual model as runtime-selected/unknown. Never use Fast mode.
 
 ## Method
 

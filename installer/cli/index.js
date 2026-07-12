@@ -6,7 +6,7 @@
 //   3. drop a starter AGENTS.md (+ .claude/CLAUDE.md) — mostly <<TODO>> placeholders.
 // It does NOT interrogate you about the project (test commands, ticket format, doc paths, …).
 // That is the job of the agent-driven `/tms-init`, which reads your repo and fills AGENTS.md for you.
-// It NEVER overwrites an existing AGENTS.md / CLAUDE.md unless you pass --force.
+// It NEVER overwrites existing project files or installed skill/agent assets unless you pass --force.
 
 'use strict';
 
@@ -69,7 +69,7 @@ const STRINGS = {
     step_init2: '(test/build commands, paths, ticket format), asking you only about the gaps.',
     step_claudeInstalled: 'Claude Code: skills are in ~/.claude — restart Claude Code to load them (don\'t also /plugin install).',
     step_claudePlugin: 'Claude Code: /plugin marketplace add TmsNine/tms-pipeline → /plugin install tms-pipeline@tms-pipeline → /reload-plugins',
-    step_codex: 'Codex: re-run and accept the skill install, or: cp -R codex-skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/',
+    step_codex: 'Codex: re-run and accept the skill install, or: cp -R codex-skills/* ~/.codex/skills/ && cp -R codex-agents/* ~/.codex/agents/',
     step_task: 'Then start a task:  /tms-ticket <your first ticket>',
     enterHint: 'Enter = default',
   },
@@ -86,7 +86,7 @@ const STRINGS = {
     step_init2: '(команды тестов/сборки, пути, формат тикета), спрашивая только то, что не смог вывести.',
     step_claudeInstalled: 'Claude Code: скиллы в ~/.claude — перезапустите Claude Code (не делайте ещё и /plugin install).',
     step_claudePlugin: 'Claude Code: /plugin marketplace add TmsNine/tms-pipeline → /plugin install tms-pipeline@tms-pipeline → /reload-plugins',
-    step_codex: 'Codex: перезапустите и согласитесь на установку, или: cp -R codex-skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/',
+    step_codex: 'Codex: перезапустите и согласитесь на установку, или: cp -R codex-skills/* ~/.codex/skills/ && cp -R codex-agents/* ~/.codex/agents/',
     step_task: 'Затем запустите задачу:  /tms-ticket <первый тикет>',
     enterHint: 'Enter = значение по умолчанию',
   },
@@ -107,7 +107,7 @@ function printHelp() {
     -y, --yes            Non-interactive: accept every default, no prompts.
         --answers <f>    Non-interactive: read answers from a JSON file (used by /tms-init).
         --dry-run        Show what would be written/copied; change nothing on disk.
-        --force          Overwrite an existing AGENTS.md / .claude/CLAUDE.md.
+        --force          Overwrite existing project files and installed skill/agent assets.
     -h, --help           Show this help.
     -v, --version        Print the version.
 

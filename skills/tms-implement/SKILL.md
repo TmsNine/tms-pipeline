@@ -1,6 +1,6 @@
 ---
 name: tms-implement
-description: "Pipeline stage 04 — mandatory multi-agent mob implementation with wave-by-wave gates, follow-up + launch capture"
+description: "Pipeline stage 04 — mandatory Claude multi-agent mob implementation with M/E/R/C-scaled proving roles, validation, risk handoff, follow-up and launch capture; also supports automatic remediation re-entry from active 04b"
 allowed-tools:
   - Read
   - Write
@@ -12,41 +12,76 @@ allowed-tools:
   - TodoWrite
 ---
 
-Run pipeline stage **04_implementation** for `$1` via **mandatory multi-agent mob programming**. The lead (you) does NOT write source code — you orchestrate parallel subagents (`Agent` tool, `subagent_type: general-purpose`) and enforce quality gates. Skip the multi-agent flow only if the user explicitly says "implement inline" / "no subagents".
+Run pipeline stage **04_implementation** for `$1` via Claude Code's multi-agent mob. The lead orchestrates; Developer agents write source. Skip the mob only when the user explicitly requests inline implementation.
 
-Read THIS project's `AGENTS.md` / `CLAUDE.md` for project specifics: task-folder path, the exact Profile-C escort triggers, commit conventions, backlog location, launch-playbook location + stage→doc mapping, output language.
+Read THIS project's `AGENTS.md` / `CLAUDE.md` for task paths, validation, follow-up and launch rules, output language, and repository safety.
 
-## Per-wave loop (from `03_delivery_plan.md`)
+Read and use `references/task-fingerprint.mjs` for every implementation/package fingerprint. Do not substitute an ad-hoc `git diff` hash. Keep separate UTF-8 manifests for implementation paths and the full task package, and record helper version `tms-task-fingerprint-v1`, scope, source (`worktree` or `index`), `base_sha`, manifest path, and output.
 
-1. **Classify the wave's escort profile and record it + the trigger reason** as a one-line note at the top of the wave section in `04_implementation.md`:
-   - **A — Minimal:** Dev + Tester + Reviewer. Rename/move/non-behavioural refactor, copy/i18n/styling, tests-only, closeout.
-   - **B — Standard:** + Architect. Non-trivial logic/services, API shape changes, new data-flow UI, schema/migration WITHOUT auth/RLS/tenant.
-   - **C — Full:** + Security. ANY project Profile-C trigger (auth/authz/JWT/session, RLS/tenant-scoping/id resolution, trust-boundary input validation, secrets/signing/webhook verify, payments, PII/cross-tenant, new mutating command surface). Non-negotiable on these triggers.
-   Default to the smallest profile the triggers allow — never run full escort "to be safe". Escort profile is the primary cost lever.
-2. **Dispatch the Developer** agent with the wave brief (scope, files, acceptance).
-3. **Dispatch the proving roles for the profile IN PARALLEL** (single message, multiple Agent calls): A = Tester + Reviewer; B = + Architect; C = + Security.
-   - Tester: build / tests / types / lint green.
-   - Architect (B/C): no design drift from `02_design.md` / `03_delivery_plan.md`.
-   - Security (C): no new vulnerabilities (auth, input validation, OWASP, tenant scoping, secret leakage).
-   - Reviewer: matches plan + acceptance criteria.
+## Automatic remediation re-entry
 
-   **Two token levers on every dispatch:**
-   - **① Model tiering** (pass `model` per `Agent` call): Tester → `haiku` (mechanical build/test/type/lint, no judgement — cheap tier even on Profile C); Reviewer → `haiku` for a plain acceptance checklist, session default only when acceptance is nuanced; Developer → session default, drop to `sonnet`/`haiku` on a purely mechanical wave; **Architect and Security stay top-tier — never downgrade the judgement roles.**
-   - **② Read-once, brief-many:** proving roles must not re-explore the wave's files from scratch (that reads the same code 2–5×). From the Developer's return (or one scout read) hand each proving agent a distilled brief — exact paths + line ranges, what changed, the one thing to confirm — not "go read the module." They re-read only the narrow spot they must independently verify. Prefer the `Explore` subagent over `general-purpose` for any search step.
-4. **Wave passes only if every spawned check is green.** On failure: spawn a focused fix agent with the specific findings, re-run only the failed gates. Do not advance.
-5. **Escalate, never downgrade:** if a Minimal/Standard wave surfaces a Profile-C trigger mid-wave, spawn the missing Security (and Architect) agent before passing the gate.
-6. Keep lead context lean (target ≥20% headroom); split a wave into sub-waves if it overloads. Write `04_implementation.md` as you go.
+When an active `tms-loop-review` attempt routes verified defects back to repeat 04:
 
-## Closing (mandatory — BOTH, before the turn ends)
+- treat its remediation brief as the bounded input; do not reopen completed product/design decisions;
+- append `Remediation cycle N` to `04_implementation.md`;
+- fix all verified in-scope defects at the owning layers and update required tests;
+- rerun the relevant proving roles and validation, recalculate fingerprints, and refresh the 04b handoff;
+- never stage or commit;
+- return directly to the same 04b invocation without asking the user to restart stage 04.
 
-**A. Follow-up capture.** Consolidate every follow-up / postponed item / deferred decision discovered during implementation into the project backlog per its rules: bundle, don't shard; drop trivia; check existing open bundles for the same surface/source/domain and fold into them before creating new; the backlog row is a one-line index (details in the ticket). Follow-ups left only in `04_implementation.md` are lost.
+The next 04b reviewer must be fresh and must not receive prior reviewer reasoning, scores, round budget, or fix explanations.
 
-**B. Pre-launch manual-action capture.** Any manual step a human must perform before/at launch that an automated test cannot — applying a migration, setting an env key, a live/browser/staging smoke, configuring an external service, a scheduler/cron check, a deploy-ordering constraint, a UAT step, a `conditional_go` gate condition — MUST be written into the project's launch playbook, in the stage-matching document, with: the exact step sequence, the copy-pasteable command/SQL, the precise pass criterion ("expect 1 row", "no Seq Scan", "message arrives"), the precondition (which migration/env first), and where to look if it fails. Vague lines ("run the smoke", "apply the migrations") are the failure mode this exists to prevent.
+## Scope and evidence setup
 
-## Commit rules
+1. Read `00_ticket.md`, approved `02_design.md`, `02b_gap_audit.md`, and `03_delivery_plan.md`.
+2. Record `base_sha`, a task-owned path manifest, and the starting implementation/package fingerprints. Fail closed on mixed ownership.
+3. Reuse the M/E/R/C profiles and canonical R-ID ledger from the plan; do not silently reclassify or redefine them.
 
-After all waves pass their gates, create the commit(s). **NEVER** add `Co-Authored-By:` or any AI/agent attribution. Do **not** push automatically — the branch waits for human review and CI.
+## Per-wave loop
 
-## Closing summary
+1. **Dispatch Developer** with one wave's scope, files, acceptance, profile, R-IDs, and validation.
+2. **Dispatch proving roles proportionally:**
+   - **M:** Tester + Reviewer.
+   - **E:** bounded Explorer/Architect evidence pass + Tester + Reviewer.
+   - **R:** Tester + Architect + Security/Privacy/Money + Reviewer.
+   - **C:** full role set with the strongest judgement agents and an explicit pre-04b adversarial pass.
+3. Use the cheapest sufficient model for mechanical test execution and evidence maps. Keep architecture, security, privacy, money, lifecycle, and final judgement on the strongest appropriate model. Never use Fast mode.
+4. Give proving roles a compact path/line/change brief. They independently reread the narrow evidence they must verify; do not make every role rediscover the whole codebase.
+5. Verify findings before fixing. Batch related corrections at the owner layer. If a new risk trigger appears, add an append-only `X-04-*` entry and dispatch the missing role.
+6. A wave passes only when acceptance, applicable proving roles, and changed-surface validation are green.
 
-Name which backlog bundles received which follow-ups (with IDs) and which launch-playbook document received which manual item (with migration numbers if any). Then stop for confirmation before `04b_loop_review` (staged execution). `04b` runs the independent loop code review on Profile B/C waves; the operator may consciously skip it, deferring the deep review to the next full-project audit (see `tms-loop-code-review`).
+## Risk-surface sweep and validation ledger
+
+For R/C waves, inspect directly coupled producer/consumer, read/write, sibling routes, auth/tenant boundaries, migrations, queues, external effects, and tests/mocks/fixtures. Record:
+
+- `R-ID | invariant | owner layer | required proof | result`;
+- `X-04-* | newly exposed risk | evidence | disposition`;
+- `V-ID | command/signal | scope | implementation fingerprint | result | fresh/reused | covers AC/R/X | environment | stage`.
+
+If validation changes code/tests/contracts/SQL/config, its result is stale until rerun on the new implementation fingerprint. Pipeline-document-only edits affect the package fingerprint, not the implementation fingerprint. The canonical helper provides SHA-256 framing, bytewise path ordering, file modes, symlinks, deletions, raw content, and package-field normalization.
+
+## Artifact and handoff
+
+Write `docs/$1/04_implementation.md` as work progresses:
+
+- mode and profile per wave;
+- Developer/proving roles used;
+- files and behavior changed;
+- R/X/V ledgers and fingerprint history;
+- deviations and fixes;
+- an orchestrator-only `04b handoff` containing the task-owned diff scope, author risk map, dangerous invariants, required tests, adjacent surfaces, and known residuals.
+
+The 04b handoff is author input, not proof. Stage 04b audits it, then derives a sanitized neutral reviewer brief; it never forwards the handoff, author findings/fixes, searches/results, suspicions, scores, or remediation history wholesale to a scoring reviewer.
+
+## Mandatory capture
+
+Before leaving stage 04:
+
+- consolidate actionable follow-ups into the project's backlog using bundle-don't-shard;
+- write every manual pre-launch action into the correct launch-playbook document with executable steps and pass criteria.
+
+## Git and stop
+
+Stage 04 never stages or commits. Leave the complete task-owned working-tree package for 04b, 05, and the one closing commit after successful 06.
+
+Name follow-ups, launch-playbook additions, validation, profiles, and what 04b must stress-test. Stop for confirmation before 04b unless this was automatic remediation inside an already active 04b invocation.

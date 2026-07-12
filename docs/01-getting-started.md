@@ -123,14 +123,15 @@ In Claude Code, run `/help` or open the skills list — you should see the `tms-
 
 ## Codex
 
-Claude Code and Codex are the two AI tools the pipeline can run in; you need only one of them. Codex reads
-`AGENTS.md` natively, so the methodology works exactly the same way, and the skills themselves don't
-care which tool they run in. Codex has no `/plugin install` equivalent, so its skills and agents have to go where Codex
+Claude Code and Codex are the two AI tools the pipeline can run in; you need only one of them. Their
+process semantics stay aligned, but their skill trees, role formats, model controls, and stage-04
+mechanics are tool-native. Codex reads `AGENTS.md` directly and has no `/plugin install` equivalent, so
+its skills and agents have to go where Codex
 looks for them — under `~/.codex`:
 
 - easiest: run `npx tms-pipeline`, choose Codex, and accept the copy prompt — the installer copies
-  `codex-skills/` → `~/.codex/skills/` and `agents/` → `~/.codex/agents/`;
-- by hand: `cp -R codex-skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/`.
+  `codex-skills/` → `~/.codex/skills/` and `codex-agents/` → `~/.codex/agents/`;
+- by hand: `cp -R codex-skills/* ~/.codex/skills/ && cp -R codex-agents/* ~/.codex/agents/`.
 
 For the directory differences, see [configuration](02-configuration.md#codex).
 

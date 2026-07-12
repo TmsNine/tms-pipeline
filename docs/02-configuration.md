@@ -115,9 +115,9 @@ when you switch to the other.
 - The wave profile in Codex is a risk/review-depth signal, not simply a list of subagents to launch while
   coding. Bounded work can stay main-agent-only in 04; risk-heavy work gets deeper 04b; maximum-risk work
   may still use the full classic multi-agent implementation when the operator deliberately chooses it.
-- Custom role agents live in `agents/`. Claude Code reads them from `agents/` or `~/.claude/agents/`;
-  Codex can use the same role definitions where its local setup supports them. The role names remain
-  useful even when Codex runs 04 mono: they describe the self-checks the main agent must record.
+- Tool-native role agents use separate trees: Claude Markdown roles live in `agents/`; Codex TOML roles
+  live in `codex-agents/`. The shared `tms_*` role intent stays aligned even though the file formats and
+  model controls differ.
 
 ### Installing the skills and agents for Codex
 
@@ -125,8 +125,13 @@ Codex has no command like `/plugin install`, so the files need to go into `~/.co
 semi-automatically:
 
 - **Semi-automatically:** run `npx tms-pipeline`, answer "yes" to the question "Do you use Codex?" and
-  agree to the copy. The installer then copies `codex-skills/` → `~/.codex/skills/` and `agents/` →
+  agree to the copy. The installer then copies `codex-skills/` → `~/.codex/skills/` and `codex-agents/` →
   `~/.codex/agents/`. If you don't use Codex, the installer leaves the `~/.codex` directory alone.
-- **By hand:** `cp -R codex-skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/`.
+- **By hand:** `cp -R codex-skills/* ~/.codex/skills/ && cp -R codex-agents/* ~/.codex/agents/`.
+
+The installer preserves existing project templates, skills, commands, and agent-role files. Pass
+`--force` only when you intentionally want the packaged versions to replace local customizations.
+
+For stage-by-stage model choices, see [model routing](06-model-routing.md).
 
 `AGENTS.md` stays in the project root either way (the installer writes it), and Codex reads it directly.

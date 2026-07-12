@@ -14,12 +14,7 @@ Date: 2026-01-15
 - Acceptance: `toCsv()` unit tests pass (incl. injection + escaping); list endpoint still works via the
   extracted query.
 - 04b review depth: stress-test CSV escaping/injection handling and list/export query parity.
-- 04 risk-handoff seed:
-
-| Invariant | Required proof/test | Owner layer | Failure signal | Risk search map |
-|---|---|---|---|---|
-| Exported cells cannot execute spreadsheet formulas. | Unit tests for `=`, `+`, `-`, `@`, quotes, commas, and newlines. | `api/src/lib/csv.ts` | A generated CSV cell begins with a formula trigger unescaped. | `toCsv`, `reports/export`, CSV tests and fixtures. |
-| List and export use the same query semantics. | Route tests covering shared filters on list and export. | `buildReportsQuery(filters, orgId)` | Same filters return different row sets. | `reports.ts`, `reportsQuery.ts`, list/export route tests. |
+- Owning R-IDs: R-CSV-01, R-CSV-02.
 
 ### Wave 2 — Export endpoint  ·  Profile: R — data-access path that must enforce org scoping
 - Scope: `GET /api/reports/export.csv` reusing `buildReportsQuery` with `req.user.orgId`; 10k cap + note
@@ -27,12 +22,7 @@ Date: 2026-01-15
 - Files: `api/src/routes/reports.ts`.
 - Acceptance: integration tests prove org isolation, filter fidelity, and the cap behavior.
 - 04b review depth: independently verify org scoping, filter fidelity, and truncation semantics.
-- 04 risk-handoff seed:
-
-| Invariant | Required proof/test | Owner layer | Failure signal | Risk search map |
-|---|---|---|---|---|
-| Export never leaks another organization's reports. | Integration test with two orgs and same filters. | Export route using `req.user.orgId` through shared query. | CSV contains a report from a different org. | `reports/export.csv`, auth test fixtures, `buildReportsQuery`. |
-| Large exports are capped predictably. | Endpoint test for 10k cap and truncation note row. | Export route response builder. | Response omits truncation note or streams unlimited rows. | export endpoint tests, CSV builder. |
+- Owning R-IDs: R-CSV-03, R-CSV-04.
 
 ### Wave 3 — Frontend button + toast  ·  Profile: M — UI wiring, no new data flow
 - Scope: Export `Button` on `ReportsList.tsx` linking to the export URL with active filters; truncation
@@ -40,8 +30,16 @@ Date: 2026-01-15
 - Files: `web/src/pages/ReportsList.tsx`.
 - Acceptance: clicking downloads the filtered CSV; disabled while filters load.
 - 04b review depth: narrow diff review for filter propagation and user-visible states.
-- 04 risk-handoff seed: check that UI reuses the active filter state and does not introduce a new data
-  access path.
+- Owning R-IDs: R-CSV-02.
+
+## Canonical risk ledger
+
+| R-ID | Business invariant | Trigger / surface | Owner layer | Required proof | Failure signal | Owning wave | Search map |
+|---|---|---|---|---|---|---|---|
+| R-CSV-01 | Exported cells cannot execute spreadsheet formulas. | CSV serialization of user-controlled values. | `api/src/lib/csv.ts` | Unit tests for `=`, `+`, `-`, `@`, quotes, commas, and newlines. | A generated CSV cell begins with a formula trigger unescaped. | Wave 1 | `toCsv`, `reports/export`, CSV tests and fixtures. |
+| R-CSV-02 | List, export, and UI use the same filter semantics. | Shared query plus frontend filter propagation. | `buildReportsQuery(filters, orgId)` and report-list filter state. | Route parity tests and UI smoke with active filters. | The same filters return different row sets or the UI drops a filter. | Waves 1 and 3 | `reports.ts`, `reportsQuery.ts`, route tests, `ReportsList.tsx`. |
+| R-CSV-03 | Export never leaks another organization's reports. | Export data-access boundary. | Export route using `req.user.orgId` through shared query. | Integration test with two organizations and the same filters. | CSV contains a report from a different organization. | Wave 2 | `reports/export.csv`, auth fixtures, `buildReportsQuery`. |
+| R-CSV-04 | Large exports are capped predictably. | Export response builder and CSV tail row. | Export route response builder. | Endpoint test for the 10k cap and truncation note row. | Response omits the note or streams unlimited rows. | Wave 2 | Export endpoint tests, CSV builder. |
 
 ## Risks & mitigations
 - Risk: query divergence between list and export. Mitigation: single shared `buildReportsQuery`.

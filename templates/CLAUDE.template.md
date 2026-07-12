@@ -1,150 +1,88 @@
 <!--
-  CLAUDE.template.md — Claude Code-specific rules for the tms-pipeline methodology.
-
-  HOW TO USE
-  1. Copy to your project as `.claude/CLAUDE.md`.
-  2. Keep the import line below so Claude Code reads the shared canon (AGENTS.md).
-  3. This file is ~95% portable — usually you only fill the {{PLACEHOLDER}} and delete these comments.
-  4. Codex users do NOT need this file (Codex reads AGENTS.md natively); these multi-agent rules still
-     apply to Codex conceptually, but the "Agent tool" dispatch below is Claude-Code-specific.
+  CLAUDE.template.md — Claude Code-specific rules for tms-pipeline.
+  Copy to .claude/CLAUDE.md and keep the AGENTS.md import below.
 -->
 
 # <Your Project> — Claude Code Context
 
 @./AGENTS.md
-<!-- ^ adjust the relative path so it points at your AGENTS.md (e.g. @../AGENTS.md). -->
+<!-- Adjust the relative path if AGENTS.md is one level above .claude/. -->
 
 ---
 
-**Everything above this line is imported from `AGENTS.md` — the single shared canon read by both Claude
-Code (via this import) and Codex (natively).** Edit shared rules there, not here. This file holds ONLY
-the Claude-Code-specific rules.
+Everything shared lives in `AGENTS.md`. This file contains only Claude Code-specific execution rules.
 
-The `/tms-*` skills are invocation shortcuts for each pipeline stage; they carry the same methodology and
-read project specifics from `AGENTS.md`. Stage `04_implementation` follows the Mandatory Multi-Agent
-Execution rule below whether invoked via `/tms-implement` or directly.
+## Stage 04 — Mandatory Multi-Agent Execution
 
----
+When running `04_implementation`, use Claude Code's `Agent` tool as a coding mob. The lead orchestrates and does not write production code directly. Skip this only when the user explicitly requests inline implementation or no subagents.
 
-## Implementation Phase — Mandatory Multi-Agent Execution
+This rule applies to stage 04 only. Stage 01 may use the bounded read-only evidence fan-out defined by `tms-research`; design and final judgement remain with the lead.
 
-When executing stage `04_implementation` for any backlog item, **always use the multi-agent "mob
-programming" approach**. The lead (the main conversation) does NOT write code directly — it orchestrates
-parallel subagents via the `Agent` tool and enforces quality gates between waves of the already-approved
-delivery plan.
+### Roles
 
-**This rule is scoped strictly to the execution of `04_implementation`.** It does NOT apply to earlier
-stages (`02_design`, `03_delivery_plan`, etc.) — those are normal lead work and must not trigger the
-code-writing dispatch defined here.
+1. **Developer** — implements one approved wave at the owning layer.
+2. **Tester/Builder** — runs the smallest meaningful validation and reports exact results.
+3. **Architect** — checks design/plan fit, owner layer, contracts, and coupled paths.
+4. **Security / Privacy / Money** — checks auth, tenant scope, trust boundaries, PII, external effects, and money semantics.
+5. **Reviewer** — checks the wave against acceptance criteria without editing.
 
-**One explicit exception:** stage `01_research` may run a bounded, read-only **search fan-out** as
-defined in the `tms-research` skill — cheap-tier gatherer sub-agents collecting code/doc evidence in
-parallel, with the top-tier lead verifying and synthesizing. This is gathering, not the code-writing mob:
-sub-agents never edit source, the lead never delegates the design/interview judgement. It is the only
-earlier-stage multi-agent pattern permitted.
+The lead writes self-contained briefs, dispatches Agents, verifies findings, and decides each gate.
 
-### Agent Team (delegate via `Agent` tool)
-1. **Backend / Frontend Developer** — writes the code per the wave brief.
-2. **Tester/Builder** — compiles, runs tests, lint, typecheck; reports green/red.
-3. **Architect** — verifies code matches `02_design.md` / `03_delivery_plan.md`, no drift.
-4. **Security Specialist** — scans for vulnerabilities (auth, input validation, tenant scoping, secret
-   leakage).
-5. **Reviewer** — verifies plan compliance and acceptance criteria from `03_delivery_plan.md`.
+### M/E/R/C profiles
 
-The lead writes briefs, dispatches subagents, collects results, and decides gate pass/fail. The lead
-never edits source code itself during this stage.
+Use the profile already approved in `03_delivery_plan.md`; do not replace it with an agent-count label.
 
-### Wave Profile — Minimal Escort By Default, Full Escort On Triggers
+- **M — Mechanical/bounded:** Developer + Tester + Reviewer; narrow 04b.
+- **E — Evidence-heavy:** add bounded Explorer/Architect evidence where completeness matters; standard 04b.
+- **R — Risk review required:** add Architect and Security/Privacy/Money; risk-focused 04b.
+- **C — Classic maximum-risk:** full role set, strongest judgement models, broad author risk sweep, and broad first-pass plus fresh final 04b reviewer.
 
-**The lead MUST classify every wave into one of three escort profiles before dispatching agents.** The
-default is the smallest profile that still satisfies the trigger rules. Spend the heaviest review effort
-(Architect + Security) only where it adds signal. Record the chosen profile and trigger reason as a
-one-line note at the top of each wave section in `04_implementation.md`
-(e.g. `Escort: full — touches auth and tenant-scoping`).
+Choose by the most dangerous touched risk, not average diff size. Escalate when the implementation exposes a stronger trigger; record an append-only X-ID instead of silently relabelling history.
 
-#### Profile A — Minimal (Dev + Tester + Reviewer)
-**Use when** the wave only: renames/moves/non-behavioural refactor; adjusts copy, i18n, comments;
-updates UI styling/layout (no new data flow); adds tests/fixtures without touching production paths;
-writes the final report / closeout wave. Skip Architect and Security.
+### Wave gate
 
-#### Profile B — Standard (Dev + Tester + Architect + Reviewer)
-**Use when** the wave: introduces or modifies non-trivial business logic/services/workflows; changes API
-request/response shapes or adds endpoints; changes UI behaviour with new data flow; changes the schema or
-migrations **without** touching auth/tenant scope. Skip Security.
+For every wave:
 
-#### Profile C — Full (Dev + Tester + Architect + Security + Reviewer)
-**Use when ANY Profile-C trigger from `AGENTS.md` applies — these are non-negotiable.** (Auth/authz,
-tenant-scoping/identity resolution, trust-boundary input validation, secrets/signing/webhook verify,
-payments, PII/cross-tenant, new mutating command surfaces, and your project's listed module paths.)
-Full escort is the **only** correct choice for these triggers, even if the wave is otherwise small.
+1. Give Developer the approved scope, files, acceptance, profile, R-IDs, and required validation.
+2. Dispatch the profile's proving roles in parallel where independent.
+3. Use cheap tiers only for mechanical command execution and evidence maps. Keep architecture, security, privacy, money, lifecycle, and final review on the strongest appropriate tier. Never use Fast mode.
+4. Give proving roles a compact path/line/change brief; they independently reread only the evidence they must verify.
+5. Verify and batch genuine findings at the owning layer.
+6. Pass only after acceptance, applicable proving roles, and changed-surface validation are green.
 
-#### Escalation
-If a Standard or Minimal wave surfaces something that hits a Profile C trigger mid-wave, the lead MUST
-escalate: spawn the missing Security (and Architect, if Minimal) agent before passing the gate. Do not
-rationalise a downgrade.
+Record R/X/V ledgers, task-owned paths, implementation/package fingerprints, and the 04b author handoff in `04_implementation.md`.
 
-### Quality Gates (wave-by-wave)
-The delivery plan (`03_delivery_plan.md`) is divided into waves. For each wave:
-1. Determine the wave's escort profile (A/B/C). Record it and the trigger reason in `04_implementation.md`.
-2. Dispatch the Developer agent with the wave brief (scope, files, acceptance).
-3. After code is produced, dispatch the proving roles for the chosen profile **in parallel**:
-   - Profile A: Tester + Reviewer
-   - Profile B: Tester + Architect + Reviewer
-   - Profile C: Tester + Architect + Security + Reviewer
-4. Collect all results. A wave **passes** only if every spawned check returns green:
-   - Tester: ✅ build green, tests green, types green, lint green
-   - Architect (B/C): ✅ no design drift
-   - Security (C): ✅ no new vulnerabilities introduced
-   - Reviewer: ✅ matches plan + acceptance criteria
-5. If any gate fails: spawn a focused fix agent with the specific findings, re-run failed gates only.
-6. Only after all gates pass: proceed to the next wave.
+### Automatic remediation from 04b
 
-### Context Budget Discipline
-- Keep the lead's context lean: hand off full file reads and code generation to subagents.
-- If a wave is too large, break it into smaller sub-waves before dispatching.
-- **Choosing the wave profile (A/B/C) is the primary cost lever.** Minimal escort costs roughly 40% of
-  full escort per wave — default to the smallest profile the trigger rules allow, never run full escort
-  "to be safe".
-- Target: lead retains ≥20% headroom, each worker agent retains a healthy margin.
+An active `tms-loop-review` invocation may call stage 04 back automatically. In that case:
 
-### Closing the Stage (mandatory)
-After all waves pass their gates, before the turn ends:
-- **Follow-up capture** and **Pre-Launch Manual Action capture** per the rules in `AGENTS.md`.
-  Follow-ups left only in `04_implementation.md` are lost.
-- Create the commit(s) per the commit rules in `AGENTS.md` (no AI attribution; do not push automatically).
+- append `Remediation cycle N`;
+- use the bounded remediation brief;
+- fix and validate owned defects;
+- refresh fingerprints and the handoff;
+- do not stop for confirmation, stage, or commit;
+- return directly to the same 04b invocation for a fresh reviewer.
 
-### Triggers
-**Only the execution of stage `04_implementation` triggers this rule.** ("do 04 for <ticket>",
-"execute 04_implementation", "implement <ticket>" when `03_delivery_plan.md` is approved.)
-**Not triggers** (normal single-agent lead work): writing/revising any pre-implementation artifact;
-discussing/refining the plan; estimations, scoping, research. Skip the multi-agent flow only if the user
-explicitly says "implement inline" or "no subagents".
+### Stage-04 close
 
----
+Capture follow-ups and pre-launch manual actions per `AGENTS.md`. Stage 04 never stages or commits. The single task-scoped commit is created only after a successful stage 06.
 
-## Auto Mode Discipline — No Speculative Expansion
+## Stage 04b — Independent and atomic
 
-When the user runs Claude Code in **auto mode** (Bypass Permissions), the lead MUST behave with the same
-scoping discipline as in edit-automatically mode. Auto mode removes the permission prompt; it does NOT
-grant license to widen scope. The dominant waste pattern in auto mode is silent scope inflation.
+Every scoring pass uses a fresh read-only Agent with a self-contained prompt. Do not reveal parent reasoning, prior findings/scores/fixes, round number, remaining budget, or the acceptance target.
 
-### Forbidden in auto mode
-- **No exploratory subagents beyond the wave's escort profile.** Escalate only on explicit Profile C
-  triggers.
-- **No speculative `bash` / `grep` / `read` / file listing** "just to be safe". Every shell or file read
-  must be tied to the current step's deliverable.
-- **No parallel side-investigations** off the main line. One hypothesis at a time; if a second seems
-  worth pursuing, stop and surface it to the user.
-- **No "while I'm here" cleanup/refactor/doc edits** discovered in passing. Capture as a follow-up.
-- **No retries of a failed approach with a slightly different prompt.** Surface the failure and ask.
+The per-attempt checkpoint limits orchestration, not quality. If implementation work remains, 04b persists `NEEDS_REMEDIATION`, automatically runs repeat 04, and starts a fresh attempt. It does not ask the user to restart 04.
 
-### Still allowed (and required) in auto mode
-- **Parallel dispatch of proving roles inside a single wave** — mandatory, saves wall-clock, adds no
-  tokens vs. sequential.
-- **Parallel tool calls in a single message when independent and clearly needed for the same step.**
-- **Acting without confirmation on local, reversible work unambiguously inside the current scope** —
-  that is the point of auto mode. The discipline is about scope, not asking permission for in-scope edits.
+`PASS` is atomic: validation and a fresh independent review must cover the exact same final implementation fingerprint, and no implementation change may follow that reviewer. Any later code/test/SQL/contract/config edit immediately returns the artifact to `NOT_ACCEPTED`.
 
-### Heuristic
-Before any tool call in auto mode: *"Would I have run this in edit-automatically mode without the user
-pushing back?"* If "probably not, I was just being thorough" — don't run it.
+Only a normalized `PASS` may proceed to 05. The first user-facing line must include `04b status: <STATUS>` and explicitly say whether 05 is allowed.
+
+## Auto Mode Discipline
+
+Auto mode removes permission prompts; it does not widen scope.
+
+- No speculative side investigations, unrelated cleanup, or hidden scope expansion.
+- Parallel proving roles and independent tool calls are allowed when tied to the current wave.
+- Prefer one hypothesis at a time.
+- Capture adjacent work as follow-up instead of implementing it opportunistically.
+- Never use Fast mode for pipeline stages or scoring review.

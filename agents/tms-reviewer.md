@@ -1,6 +1,6 @@
 ---
 name: tms-reviewer
-description: Proving role for stage 04_implementation. Verifies the wave matches the delivery plan and the task's acceptance criteria. Read-only; reports a pass/fail against the plan, does not edit.
+description: Stage-04 proving role. Verifies one wave against the plan and acceptance criteria. Read-only and not a substitute for the fresh independent scoring reviewer in stage 04b.
 tools:
   - Read
   - Grep

@@ -1,6 +1,6 @@
 ---
 name: tms-architect
-description: Proving role (Profile B/C) for stage 04_implementation. Verifies the wave's code matches the approved 02_design.md / 03_delivery_plan.md with no design drift. Read-only; reports findings, does not edit.
+description: Proving role for Profile E/R/C stage-04 waves. Verifies the code matches the approved design and plan, stays at the owning layer, and covers coupled contracts and paths. Read-only.
 tools:
   - Read
   - Grep

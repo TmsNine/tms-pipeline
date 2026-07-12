@@ -77,7 +77,9 @@ JSON shape (all keys optional; missing ones fall back to the `questions.js` defa
   wants the skeleton. The engine writes the vault to `DOC_BASE_PATH` — an absolute Obsidian/Notion path
   or a repo-relative path — **not** blindly into `repo/docs`.
 - Run with `--dry-run` first to preview the file list, then again for real.
-- Never pass `--force` without asking — it overwrites an existing `AGENTS.md` / `.claude/CLAUDE.md`.
+- Never pass `--force` without explicit consent that names the full scope: it may overwrite existing
+  `AGENTS.md`, `.claude/CLAUDE.md`, copied pipeline/doc-base template files, and installed Claude/Codex
+  skills, commands, and agent-role files. Without `--force`, all existing files are preserved.
 - Do **not** copy the per-task pipeline forms into the repo. The stage skills generate those documents
   per task; a template copy in the user's repo is redundant.
 

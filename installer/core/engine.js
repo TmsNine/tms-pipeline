@@ -14,6 +14,8 @@ const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const TEMPLATES = path.join(REPO_ROOT, 'templates');
 const CLAUDE_SKILLS = path.join(REPO_ROOT, 'skills');
 const CODEX_SKILLS = path.join(REPO_ROOT, 'codex-skills');
+const CLAUDE_AGENTS = path.join(REPO_ROOT, 'agents');
+const CODEX_AGENTS = path.join(REPO_ROOT, 'codex-agents');
 
 // Where Codex looks for globally-available skills and agents. Codex has no `/plugin install`
 // equivalent, so to make the tms-* skills available to Codex we copy them here.
@@ -76,21 +78,40 @@ function writeFileSafe(filePath, contents, { force = false, dryRun = false } = {
   return { path: filePath, status: 'written' };
 }
 
-function copyDir(srcDir, destDir) {
+function copyDir(srcDir, destDir, { force = false } = {}) {
+  let copied = 0;
+  let skipped = 0;
   ensureDir(destDir);
   for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
     const src = path.join(srcDir, entry.name);
     const dest = path.join(destDir, entry.name);
-    if (entry.isDirectory()) copyDir(src, dest);
-    else fs.copyFileSync(src, dest);
+    if (entry.isDirectory()) {
+      const nested = copyDir(src, dest, { force });
+      copied += nested.copied;
+      skipped += nested.skipped;
+    } else if (fs.existsSync(dest) && !force) {
+      skipped += 1;
+    } else {
+      fs.copyFileSync(src, dest);
+      copied += 1;
+    }
   }
+  return { copied, skipped };
 }
 
 // Copy a directory only when not in dry-run; return a status record either way.
-function copyDirSafe(srcDir, destDir, label, { dryRun = false } = {}) {
-  if (dryRun) return { path: destDir, status: `would copy (dry-run) — ${label}` };
-  copyDir(srcDir, destDir);
-  return { path: destDir, status: `copied (${label})` };
+function copyDirSafe(srcDir, destDir, label, { dryRun = false, force = false } = {}) {
+  if (dryRun) {
+    return {
+      path: destDir,
+      status: `would copy (dry-run; existing files preserved unless --force) — ${label}`,
+    };
+  }
+  const { copied, skipped } = copyDir(srcDir, destDir, { force });
+  return {
+    path: destDir,
+    status: `copied ${copied}; skipped ${skipped} existing (${label})`,
+  };
 }
 
 /**
@@ -102,9 +123,9 @@ function copyDirSafe(srcDir, destDir, label, { dryRun = false } = {}) {
  * @param {boolean} opts.useCodex       gates the Codex asset install below.
  * @param {boolean} opts.copyPipeline   copy the task-pipeline template into the project.
  * @param {boolean} opts.copyDocsVault  copy the docs-vault skeletons into the project.
- * @param {boolean} opts.copyClaudeAssets copy skills/ + agents/ + commands/ into ~/.claude (npx alt to /plugin install).
+ * @param {boolean} opts.copyClaudeAssets copy skills/ + Claude agents/ + commands/ into ~/.claude (npx alt to /plugin install).
  * @param {string}  opts.claudeHome     override the Claude home dir (defaults to ~/.claude; for tests).
- * @param {boolean} opts.copyCodexAssets copy codex-skills/ + agents/ into ~/.codex (Codex has no plugin install).
+ * @param {boolean} opts.copyCodexAssets copy codex-skills/ + Codex TOML agents/ into ~/.codex (Codex has no plugin install).
  * @param {string}  opts.codexHome      override the Codex home dir (defaults to ~/.codex; for tests).
  * @param {boolean} opts.force          overwrite existing AGENTS.md / CLAUDE.md
  * @param {boolean} opts.dryRun         compute and report actions without writing anything
@@ -143,7 +164,7 @@ function applyConfig({
 
   if (copyPipeline) {
     const dest = path.join(targetDir, 'docs', '_pipeline_template');
-    results.push(copyDirSafe(path.join(TEMPLATES, 'pipeline'), dest, 'pipeline template', { dryRun }));
+    results.push(copyDirSafe(path.join(TEMPLATES, 'pipeline'), dest, 'pipeline template', { dryRun, force }));
   }
 
   if (copyDocsVault) {
@@ -152,7 +173,7 @@ function applyConfig({
     // project. Default to docs/ only when no doc base was given.
     const docBase = (answers.DOC_BASE_PATH && String(answers.DOC_BASE_PATH).trim()) || 'docs';
     const dest = path.isAbsolute(docBase) ? docBase : path.join(targetDir, docBase);
-    results.push(copyDirSafe(path.join(TEMPLATES, 'docs-vault'), dest, 'docs-vault skeletons → DOC_BASE_PATH (rename the PROJECT_NAME folder)', { dryRun }));
+    results.push(copyDirSafe(path.join(TEMPLATES, 'docs-vault'), dest, 'docs-vault skeletons → DOC_BASE_PATH (rename the PROJECT_NAME folder)', { dryRun, force }));
   }
 
   // Claude Code: the npx alternative to `/plugin install` — copy skills/agents/commands into ~/.claude.
@@ -161,9 +182,9 @@ function applyConfig({
     if (!useClaude) {
       results.push({ path: claudeHome, status: 'skipped (Claude Code not selected)' });
     } else {
-      results.push(copyDirSafe(CLAUDE_SKILLS, path.join(claudeHome, 'skills'), 'Claude skills → ~/.claude/skills', { dryRun }));
-      results.push(copyDirSafe(path.join(REPO_ROOT, 'agents'), path.join(claudeHome, 'agents'), 'Claude agents → ~/.claude/agents', { dryRun }));
-      results.push(copyDirSafe(path.join(REPO_ROOT, 'commands'), path.join(claudeHome, 'commands'), 'Claude commands → ~/.claude/commands', { dryRun }));
+      results.push(copyDirSafe(CLAUDE_SKILLS, path.join(claudeHome, 'skills'), 'Claude skills → ~/.claude/skills', { dryRun, force }));
+      results.push(copyDirSafe(CLAUDE_AGENTS, path.join(claudeHome, 'agents'), 'Claude agents → ~/.claude/agents', { dryRun, force }));
+      results.push(copyDirSafe(path.join(REPO_ROOT, 'commands'), path.join(claudeHome, 'commands'), 'Claude commands → ~/.claude/commands', { dryRun, force }));
     }
   }
 
@@ -173,12 +194,12 @@ function applyConfig({
     if (!useCodex) {
       results.push({ path: codexHome, status: 'skipped (Codex not selected)' });
     } else {
-      results.push(copyDirSafe(CODEX_SKILLS, path.join(codexHome, 'skills'), 'Codex skills → ~/.codex/skills', { dryRun }));
-      results.push(copyDirSafe(path.join(REPO_ROOT, 'agents'), path.join(codexHome, 'agents'), 'Codex agents → ~/.codex/agents', { dryRun }));
+      results.push(copyDirSafe(CODEX_SKILLS, path.join(codexHome, 'skills'), 'Codex skills → ~/.codex/skills', { dryRun, force }));
+      results.push(copyDirSafe(CODEX_AGENTS, path.join(codexHome, 'agents'), 'Codex agents → ~/.codex/agents', { dryRun, force }));
     }
   }
 
   return results;
 }
 
-module.exports = { applyConfig, renderTemplate, stripGuidance, fillTokens, copyDir, REPO_ROOT, TEMPLATES, CLAUDE_SKILLS, CODEX_SKILLS, CODEX_HOME, CLAUDE_HOME };
+module.exports = { applyConfig, renderTemplate, stripGuidance, fillTokens, copyDir, REPO_ROOT, TEMPLATES, CLAUDE_SKILLS, CODEX_SKILLS, CLAUDE_AGENTS, CODEX_AGENTS, CODEX_HOME, CLAUDE_HOME };

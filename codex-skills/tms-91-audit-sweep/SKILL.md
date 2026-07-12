@@ -23,14 +23,14 @@ A user invocation of this skill/stage is explicit authorization to use the subag
 
 ## Subagent Independence And Model Tiers (Codex)
 
-If `multi_agent_v1.spawn_agent` is not visible, use tool discovery for multi-agent tools. Spawn finder and skeptic with `fork_context: false`; the skeptic must NOT see the finder's reasoning as your endorsement, only bare claims to refute.
+If `spawn_agent` is not visible, use tool discovery for multi-agent tools. Spawn finder and skeptic with the exposed clean-context mechanism (`fork_turns: "none"` in the current schema); the skeptic must NOT see the finder's reasoning as your endorsement, only bare claims to refute.
 
 Model tiers:
 
-- Code-map explorer: `gpt-5.4-mini` high when the zone is broad and the finder needs a compact map first. It returns only `path:line`, symbol/route/component name, snippet/signature, and why it matters; it does not classify final severity.
-- Finder: `gpt-5.4` high for ordinary code zones; `gpt-5.5` high for auth/RLS/payments/PII/migrations/queues/lifecycle zones; `gpt-5.4-mini` medium only for docs/copy/dead-code seed sweeps where tool output is the main evidence.
-- Skeptic: at least the finder's tier. Use `gpt-5.5` xhigh for any proposed Class A/B or security/privacy/payment finding.
-- Debate follow-ups: use the cheapest tier that can answer the narrowed question, but never below `gpt-5.5` high for Class A/B security or data-integrity disputes.
+- Code-map explorer: Terra medium (fallback `gpt-5.4-mini` high) for a broad zone; evidence only, no severity classification.
+- Finder: Terra high (fallback `gpt-5.4`) for ordinary zones; Sol high (fallback `gpt-5.5`) for auth/RLS/payments/PII/migrations/queues/lifecycle.
+- Skeptic: at least the finder's capability tier; Sol xhigh for proposed Class A/B or security/privacy/payment findings.
+- Debate follow-ups: use the lowest sufficient tier, but never below Sol high / `gpt-5.5` high for Class A/B security or data-integrity disputes. Never use Fast mode or Ultra for a scoring verdict.
 
 ## Method
 
@@ -40,7 +40,7 @@ Model tiers:
 
 3. **Ground with tools first.** Run the static-analysis tools `00_scope.md` recorded, scoped to this zone (dead-code/unused, dep/cycle, `tsc --noEmit`, linter). Their output is **grounded seed evidence** — pass it to the finder so "dead code / unused export / cycle" findings are tool-verified facts, not LLM guesses. Do NOT install tools; if none exist for this zone, note that and proceed.
 
-4. **Finder pass.** If the zone is broad, first spawn a `gpt-5.4-mini` explorer to produce the compact code map above, then give that map plus tool seeds to the finder. Spawn a finder subagent scoped to the zone's path(s), with the tool seeds. Self-contained prompt: hunt the in-scope categories, return raw findings each with `file:line`, category, proposed severity + a "why this class, not the one below" line, and concrete evidence. **Empirical gate:** any finding the finder wants to mark Class A/B in the correctness/security category must come with a runnable repro/test or a concrete exploit path — an argument alone is not enough; without it, it cannot be A/B. For an oversized zone, split across 2–3 finders by sub-area. Collect raw findings — do not yet trust them.
+4. **Finder pass.** If the zone is broad, first spawn a Terra/fallback evidence explorer to produce the compact code map above, then give that map plus tool seeds to the finder. Spawn a finder subagent scoped to the zone's path(s), with the tool seeds. Self-contained prompt: hunt the in-scope categories, return raw findings each with `file:line`, category, proposed severity + a "why this class, not the one below" line, and concrete evidence. **Empirical gate:** any finding the finder wants to mark Class A/B in the correctness/security category must come with a runnable repro/test or a concrete exploit path — an argument alone is not enough; without it, it cannot be A/B. For an oversized zone, split across 2–3 finders by sub-area. Collect raw findings — do not yet trust them.
 
 5. **Skeptic pass — context asymmetry.** Spawn an INDEPENDENT skeptic subagent (fresh context) given ONLY the bare claim + `file:line` + the zone code — **NOT the finder's narrative/reasoning** (so it forms an orthogonal judgement instead of anchoring on the finder). Its job is to **refute each one**, defaulting to skepticism: actually reachable? already validated/handled upstream? intentional? false positive? dead-but-harmless vs truly dead? For A/B correctness/security it must independently check the empirical evidence reproduces. Returns per finding a verdict — `stands` / `refuted` / `needs-revision` — with its own reasoning, and a **confidence 0–100** that the finding is real.
 

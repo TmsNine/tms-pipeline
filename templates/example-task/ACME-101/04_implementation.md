@@ -2,6 +2,40 @@
 
 Date: 2026-01-15
 
+## Scope and fingerprints
+- Evidence note: the base and fingerprints in this documentation-only worked example are illustrative,
+  format-valid values; a real task must record actual `task-fingerprint.mjs` output.
+- Base SHA: `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`.
+- Task-owned tracked paths: reports API/UI source, tests, and `docs/ACME-101/`.
+- Task-owned untracked paths: `api/src/lib/csv.ts`, `api/src/lib/reportsQuery.ts`.
+- Starting implementation fingerprint: `sha256:1111111111111111111111111111111111111111111111111111111111111111`.
+- Final implementation fingerprint: `sha256:2222222222222222222222222222222222222222222222222222222222222222`.
+- Package fingerprint (normalized evidence fields): `sha256:4444444444444444444444444444444444444444444444444444444444444444`.
+- Fingerprint helper: `tms-task-fingerprint-v1`; source: `worktree`; base: `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`.
+- Implementation manifest (one repo-relative POSIX path per line):
+
+```text
+api/src/lib/csv.ts
+api/src/lib/reportsQuery.ts
+api/src/routes/reports.test.ts
+api/src/routes/reports.ts
+web/src/pages/ReportsList.tsx
+```
+
+- Package manifest: the implementation paths above plus these repo-local pipeline paths:
+
+```text
+docs/ACME-101/00_ticket.md
+docs/ACME-101/01_research.md
+docs/ACME-101/02_design.md
+docs/ACME-101/02b_gap_audit.md
+docs/ACME-101/03_delivery_plan.md
+docs/ACME-101/04_implementation.md
+docs/ACME-101/04b_loop_review.md
+docs/ACME-101/05_test_report.md
+docs/ACME-101/06_review_gate.md
+```
+
 ## Wave-by-wave execution
 
 ### Wave 1 — CSV helper + shared query/columns
@@ -41,15 +75,37 @@ Date: 2026-01-15
 - Validation: UI smoke proves the download link includes active filters and the loading state is stable.
 - 04b must stress-test: narrow diff review for filter propagation and user-visible states.
 
-## 04b handoff — author risk map for 04b to verify and complete
+## R/X/V evidence
+
+| R-ID | Invariant | Owner layer | Required proof | Result |
+|---|---|---|---|---|
+| R-CSV-01 | Formula cells cannot execute. | CSV helper | CSV unit tests | PASS |
+| R-CSV-02 | List/export filters match. | Shared reports query | Route parity tests | PASS |
+| R-CSV-03 | Export stays organization-scoped. | Export route/shared query | Two-org integration test | PASS |
+| R-CSV-04 | Large export is capped with a note. | Export response builder | Endpoint cap test | PASS |
+
+| X-ID | Newly exposed risk | Evidence | Disposition |
+|---|---|---|---|
+| X-04-01 | Endpoint test originally omitted the truncation note row. | Author self-review of route tests. | Fixed before 04b handoff. |
+
+| V-ID | Command / signal | Scope | Implementation fingerprint | Result | Fresh/reused | Covers |
+|---|---|---|---|---|---|---|
+| V-04-01 | `npm test -- csv reports-export` | API CSV/export | `sha256:2222222222222222222222222222222222222222222222222222222222222222` | PASS | fresh | R-CSV-01..04, X-04-01 |
+| V-04-02 | `npm run typecheck` | API + web | `sha256:2222222222222222222222222222222222222222222222222222222222222222` | PASS | fresh | AC |
+
+## 04b handoff — orchestrator-only author risk map
+- Reviewer isolation: 04b audits this section but sends the scoring reviewer only the current contract,
+  exact scope/fingerprint, neutral invariants/surfaces, constraints, and validation expectations.
 - Resolved task-owned files: `api/src/lib/csv.ts`, `api/src/lib/reportsQuery.ts`,
   `api/src/routes/reports.ts`, `web/src/pages/ReportsList.tsx`, related tests.
-- Commit/range for 04b: worktree changes for ACME-101.
+- Base SHA and task-owned scope for 04b: worktree changes for ACME-101 from the recorded illustrative base.
 - Dangerous invariants: CSV injection neutralization, org scoping, list/export filter parity, 10k cap.
 - Searches/risk-surface sweeps performed in 04: CSV trigger characters, shared query call sites, export
   route auth fixtures, frontend active filter propagation.
 - Adjacent surfaces checked: list reports endpoint, export endpoint tests, CSV unit tests, UI smoke.
 - Validation: `npm test -- csv reports-export`, `npm run typecheck`; no manual launch action.
+- Final implementation fingerprint for 04b: `sha256:2222222222222222222222222222222222222222222222222222222222222222`.
+- Package fingerprint (normalized evidence fields) and task-owned manifest: `sha256:4444444444444444444444444444444444444444444444444444444444444444`; paths listed above.
 - Reviewer stress-test prompts: try to prove formula injection is still possible; try to find a route path
   where export skips `req.user.orgId`; try to make list/export filters diverge.
 

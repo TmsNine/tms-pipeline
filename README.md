@@ -15,7 +15,7 @@ called a *skill* here — for example, `/tms-research`). The call at every step 
 one step, you check it, and only then do you move on (this is the "human in the loop" principle —
 a person reviews every step).
 
-🇷🇺 [Читать по-русски](README.ru.md) · 📖 [Full methodology](docs/00-methodology.md) · 🚀 [Getting started](docs/01-getting-started.md)
+🇷🇺 [Читать по-русски](README.ru.md) · 📖 [Full methodology](docs/00-methodology.md) · 🚀 [Getting started](docs/01-getting-started.md) · 🧭 [Model routing](docs/06-model-routing.md)
 
 ---
 
@@ -171,8 +171,8 @@ iterative **review loop** (`/tms-loop-code-review`).
    surface needs strong independent review, and **C** when full classic multi-agent implementation is
    deliberately allowed. In Codex, ordinary stage 04 work stays with the main agent and explicit
    self-check roles; the expensive independence moves to 04b, where a fresh reviewer checks the actual
-   diff. Risky waves carry a concrete handoff seed from 03 into 04 and 04b: invariants, required proof,
-   owner layer, failure signal, and the adjacent surfaces to search. Heavy review only kicks in where it
+   diff. Stage 03 keeps one canonical risk ledger for 04 and 04b: stable R-IDs, invariants, required
+   proof, owner layer, failure signal, owning wave, and adjacent surfaces to search. Heavy review only kicks in where it
    pays off; "run everything to be safe" is explicitly discouraged.
 3. **Nothing found gets lost.** Deferred items found along the way (follow-ups), documentation drift, and
    manual pre-launch actions are captured by a hard rule. Each finding has a table for where to send it: to
@@ -228,7 +228,7 @@ npx tms-pipeline
 
 # 2b) Codex — reads AGENTS.md natively. Codex has no /plugin install equivalent, so its skills/agents
 #     go in ~/.codex. At the same installer step pick 2 (Codex) and it copies them. By hand:
-#       cp -R codex-skills/* ~/.codex/skills/ && cp -R agents/* ~/.codex/agents/
+#       cp -R codex-skills/* ~/.codex/skills/ && cp -R codex-agents/* ~/.codex/agents/
 #     More: docs/02-configuration.md#codex
 ```
 
@@ -317,10 +317,11 @@ gain from clearing it.
 skills/        Claude Code tms-* skills (setup + process + audit + refactoring)
 codex-skills/  Codex tms-* skills with Codex-native names and instructions
 agents/        5 mob roles (developer, tester, architect, security, reviewer)
+codex-agents/  5 Codex TOML roles (explorer, validator, reviewer, gap auditor, risk reviewer)
 commands/      the /tms-init onboarding command
 installer/     the core config engine + the `npx tms-pipeline` installer
 templates/     AGENTS/CLAUDE templates, process document forms, blank documentation-base templates, an example task
-docs/          methodology + getting started + configuration + documentation base + the under-the-hood step walkthrough
+docs/          methodology + setup/configuration + stage walkthrough + model-routing memo
 ```
 
 ---

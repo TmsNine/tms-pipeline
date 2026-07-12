@@ -32,6 +32,7 @@ the source templates and packaged skills.
 - `skills/` — Claude Code skill tree. These names are the Claude-facing `/tms-*` commands.
 - `codex-skills/` — Codex skill tree. These use Codex-native numbered names such as `tms-00-ticket`.
 - `agents/` — role-agent prompts shared by the methodology.
+- `codex-agents/` — Codex-native TOML role configs installed into `~/.codex/agents`.
 - `commands/` — onboarding command sources, currently `/tms-init`.
 - `installer/` — zero-dependency Node installer and tests.
 - `templates/` — generated project templates: `AGENTS`, `CLAUDE`, pipeline artifacts, doc-base skeletons,
@@ -86,7 +87,7 @@ The public pipeline currently has 9 durable task artifacts:
 - The installer is intentionally thin. It selects language/tooling, installs skills/agents, and writes
   starter project files. Deep project-specific discovery belongs to `/tms-init`, not the terminal wizard.
 - Claude asset copy uses `skills/` plus `agents/` and `commands/`.
-- Codex asset copy uses `codex-skills/` plus `agents/`.
+- Codex asset copy uses `codex-skills/` plus `codex-agents/`.
 - Do not make the installer overwrite existing user files unless `--force` is explicitly used.
 - Preserve dry-run behavior: `--dry-run` reports actions without writing.
 - Keep the installer zero-dependency unless there is a strong public maintenance reason to change that.

@@ -164,11 +164,11 @@ The profile is chosen by the **most dangerous touched risk**, not by the average
 goal is not to weaken review; it is to buy quality in the stage where it is most efficient: a focused
 implementation in 04, followed by an independent review/fix loop in 04b.
 
-For risky waves, the delivery plan also carries a small handoff seed into implementation: the invariant
-that must not break, the proof or test that should show it, the owner layer where the decision belongs,
-the failure signal, and the search map for adjacent routes, services, tests, and mocks. This keeps 04 from
-forgetting why the wave was risky, and gives 04b something concrete to verify rather than a vague "review
-carefully."
+The delivery plan keeps one canonical append-only risk ledger for implementation: stable R-IDs, the
+invariant that must not break, the proof or test that should show it, the owner layer where the decision
+belongs, the failure signal, owning wave, and the search map for adjacent routes, services, tests, and
+mocks. Waves reference their owning R-IDs instead of copying the entries. This keeps 04 from forgetting
+why a wave was risky and gives 04b concrete evidence to verify rather than a vague "review carefully."
 
 ### 3.3 Nothing discovered gets lost: capturing follow-ups and launch steps
 
@@ -237,23 +237,31 @@ The result is written into `04_implementation.md`: stage-04 mode, profile per wa
 applied, risks checked, validation, follow-ups, launch actions, and what 04b must independently
 stress-test.
 
+Fingerprint evidence is executable rather than descriptive. Both tool trees ship the same
+zero-dependency `task-fingerprint.mjs` helper (`tms-task-fingerprint-v1`). It hashes exact recorded path
+manifests with SHA-256, length framing, bytewise path ordering, raw content, modes, symlinks, and
+deletions. Package-fingerprint fields are normalized by the helper so they do not hash themselves; stage
+06 requires the worktree and staged-index package hashes to match.
+
 For Profile R/C work, stage 04 must do a bounded local risk-surface sweep before handing off: check
 directly coupled routes, services, read/write paths, tests, mocks, and risky field reads named by the
-plan's handoff seed and by the actual diff. It also runs an adversarial self-review against the invariant
+plan's canonical risk ledger and by the actual diff. It also runs an adversarial self-review against the invariant
 table. That pass is not independent review and must not be presented as acceptance. Its output is an
 author risk map for 04b to verify and complete.
 
-Stage 04b is where the pipeline buys independent confidence. It resolves the task diff (worktree,
-commits, or both), gives that concrete scope to a fresh read-only reviewer, fixes real findings, validates
-again, and repeats until the latest independent review reports no actionable findings or reaches the
-acceptance threshold with validation green.
+Stage 04b is where the pipeline buys independent confidence. Normally it resolves the uncommitted
+task-owned worktree scope left by stage 04, gives that concrete scope to a fresh read-only reviewer,
+fixes real findings, validates again, and repeats until the latest independent review reports no
+actionable findings or reaches the acceptance threshold with validation green. A committed or mixed
+range is accepted only for a legacy task or an explicitly requested standalone review.
 
 The first 04b step is to distrust the author's handoff enough to audit it: does the claimed file list match
 the diff, do the invariants cover the dangerous surfaces, did tests or mocks keep the old contract, and
 are there sibling paths that make the same business decision? On risk-heavy work, the first reviewer must
 cover all relevant defect classes in one broad pass. If repeated reviews show the implementation is
 under-hardened, the loop stops patching around the edges and sends the task back through a focused
-stage-04-style remediation pass before restarting fresh 04b.
+separately recorded repeat-04 pass in the same session before starting a fresh 04b attempt. The round
+counter ends only one attempt; it never justifies `PASS` or a request for the user to restart 04.
 
 Why this works. Full multi-agent coding during 04 can be valuable on maximum-risk work, but on ordinary
 bounded work it spends a lot of context and tokens before there is a concrete diff to inspect. The updated
@@ -263,9 +271,10 @@ plan. Even small changes get at least a narrow 04b because a small diff can stil
 permissions, copy with legal meaning, or state transitions.
 
 Here, too, you review every step: the lead shows you the result of each wave, and finished code does not
-move on by itself. Stage 04, 04b, and 06 create task-scoped commits by default when validation is green and
-the changed files clearly belong to the task. They never push automatically, never add AI attribution, and
-stop instead of guessing when the worktree mixes unrelated changes.
+move on by itself. Stages 00–05 do not commit. After a successful stage 06, the pipeline creates exactly
+one task-scoped closing commit when external status documents are synced, fingerprints match, and every
+path is unambiguously task-owned. It never pushes automatically, never adds AI attribution, and stops
+instead of guessing when the worktree mixes unrelated changes.
 
 ---
 

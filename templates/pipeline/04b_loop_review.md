@@ -2,29 +2,32 @@
 
 Date: [DATE]
 
+**Status:** PASS / NOT_ACCEPTED / SKIPPED / NEEDS_REMEDIATION / BLOCKED
+
 ## Scope resolved
-- Source: worktree / commit `[sha]` / range `[range]`
+- Base SHA / legacy range: ...
 - Files reviewed: ...
+- Accepted implementation fingerprint: ...
+- Package fingerprint at handoff: ...
 - Review depth: narrow / standard / classic
 - Stage-04 handoff: present/complete enough / expanded / missing
 
 ## Loop result
-- Status: PASS / SKIPPED
-- Iterations: ...
+- Attempt / reviewer rounds / fix rounds: ...
 - First-reviewer breadth: ...
 - Risk-map completeness: accepted / expanded / missing — ...
-- Loop health: scores, blocker-like defect count, repeat-04 remediation triggered? yes/no
+- Loop health: verified A/B count, reopened R/X IDs, repeat-04 remediation cycles
 - Final acceptance: score / no actionable findings
 
 ## Findings and fixes
-| Finding | Action | Evidence |
-|---|---|---|
-| ... | fixed / rejected / deferred | ... |
+| Class | Confidence | Path:line / finding | Action | Evidence |
+|---|---|---|---|---|
+| A/B/C/D | High/Medium/Low | ... | fixed / rejected / deferred | ... |
 
 ## Validation
-| Command | Result |
-|---|---|
-| `...` | PASS/FAIL |
+| V-ID | Command / signal | Fingerprint | Result | Covers |
+|---|---|---|---|---|
+| V-... | `...` | ... | PASS/FAIL | AC/R/X |
 
 ## Deferred follow-ups
 - [TICKET-ID] [area] [driver] -> [backlog path]

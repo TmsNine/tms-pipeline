@@ -7,7 +7,7 @@ description: "Run pipeline stage 02 (design) for a backlog task in a project tha
 
 Read THIS project's `AGENTS.md` (Codex reads it natively) for product rules, tenant/auth/persistence constraints, task-folder path, backlog location, output language.
 
-> **Model tier.** This stage is product/architecture judgement. Use the current strong model, with high/xhigh for auth/RLS/payments/PII, lifecycle, migrations, queues, or cross-module contracts. `gpt-5.4-mini` may be used only as a read-only explorer for a compact evidence map; the lead must verify citations before turning them into the design contract.
+> **Model tier.** Prefer Sol high for product/architecture judgement and Sol xhigh for auth/RLS/payments/PII/lifecycle/migrations/queues/cross-module contracts; fallback `gpt-5.5`. A read-only evidence gatherer should use Terra medium (fallback `gpt-5.4-mini` high), and the lead must verify citations before turning them into the design contract. Never use Fast mode; Max is reserved for an unresolved Profile-C decision after a normal strong pass.
 
 ## Method
 

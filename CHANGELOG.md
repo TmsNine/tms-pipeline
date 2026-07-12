@@ -12,8 +12,9 @@ All notable changes to tms-pipeline are documented here. The format follows
   brainstorm.
 - `codex-skills/`: a Codex-native skill tree with numbered stage names and Codex-specific execution
   guidance, kept separate from the Claude Code `skills/` tree.
-- `/tms-loop-review`: stage `04b_loop_review`, the task-ID-based review/fix loop that resolves either
-  worktree or committed task diffs before `05_test_report`.
+- `/tms-loop-review`: stage `04b_loop_review`, the task-ID-based review/fix loop that normally resolves
+  the uncommitted task-owned worktree before `05_test_report`; committed ranges remain a legacy or
+  explicitly standalone-review fallback.
 - Public root `AGENTS.md` for this repository, adapted from battle-tested project rules but stripped of
   private/customer-specific context for public reuse.
 - `docs/04-stages-deep-dive.md` (+ `.ru.md`): an under-the-hood walkthrough of the delivery stages — which agents
@@ -38,15 +39,32 @@ All notable changes to tms-pipeline are documented here. The format follows
 - `docs/05-manual-setup.md` (+ `.ru.md`): a "finish onboarding with your AI agent" tutorial with
   ready-to-paste prompts for the deep judgement fields (Profile-C triggers, tenancy, migration policy,
   doc-base hints) that `/tms-init` intentionally leaves as `<<TODO>>`.
+- `docs/06-model-routing.md` (+ `.ru.md`): a stage-by-stage Sol/Terra/Luna routing memo with reasoning
+  effort, escalation rules, fallbacks, and explicit Fast/Max/Ultra constraints.
+- `codex-agents/`: Codex-native TOML roles for evidence exploration, validation, ordinary review,
+  design gap audit, and R/C risk review.
 
 ### Changed
 - Public docs and templates now explain the Codex-oriented stage `04`/`04b` split: focused
   main-agent implementation with explicit self-check roles, followed by mandatory independent review over
   the actual diff. Delivery plans now teach risk profiles `M/E/R/C` instead of the old A/B/C escort model.
-- Codex pipeline skills now use `gpt-5.4-mini` for cheap evidence/model-tier slots, add structured
-  risk-handoff seeds from `03` to `04`, require pre-04b risk-surface sweeps and author handoffs in `04`,
-  make `04b` audit that handoff before trusting it, and create task-scoped commits by default at
-  successful `04`, `04b`, and `06` boundaries.
+- Codex pipeline skills now use the GPT-5.6 Sol/Terra/Luna family with explicit fallbacks, add structured
+  R/X/V evidence and implementation/package fingerprints, require pre-04b risk-surface sweeps and author
+  handoffs, and make 04b audit that handoff before trusting it.
+- 04b acceptance is atomic: only a fresh reviewer and validation over the same final implementation
+  fingerprint may produce `PASS`. Per-attempt checkpoints are hidden from reviewers; remediation runs
+  repeat 04 and a fresh 04b attempt automatically in the same invocation.
+- Pipeline commit policy now leaves stages 00–05 uncommitted and creates exactly one task-scoped closing
+  commit after successful 06, verified external status sync, matching fingerprints, and unambiguous scope.
+- Package fingerprints now normalize their own evidence fields before hashing, and stage 06 records
+  commit eligibility rather than an impossible future commit SHA inside the commit itself.
+- Claude and Codex now ship a byte-identical zero-dependency fingerprint helper with SHA-256 framing,
+  explicit worktree/index sources, path containment, exact observed/manifest equality, and fixture
+  coverage proving staged-package parity, rename stability, and rejection of extra staged task files.
+- Claude and Codex skill trees now share the same M/E/R/C, atomic-04b, auto-remediation, and single-commit
+  semantics while retaining tool-native implementation and subagent mechanics.
+- The installer now copies `agents/` only to Claude Code and `codex-agents/` to Codex instead of
+  installing Claude Markdown role files into `~/.codex/agents`.
 - **Onboarding split into a thin installer + agent-driven setup** (matching the Superpowers/GSD
   convention). `npx tms-pipeline` is now a thin installer: pick language (EN/RU) and tool(s), install the
   skills, drop a starter `AGENTS.md` — it no longer interrogates you about test commands, ticket format,
@@ -64,6 +82,8 @@ All notable changes to tms-pipeline are documented here. The format follows
 - Newcomer reassurance callouts where placeholders are filled ("don't guess alone — ask your AI agent").
 
 ### Fixed
+- Installer asset copy now preserves existing project templates, installed skills, commands, and agent
+  roles unless `--force` is explicitly passed; tests cover customized Claude and Codex files.
 - `DESIGN_SYSTEM_HINT` was used in `AGENTS.template.md` but neither asked nor deferred; it is now a
   documented deferred token so it renders as a clear TODO and is covered by a test.
 

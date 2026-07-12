@@ -1,6 +1,6 @@
 ---
 name: tms-loop-review
-description: "Pipeline stage 04b — independent iterative loop code-review-and-fix for one task by ID; resolves the task's diff (committed or working-tree), runs fresh read-only reviewers until ≥9.5/10 or no actionable findings, writes 04b_loop_review.md. Use when the user invokes /tms-loop-review TASK-ID or wants to run 04b for a ticket in a clean window."
+description: "Pipeline stage 04b — independent iterative review controller for one task by ID; audits the task-owned diff with fresh M/E/R/C-scaled reviewers, automatically runs repeat 04 and a new 04b attempt when remediation is needed, and writes an atomic PASS/non-PASS status"
 allowed-tools:
   - Read
   - Write
@@ -12,42 +12,89 @@ allowed-tools:
   - TodoWrite
 ---
 
-Run pipeline stage **04b_loop_review** for `$1` — the independent iterative code-review-and-fix loop that sits right after `04_implementation` and before `05_test_report`. This is the **stage entry point invocable by task ID in a clean window**: unlike `/tms-loop-code-review` (which only inspects the *uncommitted* worktree), this skill first **resolves the task's implementation diff by ID** — so it works even after the implementation was already committed.
+Run pipeline stage **04b_loop_review** for `$1`, immediately after `04_implementation` and before `05_test_report`.
 
-Read THIS project's `AGENTS.md` / `CLAUDE.md` for project specifics: task-folder path (`docs/<TASK-ID>/`), validation commands, output language (this project: user-facing prose in Russian), commit/safety rules (never auto-push; no AI attribution).
+Read THIS project's `AGENTS.md` / `CLAUDE.md` for task paths, validation commands, output language, follow-up/launch rules, and Git safety.
 
-## Step 0 — resolve the review scope for `$1` (the new, essential part)
+## Mandatory run and depth
 
-Do NOT assume the diff is in the worktree. Determine the scope in this order and state which you used:
+04b is the default for every task. A user may explicitly skip it, but `SKIPPED` is not equivalent to acceptance and cannot proceed to 05 under the normal gate.
 
-1. **Uncommitted worktree changes** — run `git status --short`. If there are staged/unstaged/untracked source changes clearly belonging to `$1` (touching files named in `docs/$1/03_delivery_plan.md` / `04_implementation.md`, or matching the ticket), review those via `git diff`, `git diff --cached`, and the untracked files.
-2. **Committed but unpushed** — if the worktree is clean (implementation already committed), find the task's commit(s): `git log --oneline --grep="$1" -i` (also try the branch name / the migration or file names listed in `04_implementation.md`). Review the aggregate diff of those commits: `git show <sha>` for a single commit, or `git diff <first-parent>^..<last-sha>` for a range. Confirm with the user if multiple unrelated commits match.
-3. **Mixed** — some committed, some still in the worktree: review the union (committed task diff + current worktree diff).
+Scale review depth by the highest wave profile:
 
-Pass the resolved concrete scope (explicit file list + how to obtain the diff — `git show <sha>` / `git diff A..B`) into every reviewer prompt, because a clean worktree gives a fresh reviewer nothing to inspect on its own. The reviewer must still read the changed files and diff itself; you only tell it *where* the diff is.
+- **M:** one narrow independent diff review; re-review after fixes.
+- **E:** standard independent review with evidence-map completeness.
+- **R/C:** broad first pass over all relevant risk classes, batched fixes, and a fresh final reviewer. The 3-review/2-fix checkpoint limits one attempt only; it is hidden from reviewers and never lowers quality. Exhaustion automatically routes implementation work to repeat 04, then starts a fresh 04b attempt.
 
-Read `docs/$1/02_design.md` (the contract) and `docs/$1/03_delivery_plan.md` / `04_implementation.md` (waves + escort profiles) to know what the change was supposed to be and which waves ran.
+## Resolve exact task scope
 
-## Conditional-run & skip rules (stage 04b policy)
+1. Prefer the `base_sha`, task-owned path manifest, untracked paths, and fingerprints recorded by stage 04. Compare them with `git status --short`, staged/unstaged diffs, and task-owned untracked content.
+2. Use a committed range only for legacy tasks completed under an older commit policy or when the user explicitly requests standalone review.
+3. Fail closed as `BLOCKED` when task ownership or overlap is ambiguous. Unrelated staged files are a blocker.
 
-- **Run the full loop only for Profile B or C waves** (real business logic, contracts, auth/RLS/payments/PII). For **Profile A**-only work (renames, copy, styling, docs, tests-only, non-behavioural refactor) the loop adds little over `06_review_gate` — record `04b skipped — Profile A, no behavioural change` in the artifact and stop. If a task mixed profiles, run the loop scoped to the B/C waves' surface only.
-- **Operator may consciously skip** any task's 04b (e.g. no token budget). A skip is not a silent gap: write `docs/$1/04b_loop_review.md` with status `SKIPPED`, the reason, and a marker that this task's deep review is **owed to the next full-project audit** (`tms-audit-*`), which sweeps all committed code by construction.
-- This loop **fixes** code; it is NOT the gate. `06_review_gate` independently judges design conformance afterward. A reviewer that fixed code cannot also be the final sign-off.
+Give every reviewer the exact base/range and task-owned paths, but no parent reasoning.
 
-## Loop mechanics, scoring rubric & reviewer prompt
+Read `02_design.md`, `03_delivery_plan.md`, and `04_implementation.md`. Treat the 04b handoff as orchestrator-only author input to audit, not as proof and not as reviewer context.
 
-Use the full methodology defined in the sibling **`tms-loop-code-review`** skill (`SKILL.md` in the same skills directory) — it is the shared canon for: the golden-middle scoring rubric (9.5 = correct + complete per contract + right-sized + clear; penalise BOTH over- and under-engineering), subagent context isolation, the self-contained reviewer prompt template, the fix→validate→re-review loop, and the acceptance signal (≥9.5/10 OR explicit no-actionable-findings, with local validation green). Do not restate or fork that canon here; read it and apply it. The only additions this stage layers on top are Step 0 (diff resolution by ID) above and the mandatory artifact below.
+## Handoff completeness audit
 
-Key invariants (from that canon): each reviewer is a **fresh** `Agent` (`subagent_type: general-purpose`, `model: opus`), read-only (enforced by prompt), given no parent reasoning; you treat findings as input, fix genuine issues at the owning layer (no child-side compensation), validate after each fix, and re-spawn a new reviewer until the accept signal holds with validation green.
+Check whether the claimed file list matches the diff, risk invariants cover every dangerous surface, sibling decisions/read-write paths were omitted, risky identifiers or status fields bypass the owner layer, mocks still model an old contract, or green tests hide an untested coupled path. Expand only to directly coupled surfaces tied to the contract, diff, or risk trigger.
 
-## Artifact (mandatory — always write it)
+For every scoring pass, build a sanitized reviewer brief from the design, canonical R-ID ledger, exact current diff/path scope, current fingerprint, neutral invariant labels/surfaces, repository constraints, and validation expectations. Never attach the full author handoff, `04_implementation.md`, or `04b_loop_review.md`; exclude author searches/results, defects found/fixed, suspected bugs, scores, fix explanations, attempt/remediation history, and acceptance state. Rebuild the brief after every implementation change.
 
-Write `docs/$1/04b_loop_review.md`:
-- **Header:** stage `04b_loop_review`, date, task ID, resolved scope (worktree / commit sha(s) / range), escort profile(s) of the reviewed waves.
-- **Status:** `PASS` (accept signal reached) or `SKIPPED` (Profile A or operator skip) — with reason.
-- For a run: the number of loop iterations, the final reviewer acceptance signal + score, what was fixed (file/line + why), findings intentionally deferred (with reason + where captured — backlog ID per `AGENTS.md` Future Work Capture if actionable), and validation commands + results.
-- For a skip: the reason + the deferral-to-next-audit marker.
+For R/C, the first reviewer must cover all relevant classes in breadth before stopping: auth/session/tenant scope, PII/privacy, money, lifecycle, concurrency/atomicity, migrations/RPC/RLS, queues/jobs, notifications/outbox/external effects, tests/mocks/fixtures, and rollout/manual gates.
 
-## Follow-up & closing
+## Reviewer isolation and shared canon
 
-Any actionable finding you deliberately do NOT fix in-loop must land per `AGENTS.md` Future Work Capture (bundle-don't-shard; backlog row is a one-line index) — not left only in `04b_loop_review.md`. Any manual/pre-launch action surfaced goes to the launch playbook per Pre-Launch Manual Action Capture. If you changed code, follow the project commit rules (create the commit; never auto-push; no AI attribution). Then stop for confirmation before `05_test_report` (staged execution).
+Read and apply `../tms-loop-code-review/references/review-canon.md`.
+
+Each scoring pass uses a **fresh** read-only `Agent` with a self-contained prompt and no prior findings, scores, fixes, round number, remaining budget, or acceptance target. Use a balanced strong tier for M/E and the strongest available reasoning tier for R/C. Never use Fast mode.
+
+Never tell a reviewer the 9.5 threshold or ask it to produce `PASS`. It reports evidence and a fitness score; the lead owns the gate.
+
+## Remediation boundary and automatic repeat 04
+
+Trigger remediation when at least three unique verified Class A/B defects exist, the same R/X invariant reopens, or two review rounds expose new verified systemic defects across multiple owner layers. A low score alone is not a trigger.
+
+When implementation work remains:
+
+1. Persist the current attempt as `**Status:** NEEDS_REMEDIATION` with a bounded brief: findings, R/X IDs, owner layers, and required tests.
+2. Invoke `tms-implement` in automatic remediation mode inside the same session. Append `Remediation cycle N` to `04_implementation.md`, fix and validate the owned defects, recalculate fingerprints, and refresh the orchestrator-only handoff. Never stage or commit.
+3. Set 04b back to `NOT_ACCEPTED`, start `Attempt N+1`, rebuild the sanitized reviewer brief with remediation history removed, and spawn a fresh independent reviewer without sending an intermediate completion response.
+4. Continue until atomic `PASS`, explicit user interruption/skip, or a genuine blocker. A counter, token concern, context compaction, low score, or another remediation cycle is not a blocker.
+
+If only fresh validation/review evidence is missing and implementation is unchanged, start a fresh evidence attempt without an unnecessary repeat 04.
+
+## Fail-closed status and artifact
+
+At the start of every attempt, and before/together with every implementation/test/SQL/contract/config fix, set `docs/$1/04b_loop_review.md` to `**Status:** NOT_ACCEPTED`. Never leave stale `PASS` visible while changing the accepted fingerprint.
+
+The first field under the header must be exactly one of:
+
+- `**Status:** PASS`
+- `**Status:** NOT_ACCEPTED`
+- `**Status:** SKIPPED`
+- `**Status:** NEEDS_REMEDIATION`
+- `**Status:** BLOCKED`
+
+Record scope, profile/depth, attempt, handoff audit, reviewer/fix rounds, breadth, R/X/V evidence, fingerprints, scores, fixes, remediation links, and deferred items with their external capture locations.
+
+Stage 04b never stages or commits. Accepted changes remain for stage 05/06 and the single closing commit after successful 06.
+
+## Atomic PASS gate
+
+Write `PASS` only as the last artifact update after all conditions hold on the exact same final implementation fingerprint:
+
+1. required validation passed after the last implementation change;
+2. a fresh independent reviewer inspected that exact fingerprint afterward;
+3. no unresolved Class A/B remains and the latest reviewer reports no actionable findings or scores at least 9.5 without contradictory findings;
+4. no implementation change occurred after that reviewer;
+5. artifact status and user-facing claim agree.
+
+Any later code/test/SQL/contract/config change immediately invalidates acceptance. Return to `NOT_ACCEPTED`, rerun validation, and use a fresh reviewer.
+
+## Final response
+
+The first line must contain the literal normalized token `04b status: <STATUS>` and, in the project's output language, state whether stage 05 is allowed. Only `PASS` allows 05.
+
+Then briefly state reviewer waves, findings, fixes, and why that many waves were needed. Never use completion wording for any non-PASS state. Never ask the user to relaunch 04; the active 04b session owns remediation. Stop for confirmation before 05 only after `PASS`.

@@ -14,7 +14,7 @@ Use fresh, independent, read-only reviewer sub-agents to identify bugs and regre
 The loop is accepted only when:
 
 - Required validation for the changed surface passes.
-- No unresolved Critical or High severity findings remain.
+- No unresolved Class A or Class B findings remain.
 - All other in-scope actionable findings are fixed, rejected with evidence, or explicitly documented as intentionally deferred.
 - The latest fresh reviewer either:
   - gives a score of at least 9.5/10; or
@@ -26,18 +26,11 @@ A numeric score alone must never override an unresolved correctness, security, p
 
 A user invocation of this skill/stage is explicit authorization to use the subagents described by this skill. Do not treat the general multi-agent tool rule (spawn only on explicit user request) as a reason to skip a required reviewer, finder, skeptic, critic, worker, tester, architect, security specialist, or bounded explorer that this skill calls for. If this skill marks a subagent step as mandatory, run it; fall back to a local pass only when multi-agent tools are genuinely unavailable or the user explicitly opts out, and record the limitation in the stage artifact and final summary. If this skill marks a subagent step as optional, the invocation authorizes that option, but the skill's own use/skip criteria still decide whether it is worth running.
 
-## Pipeline Role: Stage 04b (and standalone use)
+## Relationship To Pipeline Stage 04b
 
-This skill runs in two modes:
+This skill is the generic bounded review canon: repository safety, reviewer isolation, finding triage, validation, scoring, loop limits and acceptance. Pipeline-specific scope, M/E/R/C depth, R/X/V ledgers, remediation status, artifacts, stage stops and commit policy live only in `tms-04b-loop-review`. Do not infer a pipeline skip, profile or closing action here.
 
-- Standalone, invoked via /tms-loop-code-review on the active change set.
-- Pipeline stage `04b_loop_review`, immediately after `04_implementation` and before `05_test_report`, over that task's implementation diff. It sits before the independent `06_review_gate`: the loop fixes code, then `06` judges design conformance independently. The loop must not become the gate — a reviewer that fixed code cannot also be the final independent sign-off.
-
-In pipeline mode, stage `04b_loop_review` is the default next stage after every `04_implementation`. Do not skip it merely because a wave was small. Scale the depth by the current M/E/R/C risk profile instead: Profile M gets a narrow independent diff review, Profile E gets evidence-aware review, Profile R gets a stronger risk-focused loop, and Profile C can use the full classic iterative depth.
-
-Operator may consciously skip: the user may explicitly skip stage `04b` for any task (for example, no token budget now) and proceed to `05_test_report`. A skip is not a silent gap. Write `docs/<TASK-ID>/04b_loop_review.md` with status SKIPPED, the reason, and a deferral marker that this task's deep code review is owed to the next full-project audit (`tms-audit-*`). The periodic project audit sweeps all committed code, so a skipped task is in scope there by construction; the marker makes the debt explicit.
-
-Artifact: in pipeline mode always write `docs/<TASK-ID>/04b_loop_review.md` — final reviewer acceptance signal and score, fixes applied, findings deferred, validation results, or the SKIPPED and deferral note.
+`references/review-canon.md` is the concise shared authority used by pipeline 04b. If duplicated standalone detail below ever conflicts with that reference, the reference wins and this skill must be aligned.
 
 ## Project Specifics
 
@@ -240,13 +233,9 @@ Do not fork or forward the current parent context.
 
 ### Codex spawn mechanics
 
-- If `multi_agent_v1.spawn_agent` is not visible, use tool discovery for `spawn_agent` / multi-agent tools before declaring the loop unavailable.
-- Spawn each scoring reviewer with `spawn_agent`, `agent_type: "default"`, and `fork_context: false`. **Never** set `fork_context: true` for a scoring pass — that would inherit parent context and break independence.
-- Model tier by reviewed surface:
-  - Profile M / bounded low-risk diff: `model: "gpt-5.4"` or the cheapest reviewer capable of independent judgement, `reasoning_effort: "high"`.
-  - Profile E / evidence-heavy but low-judgement support: `gpt-5.4-mini` may gather maps, but scoring review still uses an independent reviewer capable of judgement.
-  - Profile R / ordinary business logic, contracts, auth, RLS, payments, PII, migrations, queues, lifecycle/state machines, or prior reviewer disagreement: `model: "gpt-5.5"`, `reasoning_effort: "high"` or `"xhigh"` for security/privacy/payment/data-integrity risk.
-  - Profile C / maximum cost-of-error or heavy prior findings: `model: "gpt-5.5"`, `reasoning_effort: "xhigh"`.
+- If `spawn_agent` is not visible, use tool discovery for multi-agent tools before declaring the loop unavailable.
+- Inspect the actual spawn schema before selecting arguments. When it supports a custom role/model/effort, prefer Terra high for ordinary review and Sol xhigh for auth/RLS/payments/PII/migrations/queues/lifecycle/data-integrity or prior disagreement; fallbacks are `gpt-5.4` and `gpt-5.5`. When the schema exposes only `task_name`, `message`, and `fork_turns`, use `fork_turns: "none"`, put the complete reviewer role in the prompt, and report `custom_role_enforced = false`, `actual_model = runtime-selected/unknown`. Never pretend `task_name` selects an agent type.
+- Never inherit or forward the parent context for a scoring pass. Never use Ultra for a scoring reviewer and never use Fast mode.
 - Pass only a self-contained reviewer prompt (see template below). Do not include parent-thread analysis, implementation rationale, suspected issues, proposed fixes, previous reviewer output, or summaries of the main process's reasoning.
 
 Create the reviewer with a clean context and provide only a self-contained review task containing:
@@ -358,7 +347,7 @@ Ignore unrelated pre-existing issues unless the active changes make them worse o
 
 For each finding, use this format:
 
-[Severity] [Confidence] path/to/file:line - Short title
+[Class] [Confidence] path/to/file:line - Short title
 
 Evidence:
 <what the code currently does>
@@ -372,10 +361,14 @@ Why it belongs to this change:
 Recommended direction:
 <minimal correction or missing test, without editing files>
 
-Severity must be one of: Critical, High, Medium, Low.
+Class must be one of:
+- A — data loss, security/privacy breach, cross-tenant exposure, major money error, or launch blocker;
+- B — recoverable production incident, unsafe lifecycle/concurrency behavior, material contract break, or false success;
+- C — bounded correctness/UX/operability/test gap that should be fixed or bundled;
+- D — theoretical, cosmetic, or optional improvement.
 Confidence must be one of: High, Medium, Low.
 
-Return findings first, ordered by severity and then confidence.
+Return findings first, ordered by class and then confidence.
 
 Do not include speculative findings without concrete repository evidence. Do not deduct points solely for unrelated pre-existing problems, personal style preferences, or optional polish.
 
@@ -520,8 +513,8 @@ Accept the loop only when all of the following are true:
 
 ### Findings
 
-- no unresolved Critical findings remain;
-- no unresolved High findings remain;
+- no unresolved Class A findings remain;
+- no unresolved Class B findings remain;
 - all valid in-scope findings have been fixed or intentionally deferred with a defensible reason;
 - no accepted finding is hidden merely because the reviewer score is high.
 
@@ -532,7 +525,7 @@ The latest fresh reviewer either:
 - scores the current state at least 9.5/10; or
 - explicitly states that there are no actionable findings or comments.
 
-A reviewer response with a score of 9.5 or higher is not sufficient when the same response contains unresolved Critical or High severity findings.
+A reviewer response with a score of 9.5 or higher is not sufficient when the same response contains unresolved Class A or B findings.
 
 A score below 9.5 with an explicit statement of no actionable findings or comments is acceptable. Do not invent cosmetic work merely to increase the score.
 
@@ -543,9 +536,9 @@ When the reviewer gives a score below 9.5 and mentions vague concerns without co
 - if no concrete issues are provided, spawn a new fresh reviewer;
 - do not fabricate work to satisfy an unexplained score.
 
-## Loop Limits
+## Per-Attempt Orchestration Checkpoint
 
-The loop must be bounded to prevent uncontrolled token and time consumption.
+The loop must be bounded to prevent uncontrolled token and time consumption without turning the budget into a reviewer target.
 
 Default limits:
 
@@ -556,12 +549,12 @@ MAX_FIX_ROUNDS = 2
 
 A review round means a fresh independent scoring reviewer. A fix round means a meaningful batch of source or test changes made in response to verified findings.
 
-The user may explicitly increase these limits.
+These are orchestrator-only per-attempt checkpoints. Never disclose the round number, remaining budget, previous scores/findings/fixes, or acceptance threshold to a scoring reviewer. The user may explicitly increase the checkpoint, but doing so never lowers the acceptance bar.
 
 Stop without claiming acceptance when:
 
-- the maximum review rounds are exhausted;
-- the maximum fix rounds are exhausted;
+- the per-attempt review checkpoint is exhausted;
+- the per-attempt fix checkpoint is exhausted;
 - the same unresolved issue repeats without new evidence;
 - reviewers provide contradictory architecture requirements that cannot be resolved from the repository;
 - required validation cannot be executed;
@@ -570,7 +563,7 @@ Stop without claiming acceptance when:
 - the user interrupts the process;
 - a decision requires explicit product or architecture approval.
 
-When stopped by a limit or blocker, return the current state, unresolved findings, validation status, and exact reason the loop could not be accepted.
+When stopped by a checkpoint or blocker, return the current state, unresolved findings, validation status, and exact reason the loop could not be accepted. A later remediation/reimplementation attempt starts a fresh checkpoint; no number of attempts creates acceptance without the full evidence gate.
 
 ## Final Repository Check
 
@@ -592,6 +585,8 @@ Confirm:
 - the final diff contains only intended changes plus preserved pre-existing user work;
 - validation results correspond to the latest file state;
 - the accepted reviewer inspected the latest state, not an earlier revision.
+
+Acceptance is atomic: required validation must have passed after the last implementation/test/SQL/contract/config change, and a fresh independent reviewer must then have inspected that exact final state. Any later implementation change invalidates acceptance until validation and fresh review are repeated. If the evidence order or final state is uncertain, report the loop as not accepted.
 
 ## Final Response
 

@@ -47,6 +47,7 @@ around it.
 
 > The specific model names in the skills can change. The stable principle is the split of work: cheap
 > models can gather evidence; high-judgement work and independent review use stronger reasoning.
+> Current Sol/Terra/Luna table: [model routing](06-model-routing.md).
 
 ---
 
@@ -162,15 +163,15 @@ around it.
 ## Stage 03 — Delivery plan (`/tms-plan`)
 
 - **Purpose.** Split the approved design into **waves** — small, self-contained slices of the task, each
-  of which can be coded, covered with tests, and committed on its own. The agent handles small slices
+  of which can be coded and proven with tests on its own. The agent handles small slices
   better than one huge task whole.
 - **Who works.** The lead.
 - **Input → Output.** `02_design.md` (with the blockers folded in) → an `03_delivery_plan.md` file: a list
   of waves, and **each wave has its own risk profile M/E/R/C** with the reason for the choice.
 - **What the agent does.** Divides the work into finished units, notes for each which files will be
-  created or changed, what the main agent must self-check in 04, and how deep 04b must be. For Profile
-  R/C waves it also writes a structured 04 risk-handoff seed: invariant, required proof/test, owner layer,
-  failure signal, and the adjacent search map 04 must check before handoff.
+  created or changed, what the main agent must self-check in 04, and how deep 04b must be. It also writes
+  one canonical append-only risk ledger with stable R-IDs, invariants, proof, owner layer, failure signal,
+  owning wave, and the adjacent search map. Each wave references its owning R-IDs.
 - **Where you check.** You check whether the agent invented anything extra: is the plan split logically,
   did entities, files, or layers appear that weren't in the approved design? (Agents sometimes confidently
   write in things the task doesn't actually contain — that's what to catch.)
@@ -192,13 +193,13 @@ around it.
   smallest coherent change → runs targeted tests/checks → verifies architecture, contracts, security,
   privacy, money, and launch implications when relevant → records what passed and what 04b must
   stress-test. On Profile R/C waves it also performs a bounded risk-surface sweep, checks the invariant
-  table adversarially, and writes a compact 04b handoff as an author risk map for the independent reviewer
-  to verify. The next wave starts only after the current wave is locally coherent.
+  table adversarially, and writes a compact 04b handoff as an orchestrator-only author risk map. Stage 04b
+  audits it and derives a sanitized neutral brief for the independent reviewer; author findings, fixes,
+  searches, and remediation history are not forwarded. The next wave starts only after the current wave
+  is locally coherent.
 - **Where you check.** The lead shows you the result wave by wave. At the end the code **does not move on
-  by itself**. A task-scoped commit is created by default when validation is green and the changed files
-  clearly belong to the task, but without any mention that an AI made it (the license requires this), and
-  that commit is **not pushed to the server automatically**. If the worktree mixes unrelated edits and the
-  task boundary is unclear, the agent stops and reports the exact paths instead of staging a guess.
+  by itself**. Stage 04 does not commit: the task-owned package stays in the worktree for independent
+  04b, stage-05 testing, and one closing commit after successful 06.
 - **When to go on.** After all the waves have passed — on to `04b_loop_review`.
 
 Why stage 04 works this way in Codex. Multi-agent implementation is expensive because every role has to
@@ -217,19 +218,21 @@ is not removed; it is moved to the stage where there is concrete code to review.
   assumptions.
 - **Input → Output.** `02_design.md`, `03_delivery_plan.md`, `04_implementation.md`, and the resolved
   implementation diff → `04b_loop_review.md`.
-- **What the loop does.** First it resolves what to review: uncommitted worktree changes, committed task
-  commits, or both. Then it audits the 04b handoff instead of trusting it: the reviewer checks whether the
-  claimed files, invariants, tests, mocks, and adjacent decision paths actually cover the diff. It then
+- **What the loop does.** Normally it resolves the uncommitted task-owned worktree scope left by stage
+  04. Committed or mixed ranges are accepted only for legacy tasks or explicitly requested standalone
+  reviews. Then the orchestrator audits the 04b handoff instead of trusting it and derives a sanitized
+  neutral reviewer brief from the contract, current scope/fingerprint, invariants, and surfaces. The
+  independent reviewer never receives author findings/fixes or remediation history. The loop then
   runs a bounded review/fix/re-review loop until validation is green and the latest independent reviewer
   either scores the result high enough or reports no actionable findings. The depth scales by risk: small
   tasks get a narrow diff review, ordinary features get fix + re-review, and risk-heavy work gets the
   classic iterative loop with broad first-reviewer coverage. If the loop exposes repeated blocker-like
-  defects, it can switch to a repeat-04 remediation cycle instead of applying endless tiny patches.
+  defects, it automatically switches to a separately recorded repeat-04 remediation cycle in the same
+  session, then starts a fresh 04b attempt with a new reviewer.
 - **Where you check.** You read the fixes, rejected/deferred findings, validation results, and final
   acceptance signal. If the stage was skipped, the file must say why and where that review debt is tracked.
-- **When to go on.** After a PASS or an explicit operator skip — on to `05_test_report`. If 04b changed
-  task-owned files and the final review accepted the result with validation green, it creates its own
-  task-scoped review-fix commit by default.
+- **When to go on.** Only after a normalized `PASS` — on to `05_test_report`. 04b never commits:
+  accepted fixes remain in the task-owned package for 05/06 and the one closing commit after 06.
 
 ---
 
@@ -261,9 +264,9 @@ is not removed; it is moved to the stage where there is concrete code to review.
   accepted the implementation, 06 does not repeat a full 04b-style code review; it verifies design
   conformance and launch readiness. If `conditional_go` is the verdict, the conditions go into the launch
   playbook (a separate list of mandatory manual steps to do before shipping) — so they don't get lost.
-- **Closing commit.** On `go` or `conditional_go`, the agent also records the final task state in a
-  task-scoped closing commit by default: test report, review gate, external backlog/status row, and launch
-  playbook entries. It skips the commit if unrelated dirty files make the task boundary ambiguous.
+- **Closing commit.** On `go` or `conditional_go`, the agent creates exactly one task-scoped commit
+  containing all repo-local task changes from 00 through 06. External backlog/status and launch entries
+  are updated and reread first but do not enter Git. Ambiguous dirty ownership forbids the commit.
 - **Where you check.** This is the last human gate: you read the verdict, run your own CI/CD, and make the
   final decision on merging.
 - **When to go on.** The task is closed. Everything found along the way but not done now is already sorted
@@ -277,7 +280,7 @@ is not removed; it is moved to the stage where there is concrete code to review.
 | Stage | Agent team | Models | Your control point |
 |---|---|---|---|
 | 00 Ticket | one lead | strong enough for scope judgement | Confirm the task and scope |
-| 01 Research | lead + 4 collectors | strong lead + cheap evidence collectors (`gpt-5.4-mini` in current Codex skills) | Answer the interview (if asked) |
+| 01 Research | lead + up to 4 collectors | Terra lead + Terra evidence collectors; Sol for risky judgement | Answer the interview (if asked) |
 | 02 Design | one lead | strong design/reasoning model | **Review and correct the design** |
 | 02b Audit | auditor (separate checking angle) | strong risk-judgement model | Sign off on the classes of the holes found |
 | 03 Plan | one lead | cheaper planning tier unless risk ambiguity remains | Check whether the agent invented anything extra |

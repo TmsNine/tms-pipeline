@@ -268,6 +268,40 @@ In `04_implementation.md`, record the stage-04 mode, profile per wave, self-chec
 (Developer / Tester / Architect / Security-Privacy-Money / Reviewer), validation, follow-ups, launch
 actions, and what `04b_loop_review` must independently stress-test.
 
+### Atomic 04b and the single closing commit
+
+- Stage 04 records `base_sha`, task-owned paths, R/X/V evidence, implementation/package fingerprints,
+  and an author handoff. It never stages or commits.
+- Stage 04b audits that handoff instead of trusting it. Every scoring pass uses a fresh read-only
+  reviewer that does not receive parent reasoning, prior findings/scores/fixes, round number, remaining
+  budget, or the acceptance target.
+- The full author handoff and remediation artifacts are orchestrator-only. Every scoring pass receives a
+  freshly rebuilt sanitized brief containing only the current contract, exact scope/fingerprint, neutral
+  invariants/surfaces, repository constraints, and validation expectations.
+- The per-attempt review/fix checkpoint is hidden from reviewers and never lowers quality. When
+  implementation work remains, 04b persists `NEEDS_REMEDIATION`, automatically runs a separately
+  recorded repeat 04 in the same invocation, and starts a fresh 04b attempt. Do not ask the user to
+  restart 04 merely because a checkpoint was reached.
+- `PASS` is atomic. Required validation and the final fresh reviewer must cover the exact same final
+  implementation fingerprint. Any later code/test/SQL/contract/config change immediately invalidates
+  acceptance and returns the artifact to `NOT_ACCEPTED`.
+- The first 04b summary line includes the literal normalized token `04b status: <STATUS>` and states,
+  in the project's output language, whether stage 05 is allowed. Only `PASS` allows 05.
+- Stages 00–05 do not commit. Stage 06 creates exactly one task-scoped closing commit after `go` or
+  `conditional_go`, verified external status sync, matching fingerprints, and an unambiguous
+  task-owned package. Never auto-push or add AI attribution.
+- Package fingerprints use a deterministic normalized form: replace the values of package-fingerprint
+  evidence fields in pipeline artifacts with the literal `<normalized>` before hashing. Stage 06 records
+  commit eligibility, not a future commit SHA; report the actual SHA externally after the commit succeeds.
+- Both tool trees use their byte-identical `task-fingerprint.mjs` helper, version
+  `tms-task-fingerprint-v1`, with the exact manifests recorded in `04_implementation.md`. Do not replace
+  it with an ad-hoc hash. Before the closing commit, its worktree and staged-index package hashes must match.
+- Hash equality is insufficient by itself. Stage 06 derives the complete task-owned changed-path set from
+  Git, requires exact equality with the package manifest before and after staging via `--observed`, and
+  blocks on an omitted, extra, ambiguous, overlapping, or unrelated staged path.
+- Path derivation uses `--no-renames` in both worktree and index modes, so every rename is represented by
+  the same source deletion plus destination addition on both sides of the closing comparison.
+
 ## Database / Schema Migration Policy
 
 {{MIGRATION_POLICY}}
@@ -340,8 +374,8 @@ can be transferred manually — never leave the action only in chat.
 - Keep ad-hoc investigation artifacts out of the repo root (use `./.scratch/` or a tool-owned dir).
 - Don't weaken auth, permissions, validation, encryption, rate limits, or auditability to ease a task.
 - Don't manually edit generated files unless the repo requires it — update the source and run the generator.
-- Don't stage, commit, amend, rebase, reset, stash, push, or delete files unless the active pipeline
-  skill explicitly requires a task-scoped commit at a successful stage boundary, or the user explicitly
+- Don't stage, commit, amend, rebase, reset, stash, push, or delete files unless stage 06 explicitly
+  requires the single task-scoped closing commit, or the user explicitly
   asks. **Never** add `Co-Authored-By:` or any AI/agent attribution to commit messages
   (legal/licensing constraint); create only commits whose file set clearly belongs to the task, and don't
   push automatically.

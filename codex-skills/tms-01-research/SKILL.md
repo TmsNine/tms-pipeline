@@ -9,7 +9,7 @@ Read THIS project's `AGENTS.md` (Codex reads it natively) for specifics: task-fo
 
 This stage may use a bounded read-only research fan-out. The lead owns judgement: it frames the search, verifies load-bearing evidence, reconciles contradictions, decides interview need, and writes `01_research.md`. Subagents gather evidence only; they do not design, decide product options, or write the final artifact.
 
-If `multi_agent_v1.spawn_agent` is not visible, first use tool discovery for multi-agent tools. If unavailable, run the same four angles locally and record no subagent limitation only if it materially reduced coverage.
+If `spawn_agent` is not visible, first use tool discovery for multi-agent tools. If unavailable, run the same four angles locally and record the limitation only if it materially reduced coverage.
 
 ## Subagent Authorization (Codex)
 
@@ -17,8 +17,8 @@ A user invocation of this skill/stage is explicit authorization to use the subag
 
 ## Model Tiers
 
-- Lead synthesis: use the current strong model. Use high/xhigh when the task touches auth, RLS, payments, PII, lifecycle state machines, migrations, queues, or cross-module contracts.
-- Evidence gatherers: `agent_type: "explorer"`, `model: "gpt-5.4-mini"`, `reasoning_effort: "high"` by default. If `gpt-5.4-mini` is unavailable, use the cheapest available small Codex explorer. Bump one gatherer to `gpt-5.4` / `"high"` only for complex code archaeology, heavily coupled surfaces, or evidence that must be interpreted rather than merely located.
+- Lead synthesis: prefer Terra high; use Sol high/xhigh when the task touches auth, RLS, payments, PII, lifecycle state machines, migrations, queues, or cross-module contracts. Fallbacks: Terra → `gpt-5.4`, Sol → `gpt-5.5`.
+- Evidence gatherers: prefer the global `tms_explorer` role / Terra medium. If role selection is unavailable, use a fresh generic read-only subagent with the evidence-only prompt; fallback `gpt-5.4-mini` high. Record preferred and actual/unknown runtime model. Never use Fast mode.
 - Never use cheap gatherer conclusions directly as design truth. Reopen and verify the cited evidence in the lead session.
 
 ## Phase 1 — Frame The Search
@@ -51,7 +51,7 @@ Spawn up to four read-only explorer agents, one per angle, in parallel. Each pro
 - "not checked / could not confirm";
 - no design recommendations unless asked for "similar implementation worth reusing".
 
-Use `fork_context: false`. Do not pass product decisions, suspected answers, or the lead's conclusions. For two extra targeted rounds maximum, spawn focused explorers only for unresolved contradictions or missing load-bearing claims.
+Use the current clean-context mechanism (`fork_turns: "none"` when that is the exposed schema). Do not pass product decisions, suspected answers, or the lead's conclusions. For two extra targeted rounds maximum, spawn focused explorers only for unresolved contradictions or missing load-bearing claims.
 
 Keep working notes in this shape:
 

@@ -19,4 +19,7 @@ The pipeline never invents product rules — it reads them from here. Keep this 
 - `03 Architecture/` — how it's built: architecture deltas and decisions.
 - `04 Delivery/` — what's planned and tracked: the backlog (single source of truth for tasks) and the traceability map.
 
-Per-task working files (the 8 pipeline stages) live next to your code under `<task-folder>/`, not here. This vault holds the cross-task durable knowledge those stages read from and write back to.
+Per-task working files (the 9 durable pipeline artifacts: `00_ticket` → `01_research` → `02_design` →
+`02b_gap_audit` → `03_delivery_plan` → `04_implementation` → `04b_loop_review` → `05_test_report` →
+`06_review_gate`) live next to your code under `<task-folder>/`, not here. This vault holds the cross-task
+durable knowledge those stages read from and write back to.

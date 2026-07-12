@@ -32,7 +32,7 @@ Understand the project before proposing changes:
 3. Inspect current diffs and avoid touching unrelated modified files.
 4. Identify the owning layer for the behavior under review.
 
-When broad code discovery is needed and subagents are available, delegate repository search to an `explorer` subagent. Use `gpt-5.4-mini` high for compact evidence maps, bumping to `gpt-5.4` high only for cross-module archaeology or evidence that requires interpretation. Ask for `path:line`, symbol or route name, relevant snippet or signature, and why it matters. Verify critical findings before editing.
+When broad code discovery is needed and subagents are available, delegate repository search to the project explorer role or a fresh generic read-only subagent. Prefer Terra medium for compact evidence maps and Terra high for cross-module archaeology; fallbacks are `gpt-5.4-mini` high and `gpt-5.4` high. Ask for `path:line`, symbol/route, snippet/signature, and why it matters. Verify critical findings before editing. Never use Fast mode.
 
 ## Refactor Candidates
 
@@ -77,7 +77,7 @@ For each proposed scope, state:
 
 ## Challenge Checkpoint
 
-If subagents are available, ask a fresh challenge agent to validate the proposed scope before implementation. Use `gpt-5.4` high for local refactors; use `gpt-5.5` high/xhigh for public contracts, auth/RLS/payments/PII, lifecycle, persistence, or architecture-boundary changes. The challenge agent must not write code.
+If subagents are available, ask a fresh challenge agent to validate the proposed scope before implementation. Prefer Terra high for local refactors and Sol high/xhigh for public contracts, auth/RLS/payments/PII/lifecycle/persistence/architecture boundaries; fallbacks are `gpt-5.4` and `gpt-5.5`. The challenge agent must not write code.
 
 Ask it to answer:
 
