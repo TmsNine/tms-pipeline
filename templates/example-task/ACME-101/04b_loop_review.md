@@ -15,12 +15,13 @@ Date: 2026-01-15
   scope to include response-header contract coverage without exposing author history.
 
 ## Loop result
-- Attempt / reviewer rounds / fix rounds: 1 / 2 / 1.
-- First-reviewer breadth: checked CSV injection, org scoping, filter parity, cap semantics, response
-  headers, frontend filter propagation, and tests.
+- Outer attempt / reviewer rounds / fix rounds: 1 / 3 / 1.
+- First-pass pair: risk reviewer checked CSV injection and org scoping; integration reviewer independently
+  checked filter parity, cap semantics, response headers, frontend propagation and tests on the same fingerprint.
 - Risk-map completeness: expanded — stage 04 covered CSV contents but had not asserted the download
   filename contract in `Content-Disposition`.
-- Loop health: one Class C response-contract test gap, zero verified Class A/B findings, repeat-04 remediation not needed.
+- Consolidated remediation: one Class C response-contract test gap fixed as one batch; zero A/B;
+  replan not required.
 - Final acceptance: no actionable findings after the fix round.
 
 ## Findings and fixes

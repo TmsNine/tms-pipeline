@@ -45,11 +45,11 @@ docs/ACME-101/06_review_gate.md
 - What was done: extracted `buildReportsQuery`; added `toCsv()` with RFC-4180 escaping and formula-injection
   neutralization (cells leading with `= + - @` prefixed with `'`).
 - What changed: `api/src/lib/csv.ts` (new), `api/src/routes/reports.ts`, `api/src/lib/reportsQuery.ts` (new).
-- Self-check roles covered: Developer / Tester / Architect / Security-Privacy-Money / Reviewer
+- Actual roles: Developer / Tester / Architect / Security-Privacy-Money / fresh stage-04 Reviewer.
+- Planned-vs-actual scope: aligned; no new owner layer; path growth within planned set.
 - Risk-surface sweep: searched CSV formula triggers, shared query call sites, and reports route tests; no
   second export query path found.
-- Pre-04b adversarial self-review: invariants covered by CSV unit tests and shared-query route tests; no
-  author-found defect left open.
+- Stage-04 readiness review: current fingerprint scored 8.8/10; no A/B/systemic C; all R-CSV evidence green.
 - Validation: CSV unit tests pass, including escaping and formula-injection cases.
 - 04b must stress-test: CSV escaping/injection handling and list/export query parity.
 
@@ -57,7 +57,7 @@ docs/ACME-101/06_review_gate.md
 |---|---|---|---|---|---|
 | Developer | dispatched | Sonnet | `sonnet` | `runtime-selected/unknown` | copied project agent: `acceptEdits`; parent override unknown |
 | Tester | dispatched | Sonnet | `sonnet` | `runtime-selected/unknown` | copied project agent: `dontAsk`; parent override unknown |
-| Architect | dispatched | Opus | `opus` | `runtime-selected/unknown` | copied project agent: `plan`; parent override unknown |
+| Architect | dispatched | Sonnet | `sonnet` | `runtime-selected/unknown` | copied project agent: `plan`; parent override unknown |
 | Security / Privacy / Money | dispatched | Opus | `opus` | `runtime-selected/unknown` | copied project agent: `plan`; parent override unknown |
 | Reviewer | dispatched | Sonnet | `sonnet` | `runtime-selected/unknown` | copied project agent: `plan`; parent override unknown |
 
@@ -68,11 +68,11 @@ docs/ACME-101/06_review_gate.md
 - What was done: `GET /api/reports/export.csv` reusing the shared query with `req.user.orgId`; 10k cap +
   truncation note row.
 - What changed: `api/src/routes/reports.ts`.
-- Self-check roles covered: Developer / Tester / Architect / Security-Privacy-Money / Reviewer
+- Actual roles: Developer / Tester / Architect / Security-Privacy-Money / fresh stage-04 Reviewer.
+- Planned-vs-actual scope: aligned; no new auth/data owner.
 - Risk-surface sweep: searched org scoping, export route auth fixture setup, cap/truncation handling, and
   route-level mocks; truncation endpoint assertion added before handoff.
-- Pre-04b adversarial self-review: org-isolation and cap invariants have route tests; 04b should still
-  inspect whether all filters flow through the shared query.
+- Stage-04 readiness review: current fingerprint scored 8.7/10; no A/B/systemic C; all R-CSV evidence green.
 - Validation: export integration tests prove org isolation, filter fidelity, and cap behavior.
 - 04b must stress-test: org scoping, filter fidelity, and truncation semantics.
 
@@ -85,6 +85,9 @@ docs/ACME-101/06_review_gate.md
 - Risk-surface sweep: checked active filter state and loading-state wiring only; no new API semantics.
 - Validation: UI smoke proves the download link includes active filters and the loading state is stable.
 - 04b must stress-test: narrow diff review for filter propagation and user-visible states.
+
+Final R cross-wave integration review: 8.6/10 on the final implementation fingerprint; no A/B/systemic C,
+all R-CSV-01..04 evidenced. Stage 04 is ready for independent 04b.
 
 ## R/X/V evidence
 
@@ -113,6 +116,8 @@ docs/ACME-101/06_review_gate.md
 - Dangerous invariants: CSV injection neutralization, org scoping, list/export filter parity, 10k cap.
 - Searches/risk-surface sweeps performed in 04: CSV trigger characters, shared query call sites, export
   route auth fixtures, frontend active filter propagation.
+- Scope-drift result: aligned with planned files/owner layers; no replan trigger.
+- Stage-04 Reviewer evidence: Wave 1 8.8, Wave 2 8.7, final R integration 8.6 on recorded fingerprints.
 - Adjacent surfaces checked: list reports endpoint, export endpoint tests, CSV unit tests, UI smoke.
 - Validation: `npm test -- csv reports-export`, `npm run typecheck`; no manual launch action.
 - Final implementation fingerprint for 04b: `sha256:2222222222222222222222222222222222222222222222222222222222222222`.

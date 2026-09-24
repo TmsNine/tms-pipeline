@@ -145,8 +145,8 @@ them in full on the next pages:
 | 02 Design | `/tms-design` | Writes the design contract — a description of the change agreed up front, which the code is later checked against; the change is the smallest one that does the job, reviewed before any code. |
 | 02b Gap audit | `/tms-gap-audit` | One bounded pass where a different agent looks at the design with fresh, skeptical eyes, hunts for holes, and rates each one by severity. |
 | 03 Plan | `/tms-plan` | Splits the work into small finished slices — "waves"; for each, it sets a risk profile and the depth of review needed after implementation. |
-| 04 Implement | `/tms-implement` | Writes code wave by wave. Codex defaults to one main agent; Claude keeps M inline, adds bounded help for E, and uses real proving-role mobs for R/C. |
-| 04b Loop review | `/tms-loop-review` | Independently reviews the implementation diff, fixes actionable findings, and records the review loop before the test report. |
+| 04 Implement | `/tms-implement` | Writes code wave by wave: M stays with the lead, E gets bounded evidence/test help, and R/C uses a separate Developer plus proving roles with an 8/10 pre-04b readiness floor. |
+| 04b Loop review | `/tms-loop-review` | For R/C, starts with two independent lenses, fixes one consolidated batch, and runs a fresh final review; three failed attempts stop for replan. |
 | 05 Test | `/tms-test` | Validates the primary (user-visible) signal + secondary ones. |
 | 06 Review gate | `/tms-review` | Checks the result against the design contract and returns a verdict: go (ship), conditional_go (ship once conditions are met), no-go (do not ship). |
 
@@ -169,9 +169,9 @@ iterative **review loop** (`/tms-loop-code-review`).
 2. **Risk profiles that decide where quality is bought.** Each implementation wave gets a risk profile:
    **M** for small bounded work, **E** when cheap evidence gathering is useful, **R** when the touched
    surface needs strong independent review, and **C** when full classic multi-agent implementation is
-   deliberately allowed. In Codex, ordinary stage 04 work stays with the main agent and explicit
-   self-check roles; the expensive independence moves to 04b, where a fresh reviewer checks the actual
-   diff. Stage 03 keeps one canonical risk ledger for 04 and 04b: stable R-IDs, invariants, required
+   deliberately enabled. M/E stay inexpensive, while R/C gets real separation between code owner,
+   Validator, Architect/Security and a stage-04 Reviewer. Stage 04b receives an implementation that has
+   already cleared an author-stage readiness gate, not a raw first draft. Stage 03 keeps one canonical risk ledger for 04 and 04b: stable R-IDs, invariants, required
    proof, owner layer, failure signal, owning wave, and adjacent surfaces to search. Heavy review only kicks in where it
    pays off; "run everything to be safe" is explicitly discouraged.
 3. **Nothing found gets lost.** Deferred items found along the way (follow-ups), documentation drift, and
@@ -317,7 +317,7 @@ gain from clearing it.
 skills/        Claude Code tms-* skills (setup + process + audit + refactoring)
 codex-skills/  Codex tms-* skills with Codex-native names and instructions
 agents/        5 Claude proving roles (developer, tester, architect, security, reviewer)
-codex-agents/  5 Codex TOML roles (explorer, validator, reviewer, gap auditor, risk reviewer)
+codex-agents/  9 Codex TOML roles (including Developer, Architect, Security, and stage-04 wave reviewer)
 commands/      the /tms-init onboarding command
 installer/     the core config engine + the `npx tms-pipeline` installer
 templates/     AGENTS/CLAUDE templates, process document forms, blank documentation-base templates, an example task

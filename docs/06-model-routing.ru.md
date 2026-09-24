@@ -25,10 +25,11 @@ OpenAI описывает текущую линейку так: **GPT-5.6 Sol** 
 | 02 Design | Sol high | Sol xhigh для R/C; Max только для одного неразрешённого Profile-C решения после сильного обычного прохода | Ошибка здесь размножается во все следующие стадии. |
 | 02b Gap audit | Sol high | Sol xhigh для security/privacy/money/tenant/migration/lifecycle рисков | Нужен независимый риск-judgement, а не дешёвая проверка списка. |
 | 03 Delivery plan | Terra high | Luna medium для очевидного M; Sol high при оставшейся R/C-неопределённости | План — структурная декомпозиция утверждённого дизайна; риск всё ещё нельзя занижать. |
-| 04 Implementation M/E/R | Terra high | Sol high, если реализация вскрыла новый критичный X-ID | Terra удерживает хороший баланс для основной инженерной работы; evidence helpers могут быть Terra medium. |
-| 04 Implementation C | Sol high | Sol xhigh при сложной security/data-integrity развилке | Maximum-cost-of-error работа требует более сильного judgement до 04b. |
+| 04 Implementation M/E | Terra high для lead; Luna/Terra для bounded helpers | Sol high только если реализация вскрыла критичный X-ID | Bounded-работа остаётся дешёвой без потери targeted evidence. |
+| 04 Implementation R | Terra high Developer/Architect; Luna Validator; Sol high wave Reviewer/Security по trigger | Sol xhigh для сложного money/security решения | Реальное разделение ролей ловит дефект, пока волна ещё локальна. |
+| 04 Implementation C | Terra high Developer по умолчанию; Luna Validator; Sol high/xhigh Architect/Security/wave Reviewer | Sol high Developer только для сложной C coding-ветки | Strongest judgement тратится на proving-роли, а не routine code/log collection. |
 | 04b Review M/E | Terra high, свежий reviewer | Новый Terra high после любой правки | Независимость контекста важнее одной сверхдорогой модели. |
-| 04b Review R/C | Sol xhigh для широкого первого прохода; свежий Sol high/xhigh для финального | Max только при реальном неразрешённом споре; не сообщать reviewer-у лимит волн и порог PASS | Ревьюер ищет системные дефекты и не должен оптимизироваться под счётчик или целевую оценку. |
+| 04b Review R/C | Sol xhigh risk reviewer + Terra/Sol high integration reviewer на одном fingerprint; свежий Sol high/xhigh финальный | Max только при реальном неразрешённом споре; не сообщать attempt budget и порог PASS | Ортогональный первый проход объединяется в один batch перед финальным подтверждением. |
 | 05 Test report | Luna medium | Terra high для непонятных падений; Sol high для R/C-диагностики | Известные команды и компактный pass/fail дешевы; root-cause judgement — нет. |
 | 06 Review gate | Terra high для обычного `go` | Sol high/xhigh для `conditional_go`, `no-go`, R/C, неполной валидации или ручных гейтов | Финальный вердикт нельзя отдавать дешёвому суммаризатору. |
 | Полный codebase audit | Terra для карт зон; Terra/Sol для finder/skeptic по риску | Ultra — только для осознанной не-scoring синтеза действительно независимых зон | Один огромный контекст хуже нескольких независимых зон с проверяемыми находками. |
@@ -40,9 +41,9 @@ Claude aliases — tool-native defaults, а не утверждение, что 
 | Stage-04 роль / профиль | Default | Усиление и evidence |
 |---|---|---|
 | M | Lead реализует inline | Coding subagent не нужен; записать модель lead, если runtime её показывает |
-| E | Lead inline; один bounded Architect/evidence pass + Tester | Architect `opus`, Tester `sonnet`; judgement при необходимости усиливать per invocation |
-| R | Developer `sonnet`, Tester `sonnet`, Reviewer `sonnet`; нужные Architect/Security `opus` | Записать preferred, configured и actual model; неизвестное остаётся `runtime-selected/unknown` |
-| C | Полный набор ролей | Architect/Security оставить на `opus`; Reviewer обязательно запустить с strongest-available per-invocation override |
+| E | Lead inline; один bounded Architect/evidence pass + Tester | Architect/Tester `sonnet`; judgement при необходимости усиливать per invocation |
+| R | Developer/Tester/Architect/Reviewer `sonnet`; нужный Security `opus` | Записать preferred, configured и actual model; неизвестное остаётся `runtime-selected/unknown` |
+| C | Полный набор ролей | Architect/Reviewer override на strongest available; Security оставить на `opus` |
 
 Agent-файлы также задают tool allowlists и permission declarations. Claude Code может переопределить модель
 через environment или per-invocation selection; документированный приоритет модели: environment →

@@ -11,8 +11,11 @@ Date: 2026-01-15
 - Scope: extract `buildReportsQuery(filters, orgId)` and the shared `COLUMNS` definition; add
   `api/src/lib/csv.ts` with `toCsv()` including formula-injection neutralization (Class A fix).
 - Files: `api/src/routes/reports.ts`, `api/src/lib/csv.ts`, shared columns module.
+- Code owner / proving roles: Developer; Tester, Architect, Security and fresh stage-04 Reviewer.
 - Acceptance: `toCsv()` unit tests pass (incl. injection + escaping); list endpoint still works via the
   extracted query.
+- Stage-04 readiness: all R-CSV evidence green, no A/B/systemic C, fresh Reviewer >= 8.0.
+- Scope drift: replan on a new data-access owner/trust boundary or >25% unexplained path growth.
 - 04b review depth: stress-test CSV escaping/injection handling and list/export query parity.
 - Owning R-IDs: R-CSV-01, R-CSV-02.
 
@@ -20,7 +23,10 @@ Date: 2026-01-15
 - Scope: `GET /api/reports/export.csv` reusing `buildReportsQuery` with `req.user.orgId`; 10k cap + note
   row when truncated (Class B fix).
 - Files: `api/src/routes/reports.ts`.
+- Code owner / proving roles: Developer; Tester, Architect, Security and fresh stage-04 Reviewer.
 - Acceptance: integration tests prove org isolation, filter fidelity, and the cap behavior.
+- Stage-04 readiness: all R-CSV evidence green, no A/B/systemic C, fresh Reviewer >= 8.0.
+- Scope drift: replan on a new auth/data owner or >25% unexplained path growth.
 - 04b review depth: independently verify org scoping, filter fidelity, and truncation semantics.
 - Owning R-IDs: R-CSV-03, R-CSV-04.
 
@@ -28,6 +34,7 @@ Date: 2026-01-15
 - Scope: Export `Button` on `ReportsList.tsx` linking to the export URL with active filters; truncation
   toast.
 - Files: `web/src/pages/ReportsList.tsx`.
+- Code owner / proving roles: lead inline; local Tester/Reviewer self-checks.
 - Acceptance: clicking downloads the filtered CSV; disabled while filters load.
 - 04b review depth: narrow diff review for filter propagation and user-visible states.
 - Owning R-IDs: R-CSV-02.

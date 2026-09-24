@@ -1,6 +1,6 @@
 ---
 name: tms-04b-loop-review
-description: "Pipeline stage 04b — independent iterative review controller for one task by ID; reviews the task-owned diff with fresh M/E/R/C-scaled reviewers, automatically runs a separate repeat 04 and a new 04b attempt in the same session when remediation is needed, writes PASS/NOT_ACCEPTED/SKIPPED/NEEDS_REMEDIATION/BLOCKED to 04b_loop_review.md, and never commits. Default next stage after every 04_implementation. Use when the user invokes /tms-loop-review TASK-ID or wants to run 04b for a ticket in a clean window."
+description: "Pipeline stage 04b — independent bounded review controller for one task by ID; reviews the task-owned diff with fresh M/E/R/C-scaled reviewers, uses an orthogonal two-reviewer first pass for R/C, batches remediation through repeat 04, stops after three failed outer attempts for replan, writes PASS/NOT_ACCEPTED/SKIPPED/NEEDS_REMEDIATION/BLOCKED to 04b_loop_review.md, and never commits. Default next stage after every 04_implementation. Use when the user invokes /tms-loop-review TASK-ID or wants to run 04b for a ticket in a clean window."
 allowed-tools:
   - Read
   - Write
@@ -24,7 +24,9 @@ Depth uses the M/E/R/C profile from `03_delivery_plan.md`:
 
 - **M:** one narrow fresh independent diff review; any code/test fix requires one fresh re-review.
 - **E:** the M rule plus an explicit audit of evidence-map completeness and unexamined zones.
-- **R/C:** one broad first pass, batched fixes, and a fresh final reviewer. `MAX_REVIEW_ROUNDS = 3` and `MAX_FIX_ROUNDS = 2` are the per-attempt orchestration checkpoint, not a quality target. Exhaustion ends that attempt only; it never lowers the bar or ends the user's 04b invocation. The controller automatically runs a separate repeat 04 when implementation work remains, then starts a new 04b attempt with a fresh per-attempt budget.
+- **R/C:** two orthogonal fresh reviewers inspect the same starting fingerprint, the controller consolidates and verifies all findings, repeat 04 fixes them as one bounded batch, required validation runs, and one fresh final reviewer checks the exact resulting fingerprint. Run the first pair in parallel when slots permit; sequential execution must preserve isolation. `MAX_REVIEW_ROUNDS = 3` and `MAX_FIX_ROUNDS = 2` remain the hidden per-attempt checkpoint.
+
+`MAX_OUTER_ATTEMPTS = 3` is a controller safety limit, never a reviewer-visible target and never an acceptance shortcut. After the third failed attempt, stop with terminal `NEEDS_REMEDIATION`, `replan_required = true`, stage 05 forbidden, and the earliest stage (`02`, `03`, or `04`) that must be revisited. Do not spend an unbounded session repeating full review on a design/plan/implementation that is not converging.
 
 A user may consciously skip 04b only by explicit instruction. A skip is not a silent gap: write `docs/$1/04b_loop_review.md` with status `SKIPPED`, the reason, and a marker that this task's independent review is owed to the next full-project audit.
 
@@ -61,19 +63,25 @@ If the handoff is incomplete, expand the sanitized reviewer scope just enough to
 
 The orchestrator audits the full author handoff, but never forwards it to a scoring reviewer. Build a sanitized reviewer brief from `02_design.md`, the canonical R-ID ledger, repository constraints, the exact current diff/path scope, current implementation fingerprint, neutral invariant labels/surfaces, and validation expectations. Exclude author searches/results, defects found/fixed, suspected bugs, scores, fix explanations, attempt/remediation history, and acceptance state. Do not attach `04_implementation.md` or `04b_loop_review.md` wholesale. Rebuild this brief from the current state after every implementation change; tell the reviewer the neutral scope may be incomplete and ask it to search for omitted directly coupled risks.
 
-## First Reviewer Breadth Requirement
+## R/C First-Pass Reviewer Pair
 
-For Profile R/C tasks, the first independent reviewer must search for **all major classes of actionable defect in one broad pass**, not stop after the first interesting issue. The prompt must explicitly ask for coverage across the relevant risk classes: auth/session/tenant scope, PII/privacy, money/billing, lifecycle/state machine, concurrency/atomicity, migrations/RPC/RLS, queues/jobs, notifications/outbox/external effects, tests/mocks/fixtures, and rollout/manual gates.
+For Profile R/C tasks, start every outer attempt with two fresh independent read-only reviewers on the same fingerprint and no shared prior reasoning:
 
-If the first reviewer reports only a single issue on a broad high-risk diff, treat that as useful but incomplete unless the reviewer also states that it checked the other relevant classes and found no actionable findings.
+1. **Risk reviewer:** search all relevant classes in breadth — auth/session/tenant scope, PII/privacy, money/billing, lifecycle/state machine, concurrency/atomicity, secrets/signing/webhook verification/replay/idempotency, migrations/RPC/RLS, queues/jobs, notifications/outbox/external effects.
+2. **Integration reviewer:** verify design/plan fidelity, owner layers, producer/consumer and read/write paths, sibling entrypoints, tests/mocks/fixtures, OpenAPI/contracts, rollout/manual gates, and scope completeness.
+
+Use orthogonal sanitized briefs and ask each reviewer to finish its assigned breadth rather than stop at the first issue. Run them in parallel when the runtime has slots. Never show either reviewer the other reviewer's output.
+
+After both return, the controller deduplicates and verifies findings, maps them to R/X IDs and owner layers, and sends one consolidated remediation brief to repeat 04. A final reviewer is spawned only after the batch and required validation are green on the new fingerprint.
 
 ## Remediation Boundary
 
 Track review-loop health, not only the final score.
 
 - A reviewer score alone never triggers remediation and never proves acceptance. Judge concrete verified findings and invariants.
-- Trigger remediation when at least three unique verified Class A/B defects exist, the same R/X invariant reopens after a fix, or two review rounds expose new verified systemic defects across multiple owner layers. Count verified defects, not raw reviewer bullets or duplicates.
-- When a trigger holds, stop only the current attempt as `NEEDS_REMEDIATION`; do not continue 04-style hardening inside that review attempt. Write a compact brief with findings, R/X-IDs, owner layers and mandatory tests, then immediately execute the automatic repeat-04 controller below. This applies equally to staged and end-to-end execution; never request a manual repeat-04 command.
+- Any verified finding that requires an implementation/test/SQL/contract/config change triggers repeat 04, even when only one or two defects exist. Never make an implementation fix inside 04b. The thresholds below are escalation/convergence signals, not permission for a small in-review fix.
+- Treat three or more unique verified Class A/B defects, the same R/X invariant reopening after a fix, or two review rounds exposing new verified systemic defects across multiple owner layers as an explicit systemic-remediation signal. Count verified defects, not raw reviewer bullets or duplicates.
+- When implementation work exists, persist the current attempt as `NEEDS_REMEDIATION`; write one consolidated brief with findings, R/X-IDs, owner layers and mandatory tests, then execute the automatic repeat-04 controller below while the outer-attempt budget remains. Never request a manual repeat-04 command for an ordinary bounded fix.
 - If the checkpoint is exhausted without acceptance and implementation work remains, use the same automatic repeat-04 path. If the implementation is unchanged and only fresh validation/review evidence is missing, set `NOT_ACCEPTED` and immediately start a fresh 04b evidence attempt without an unnecessary repeat 04. Never convert exhaustion into `PASS` and never end the session solely because a checkpoint was reached.
 
 ## Automatic Repeat-04 Controller
@@ -82,15 +90,15 @@ An invocation of this skill authorizes the full internal cycle `04b attempt → 
 
 1. Set `**Status:** NEEDS_REMEDIATION` and persist the failed attempt plus a bounded remediation brief in `04b_loop_review.md` before changing implementation.
 2. Invoke/apply `tms-04-implement` in automatic remediation mode in the same main-agent session. Append `Remediation cycle N` to `04_implementation.md`; fix all verified in-scope defects at their owning layers, update the necessary tests, run the applicable 04 self-checks and validation, recalculate fingerprints, and refresh the orchestrator-only author handoff. Never stage or commit.
-3. When repeat 04 completes, set 04b to `NOT_ACCEPTED`, record `Attempt N+1`, rebuild the sanitized reviewer brief from the current contract/plan/diff/fingerprint with all remediation history removed, and start immediately with a fresh per-attempt checkpoint and a fresh independent reviewer. Do not send an intermediate user-facing completion message.
-4. Continue cycling without a fixed remediation-cycle cap until the atomic `PASS` gate succeeds, the user explicitly interrupts/skips, or a genuine blocker prevents meaningful progress. A counter, token concern, context compaction, low score, or the mere existence of another remediation cycle is not a blocker.
-5. If blocked, set `BLOCKED` and name the concrete external authority, missing product/architecture decision, scope ambiguity, unavailable independent isolation/required validation, or other non-progress condition. Never translate `BLOCKED` into a request for the user to manually rerun 04.
+3. When repeat 04 completes, set 04b to `NOT_ACCEPTED`, record `Attempt N+1`, rebuild the sanitized briefs from the current contract/plan/diff/fingerprint with all remediation history removed, and restart the full review route for that profile. For R/C this means a new isolated risk-reviewer + integration-reviewer pair on the same new fingerprint, followed—only after their findings require no further implementation and validation is green—by a separate fresh final scoring reviewer. Do not send an intermediate user-facing completion message.
+4. Continue only while fewer than three outer attempts have failed. If Attempt 3 still lacks atomic PASS, or repeat 04 returns `REPLAN_REQUIRED`, stop as terminal `NEEDS_REMEDIATION` with `replan_required = true`, stage 05 forbidden, the non-converging invariants/scope growth, and the earliest stage to revisit. Do not automatically start Attempt 4.
+5. If an external authority, missing product/architecture decision, scope ambiguity, unavailable independent isolation/required validation, or other non-progress condition blocks work before the limit, set `BLOCKED` and name it precisely.
 
 ## Loop mechanics, scoring rubric & reviewer prompt
 
 Read and apply `../tms-94-loop-code-review/references/review-canon.md`; it is the shared authority for safety, reviewer isolation, prompt shape, A/B/C/D findings, triage, validation and acceptance. This stage adapter owns task scope, M/E/R/C depth, per-attempt checkpoint, R/X/V ledgers, automatic repeat-04 control, remediation status, artifact and final staged stop. Do not load the full standalone `tms-94-loop-code-review/SKILL.md` for pipeline 04b unless a concrete standalone-only question requires it.
 
-Key invariants: each reviewer is a **fresh** read-only subagent given no parent reasoning. Prefer the global `tms_reviewer` role / Terra high for M/E and `tms_risk_reviewer` / Sol xhigh for R/C; fallbacks are `gpt-5.4` and `gpt-5.5` respectively. Use a role selector only when the actual spawn schema exposes it. With the current schema, use `fork_turns: "none"`, embed the complete role in the prompt, and record `custom_role_enforced = false` plus actual model as runtime-selected/unknown. Never tell the reviewer the round number, remaining review/fix budget, previous findings/fixes/scores, `9.5` threshold, or that it should produce `PASS`; the reviewer reports evidence and a score, while the main agent owns the gate. Never use Ultra for a scoring reviewer and never use Fast mode. Treat findings as input, verify them, fix genuine issues at the owning layer, validate after each fix batch, and re-spawn only within the per-attempt checkpoint.
+Key invariants: each reviewer is a **fresh** read-only subagent given no parent reasoning. Prefer `tms_reviewer` / Terra high for M/E and the R/C integration reviewer; prefer `tms_risk_reviewer` / Sol xhigh for the R/C risk reviewer and fresh final reviewer. Fallbacks are `gpt-5.4` and `gpt-5.5`. Use `fork_turns: "none"` whenever a fresh custom prompt is needed. Never tell a reviewer the pair/round/attempt number, remaining budget, previous findings/fixes/scores, `9.5` threshold, or that it should produce `PASS`; the reviewer reports evidence and a score, while the controller owns the gate. Never use Ultra for a scoring reviewer and never use Fast mode. Treat findings as input, verify them, fix genuine issues at the owning layer, validate after the consolidated fix batch, and re-spawn only within the hidden checkpoint.
 
 Use fail-closed write order. At the start of a new/reopened attempt, set the artifact status to `NOT_ACCEPTED` before review work begins. Before or together with every implementation/test/SQL/contract/config fix, set it back to `NOT_ACCEPTED`; never leave a stale `PASS` visible while the accepted fingerprint is being changed. Write `PASS` only as the last artifact update after the atomic closure check succeeds.
 
@@ -102,7 +110,7 @@ Write `docs/$1/04b_loop_review.md`:
 
 - **Header:** stage `04b_loop_review`, date, task ID, resolved scope (worktree / commit sha(s) / range), reviewed profile(s), review depth (narrow / standard / classic), and whether the stage-04 handoff was present and complete enough to use.
 - **Status:** make the first field under the header `**Status:** <STATUS>`, where `<STATUS>` is exactly one of `PASS`, `NOT_ACCEPTED`, `SKIPPED`, `NEEDS_REMEDIATION`, or `BLOCKED`; then give the reason and attempt number. `PASS` means all atomic closure conditions below hold; `NOT_ACCEPTED` means the current attempt is unfinished or a post-review implementation change still awaits validation/fresh review. Do not encode the normalized status only inside prose.
-- For a run: attempt number, review/fix rounds, first-reviewer breadth/completeness, R-ID status and any append-only `X-04b-*` risks, verified A/B count, scores, final acceptance signal, batched fixes, V-ID results/fingerprints, remediation-cycle links into `04_implementation.md`, and deferred findings with their external capture location. `NEEDS_REMEDIATION` is an honest persisted attempt state before automatic repeat 04, not a normal terminal handoff to the user; always remain before 05 until a later attempt reaches `PASS`.
+- For a run: outer attempt number, both R/C first-pass reviewer scopes/completeness, review/fix rounds, R-ID status and append-only `X-04b-*` risks, verified A/B count, scores, consolidated fixes, V-ID results/fingerprints, final reviewer evidence, remediation-cycle links into `04_implementation.md`, and deferred findings with their external capture location. `NEEDS_REMEDIATION` may be transient before bounded repeat 04 or terminal after Attempt 3/`REPLAN_REQUIRED`; in either case stage 05 remains forbidden.
 - For a skip: the reason + the deferral-to-next-audit marker.
 
 ## Follow-up & closing
@@ -123,17 +131,34 @@ Any implementation change after the final reviewer invalidates acceptance immedi
 
 The final user-facing summary after 04b must start with the literal normalized token
 `04b status: <STATUS>` and, in the project's output language, state whether stage 05 is allowed.
-Only `PASS` allows 05. Use `NEEDS_REMEDIATION` as a user-facing line only when the user explicitly
-interrupts or asks for status during the internal cycle; do not voluntarily stop there.
+Only `PASS` allows 05. Transient `NEEDS_REMEDIATION` stays internal during Attempts 1–2. Terminal
+`NEEDS_REMEDIATION` after Attempt 3 or `REPLAN_REQUIRED` is user-facing and must stop the invocation.
 
-Only after that first line, briefly state:
+For `PASS`, the final user-facing summary MUST use this complete template. Replace every
+placeholder with a concrete value; do not merge, omit, or replace any field with a generic
+summary, even when the user prefers a short answer:
 
-- how many fresh reviewer waves/rounds ran;
-- what the reviewers found, grouped or compressed by wave when there were multiple waves;
-- what was fixed in response;
-- why that many waves were needed (for example: risk-heavy surface, heavy fix-loop, repeated false-success findings, or final confirmation after fixes).
+```text
+04b status: PASS
+
+Этап 05: разрешён.
+
+- Свежих волн независимого review: <N>.
+- Что нашли по волнам: <сжатый перечень; если не было findings, написать это явно>.
+- Что исправлено в ответ: <сжатый перечень или «исправления не требовались»>.
+- Почему потребовалось <N> волн: <конкретная причина>.
+- Ручное условие выпуска и место фиксации: <условие + путь, либо «нет»>.
+- Артефакт 04b: <путь>.
+```
+
+Before sending this `PASS` final, verify field-by-field that all six bullet points contain
+task-specific content. The literal first line and every template field are a completion
+contract, not a stylistic suggestion. For other statuses, state the status truthfully
+without acceptance wording and use the applicable concise status/skip/replan explanation.
 
 Never use completion or acceptance wording for `NOT_ACCEPTED`, `SKIPPED`, `NEEDS_REMEDIATION`, or `BLOCKED`.
+
+For terminal `NEEDS_REMEDIATION`, explicitly state that automatic looping stopped to protect time/token budget, name the non-converging owner layers/invariants, and identify the earliest stage that must be revisited. Do not ask the user to rerun the same 04b command unchanged.
 
 Keep this concise and in the project's user-facing language. If 04b was explicitly skipped, state the skip reason and owed-review marker instead of the wave summary. Never ask the user to relaunch stage 04 after remediation; the active 04b session owns that transition.
 

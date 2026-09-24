@@ -75,8 +75,8 @@ support, and independent 04b review the wave needs (section 3.2).
 | 02 | Design | `/tms-design` | `02_design.md` | Write the design contract — an agreed description of the minimal sufficient change at the owning layer (the place in the code where the problem is actually fixed at its source). Reviewed by a human before any code. |
 | 02b | Gap audit | `/tms-gap-audit` | `02b_gap_audit.md` | One bounded pass in which a different agent looks at the design with fresh, skeptical eyes, hunts for holes, and sorts each one into a severity class. |
 | 03 | Delivery plan | `/tms-plan` | `03_delivery_plan.md` | Split the design into small, independently shippable waves; tag each with a risk profile and the required 04/04b checks. |
-| 04 | Implementation | `/tms-implement` | code + `04_implementation.md` | Write code wave by wave. Codex defaults to main-agent implementation; Claude keeps M inline, uses bounded evidence/test help for E, and real proving roles for R/C. |
-| 04b | Loop review | `/tms-loop-review` | `04b_loop_review.md` | Resolve the task diff, run an independent review/fix loop, and record the acceptance signal before the test report. |
+| 04 | Implementation | `/tms-implement` | code + `04_implementation.md` | Write code wave by wave: M inline, E with bounded help, R/C with separate coding/proving roles and an 8/10 readiness floor. |
+| 04b | Loop review | `/tms-loop-review` | `04b_loop_review.md` | Resolve the task diff, run a bounded independent review/fix loop, and stop for replan after three failed attempts. |
 | 05 | Test report | `/tms-test` | `05_test_report.md` | Validate the primary (user-visible) signal plus secondary signals (tests, types, lint, build). |
 | 06 | Review gate | `/tms-review` | `06_review_gate.md` | Check the implementation against the design contract; issue a verdict: go (ship), conditional_go (ship once conditions are met), or no-go (do not ship). |
 
@@ -137,33 +137,32 @@ Calling several implementation agents on every wave is expensive, especially in 
 subagent needs its own clean context. tms-pipeline therefore separates two questions that older agent
 flows often mix together:
 
-- **How should the code be written in stage 04?** Codex usually keeps one main-agent implementation thread;
-  Claude scales real role separation by profile.
+- **How should the code be written in stage 04?** Both tools scale real coding/proving-role separation by
+  the approved wave profile.
 - **How deeply must the result be independently reviewed in stage 04b?** That depends on the riskiest
   thing the wave touched.
 
-The wave profile now describes **risk and review depth**, not just "how many subagents to call while
-coding":
+The wave profile describes **implementation ownership, risk and review depth**:
 
 - **Profile M — Mono / bounded:** the design and plan are clear, the surface is small, tests are
   available, and the blast radius is limited. Both tools keep stage 04 with the lead; 04b still runs a
   narrow independent diff review.
-- **Profile E — Evidence-assisted:** the main uncertainty is finding or proving code evidence. Codex keeps
-  implementation with the main agent and may isolate bounded evidence; Claude keeps code with the lead and
-  requires one bounded Architect/evidence pass plus Tester. Product decisions stay with the lead.
+- **Profile E — Evidence-assisted:** the main uncertainty is finding or proving code evidence. The lead
+  remains code owner and uses one bounded Architect/evidence pass plus Validator/Tester. Product decisions
+  stay with the lead.
 - **Profile R — Risk review required:** money, roles, tenant scope, PII/privacy, migrations, lifecycle
   state, queues/jobs, messaging/outbox, external integrations, or important user-facing business logic.
-  Codex keeps a main-agent code owner with a direct risk sweep; Claude dispatches Developer, Tester, and
-  Reviewer plus triggered Architect/Security roles. In both tools 04b stress-tests the dangerous surface.
+  Both tools dispatch a Developer code owner, Validator/Tester, a fresh stage-04 Reviewer and every
+  triggered Architect/Security role. Stage 04b then stress-tests the dangerous surface independently.
 - **Profile C — Maximum risk:** the cost of error is maximal: payment providers, mass messaging
   or free text, privacy retention, high-blast tenant isolation, critical migrations/backfills, complex
-  concurrency, webhook/security boundaries, or full-codebase audits. Claude requires the full strongest
-  role set. Codex may deliberately choose its exceptional heavy multi-agent mode or keep the main agent
-  with maximum risk checks and deep 04b.
+  concurrency, webhook/security boundaries, or full-codebase audits. Both tools require the full role set
+  for every wave; the lead orchestrates/integrates instead of acting as the sole code author, and a fresh
+  cross-wave readiness review runs before 04b.
 
 The profile is chosen by the **most dangerous touched risk**, not by the average size of the diff. The
-goal is not to weaken review; it is to buy quality in the stage where it is most efficient: a focused
-implementation in 04, followed by an independent review/fix loop in 04b.
+goal is not to weaken review; it is to buy quality in the stage where it is most efficient: cheap M/E,
+real R/C proving roles before defects spread, then an independent review/fix loop in 04b.
 
 The delivery plan keeps one canonical append-only risk ledger for implementation: stable R-IDs, the
 invariant that must not break, the proof or test that should show it, the owner layer where the decision
@@ -220,12 +219,10 @@ substantial tasks, not for fixing a typo.
 
 ## 5. How implementation and independent review actually work (stages 04 and 04b)
 
-Stage 04 writes the code. In Codex it defaults to **mono/main-agent implementation**: the main agent
-implements the approved plan wave by wave instead of spawning a full coding mob for every wave. This is
-not a shortcut around engineering discipline. The main agent must explicitly run the same role checks the
-mob made visible:
+Stage 04 writes the code with execution depth selected per wave. M stays with the lead; E adds bounded
+evidence/test help; R/C uses real separation between code ownership and proving roles:
 
-- **Developer:** implement the smallest coherent change from `03_delivery_plan.md`.
+- **Developer:** own and implement the smallest coherent R/C change from `03_delivery_plan.md`.
 - **Tester:** add or update the highest-value tests and run the narrow changed-surface checks.
 - **Architect:** verify owner layer, read/write paths, contracts, schema or migration order, and rollout
   implications.
@@ -234,14 +231,15 @@ mob made visible:
 - **Reviewer:** compare the diff against `02_design.md` and `03_delivery_plan.md`, looking for missed
   invariants, unsafe fallbacks, races, and missing tests.
 
-The result is written into `04_implementation.md`: stage-04 mode, profile and integration owner per wave,
-self-check/dispatched roles, preferred/configured/actual model evidence, risks checked, validation,
-follow-ups, launch actions, and what 04b must independently stress-test.
+The lead remains integration owner. For R/C a dedicated Developer owns code, while Validator/Tester,
+Architect, triggered Security/Privacy/Money and a fresh stage-04 Reviewer prove the active wave. Profile C
+uses the full set on every wave and adds a fresh cross-wave integration review. Each dispatch records
+preferred/configured/actual model and permission evidence; unknown runtime facts remain
+`runtime-selected/unknown`.
 
-Claude Code applies the same checks with profile-aware separation: M stays with the lead, E isolates
-evidence and test output, R always dispatches Developer, Tester, and Reviewer plus the triggered
-Architect/Security roles, and C uses the full set. Each dispatch records preferred/configured/actual model and permission evidence;
-unknown runtime facts remain `runtime-selected/unknown`.
+The result is written into `04_implementation.md`: profile and actual roles per wave, scope-drift
+comparison, Reviewer score/fingerprint, risks checked, validation, follow-ups, launch actions, and what
+04b must independently stress-test.
 
 Fingerprint evidence is executable rather than descriptive. Both tool trees ship the same
 zero-dependency `task-fingerprint.mjs` helper (`tms-task-fingerprint-v1`). It hashes exact recorded path
@@ -249,29 +247,32 @@ manifests with SHA-256, length framing, bytewise path ordering, raw content, mod
 deletions. Package-fingerprint fields are normalized by the helper so they do not hash themselves; stage
 06 requires the worktree and staged-index package hashes to match.
 
-For Profile R/C work, stage 04 must do a bounded local risk-surface sweep before handing off: check
+For Profile R/C work, stage 04 must do a bounded risk-surface sweep before handing off: check
 directly coupled routes, services, read/write paths, tests, mocks, and risky field reads named by the
-plan's canonical risk ledger and by the actual diff. It also runs an adversarial self-review against the invariant
-table. That pass is not independent review and must not be presented as acceptance. Its output is an
-author risk map for 04b to verify and complete.
+plan's canonical risk ledger and by the actual diff. The fresh stage-04 Reviewer then enforces an author-stage
+readiness floor: acceptance and validation green on the current fingerprint, every R/X-ID evidenced, no
+unresolved A/B or systemic C, and score at least `8.0/10`. That pass is not independent 04b acceptance.
+If implementation adds an unplanned trust boundary/owner layer/profile trigger, or materially exceeds the
+planned path baseline (default signal: >25%) without a bounded same-owner explanation, stage 04 stops
+`REPLAN_REQUIRED` instead of widening silently.
 
-Stage 04b is where the pipeline buys independent confidence. Normally it resolves the uncommitted
-task-owned worktree scope left by stage 04, gives that concrete scope to a fresh read-only reviewer,
-fixes real findings, validates again, and repeats until the latest independent review reports no
-actionable findings or reaches the acceptance threshold with validation green. A committed or mixed
+Stage 04b is where the pipeline buys independent confidence. For R/C it resolves the uncommitted
+task-owned worktree scope left by stage 04 and gives the same starting fingerprint to two isolated fresh
+reviewers: one risk-focused and one integration/contract-focused. The controller consolidates verified
+findings into one repeat-04 batch, validates, then asks one fresh final reviewer to inspect the exact final
+fingerprint. A committed or mixed
 range is accepted only for a legacy task or an explicitly requested standalone review.
 
 The first 04b step is to distrust the author's handoff enough to audit it: does the claimed file list match
 the diff, do the invariants cover the dangerous surfaces, did tests or mocks keep the old contract, and
-are there sibling paths that make the same business decision? On risk-heavy work, the first reviewer must
-cover all relevant defect classes in one broad pass. If repeated reviews show the implementation is
-under-hardened, the loop stops patching around the edges and sends the task back through a focused
-separately recorded repeat-04 pass in the same session before starting a fresh 04b attempt. The round
-counter ends only one attempt; it never justifies `PASS` or a request for the user to restart 04.
+are there sibling paths that make the same business decision? If repeated reviews show the implementation
+is under-hardened, the loop sends the task through a focused repeat-04 pass while the hidden outer-attempt
+budget remains. Three failed outer attempts or `REPLAN_REQUIRED` stop terminally with stage 05 forbidden
+and the earliest stage to revisit. The limit never justifies `PASS` and is never shown to reviewers.
 
-Why this works. Full multi-agent coding during 04 is valuable on R/C work, but on ordinary bounded work
-it spends a lot of context and tokens before there is a concrete diff to inspect. The updated pipeline
-keeps M/E focused, preserves real Claude role separation where risk pays for it, and makes 04b mandatory:
+Why this works. Full role separation during 04 is valuable on R/C work, but on ordinary bounded work it
+spends unnecessary context and tokens. The updated pipeline keeps M/E focused, requires real R/C proving
+roles in both tools, and makes 04b mandatory:
 quality is not removed; independent acceptance still happens in a separate
 independent review/fix loop where the reviewer can inspect the actual implementation rather than the
 plan. Even small changes get at least a narrow 04b because a small diff can still change billing,

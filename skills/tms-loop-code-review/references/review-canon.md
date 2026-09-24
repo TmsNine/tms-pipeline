@@ -78,5 +78,5 @@ A high score never overrides an unresolved correctness, security, privacy, money
 
 - Default checkpoint: 3 fresh review rounds and 2 meaningful fix rounds per attempt.
 - The checkpoint is never shown to a scoring reviewer and never lowers the quality bar. It ends one attempt so the orchestrator can choose the correct next action.
-- For pipeline 04b, remaining implementation work routes automatically to a separately recorded repeat 04 and then a fresh 04b attempt in the same invocation. Missing review/validation evidence routes directly to a fresh evidence attempt. Do not ask the user to restart 04 and do not impose a fixed cap across remediation cycles.
+- For pipeline 04b, remaining implementation work routes to a separately recorded repeat 04 and then a fresh attempt only while the stage adapter's hidden outer-attempt budget remains. Missing review/validation evidence routes directly to a fresh evidence attempt. The pipeline adapter may impose a hard convergence cap and terminal replan handoff; never reveal that budget to scoring reviewers or lower acceptance to fit it.
 - For standalone review, or for a genuine blocker such as irreconcilable architecture, unavailable validation/isolation, destructive/external authority, or an unresolved owner decision, stop without claiming acceptance and report the exact reason.

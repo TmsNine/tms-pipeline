@@ -7,9 +7,9 @@ e.g. `docs/<TICKET-ID>/`) — one folder per task. Fill the 9 files in order:
 2. `01_research.md` — current state ("as-is"), facts only, open questions.
 3. `02_design.md` — the single design contract; minimal sufficient change.
 4. `02b_gap_audit.md` — one bounded audit pass over the design (severity A/B/C/D).
-5. `03_delivery_plan.md` — work split into waves, each with a risk profile and expected 04b depth.
-6. `04_implementation.md` — wave-by-wave execution log, self-checks, validation, and deviations.
-7. `04b_loop_review.md` — independent review/fix loop over the implementation diff.
+5. `03_delivery_plan.md` — waves with risk profile, role ownership, scope baseline, readiness gate and expected 04b depth.
+6. `04_implementation.md` — wave-by-wave role evidence, scope-drift checks, readiness scores, validation and deviations.
+7. `04b_loop_review.md` — bounded independent review/fix loop; R/C uses a two-reviewer first pass and a three-attempt replan stop.
 8. `05_test_report.md` — primary (user-visible) + secondary signals.
 9. `06_review_gate.md` — verify vs the design contract; go / conditional_go / no-go.
 

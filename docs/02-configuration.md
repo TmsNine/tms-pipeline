@@ -59,9 +59,8 @@ right. In their place the installer leaves the marker `<<TODO>>` (a placeholder)
 fill it in.
 
 - **`PROFILE_C_TRIGGERS`** is the list of your riskiest code: the parts where it's easy to break something
-  important, so a task that touches them needs Profile R/C handling and a deeper independent 04b review.
-  The placeholder name is kept for compatibility with older templates, but the meaning is risk and review
-  depth, not "always run every checker during implementation." List the items below that apply to you,
+  important, so a task that touches them needs real Profile R/C coding/proving-role separation and a deeper
+  independent 04b review. The placeholder name is kept for compatibility with older templates. List the items below that apply to you,
   plus the exact paths to the modules where they live:
   - sign-in and authorization: who the user is and what they're allowed to do;
   - separation by tenant (a tenant is a separate customer in a shared system; a single-user app has
@@ -109,12 +108,12 @@ when you switch to the other.
 - Skills in both tools use `SKILL.md`, but this repo keeps two trees: `skills/` for Claude Code and
   `codex-skills/` for Codex. They carry the same methodology, but they are not byte-for-byte identical:
   Codex uses numbered stage names and Codex-native wording.
-- The biggest workflow difference is stage 04. Claude Code is profile-aware: M stays inline, E uses
-  bounded evidence/test help, and R/C uses real proving-role separation. Codex defaults to mono/main-agent
-  implementation with explicit role self-checks. Both rely on independent `04b_loop_review` for acceptance.
-- The wave profile in Codex is a risk/review-depth signal, not simply a list of subagents to launch while
-  coding. Bounded work can stay main-agent-only in 04; risk-heavy work gets deeper 04b; maximum-risk work
-  may still use the full classic multi-agent implementation when the operator deliberately chooses it.
+- Stage 04 is profile-aware in both tools: M stays inline, E uses bounded evidence/test help, and R/C uses
+  real separation between the Developer code owner and proving roles. Both rely on independent
+  `04b_loop_review` for acceptance.
+- The wave profile controls implementation ownership as well as review depth. Bounded M/E work avoids a
+  ceremonial mob; R/C work cannot silently downgrade to one-agent self-review, and must clear the stage-04
+  readiness floor before 04b.
 - Tool-native role agents use separate trees: Claude Markdown roles live in `agents/`; Codex TOML roles
   live in `codex-agents/`. The shared `tms_*` role intent stays aligned even though the file formats and
   model controls differ. Claude agent files declare `model` and `permissionMode`, while stage 04 records

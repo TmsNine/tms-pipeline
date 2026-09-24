@@ -21,7 +21,9 @@ Check:
 - The wave's acceptance criteria (from the plan / ticket) are met.
 - The change does what the ticket's driver asked for, at the user-visible level.
 - Nothing promised in this wave is missing; nothing outside this wave was smuggled in.
+- Every owning R/X-ID has current proof, and no unresolved A/B or systemic C finding remains.
 - Follow-ups and pre-launch manual actions discovered in this wave are noted for capture (per AGENTS.md).
 
-Report back: ✅ matches plan + acceptance criteria, or a specific list of gaps (which criterion is unmet
-and evidence), plus actual model if exposed or `runtime-selected/unknown`. Do not edit code.
+Report concrete A/B/C/D findings with tight evidence, coverage performed, and a 0–10 stage-04 readiness
+score. A wave/final R/C integration may hand off only at `>=8.0/10` with no contradictory finding. This
+score is not 04b acceptance. Include actual model if exposed or `runtime-selected/unknown`. Do not edit code.

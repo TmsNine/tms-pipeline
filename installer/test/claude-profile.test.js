@@ -35,14 +35,16 @@ test('Claude stage 04 uses profile-aware execution instead of a mandatory mob', 
   assert.match(skill, /Profile C must override Reviewer per invocation to the strongest available judgement model/i);
   assert.match(skill, /permissionMode[^\n]*ignored for plugin-shipped agents/i);
   assert.match(template, /lead remains the single integration owner/i);
-  assert.match(template, /mandatory strongest-available per-invocation Reviewer override/i);
+  assert.match(template, /strongest judgement reserved for Architect\/Security and Reviewer/i);
+  assert.match(template, /Profile-C Architect\/Reviewer decisions/i);
+  assert.match(template, /at least `8\.0\/10`/i);
 });
 
 test('Claude proving roles declare model and copied-scope permission defaults', () => {
   const expected = {
     'agents/tms-developer.md': { model: 'sonnet', permissionMode: 'acceptEdits', writes: true },
     'agents/tms-tester.md': { model: 'sonnet', permissionMode: 'dontAsk', writes: false },
-    'agents/tms-architect.md': { model: 'opus', permissionMode: 'plan', writes: false },
+    'agents/tms-architect.md': { model: 'sonnet', permissionMode: 'plan', writes: false },
     'agents/tms-security.md': { model: 'opus', permissionMode: 'plan', writes: false },
     'agents/tms-reviewer.md': { model: 'sonnet', permissionMode: 'plan', writes: false },
   };
@@ -73,7 +75,8 @@ test('public docs describe the same Claude profile route', () => {
 
   for (const relativePath of files) {
     const contents = read(relativePath);
-    assert.match(contents, /Claude[\s\S]{0,220}M[\s\S]{0,160}(inline|bounded)/i, relativePath);
+    assert.match(contents, /M[^\n]{0,180}(?:inline|lead|оста[её]тся)/i, relativePath);
+    assert.match(contents, /R\/C[^\n]{0,220}(?:Developer|proving|разработчик|рол)/i, relativePath);
   }
 
   const routing = read('docs/06-model-routing.md');

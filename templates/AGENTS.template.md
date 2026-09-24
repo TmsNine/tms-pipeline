@@ -231,10 +231,10 @@ typecheck, lint, build, logs). No ceremony for simple local tasks.
 
 ## Stage 04 / 04b Risk Profiles
 
-Stage `04_implementation` may run differently by tool. Codex defaults to mono/main-agent implementation:
-the main agent implements wave by wave and records explicit self-checks. Claude Code uses the profile-aware
-route in `CLAUDE.md`: M inline, E with bounded evidence/test help, and real proving-role mobs for R/C. In
-both tools, `04b_loop_review` is the independent review/fix stage after implementation.
+Stage `04_implementation` is profile-aware in both tools: M stays inline, E uses bounded evidence/test
+help, and R/C uses real coding/proving-role separation. The lead remains integration owner; for C it
+orchestrates rather than acting as the sole code author. `04b_loop_review` is the independent review/fix
+stage after implementation, not a delayed implementation stage.
 
 Profiles describe the wave's risk and the depth of 04b, not just how many subagents to launch while
 coding:
@@ -246,10 +246,22 @@ coding:
   agent.
 - **Profile R — Risk review required:** touches money, roles, tenant scope, PII/privacy, migrations,
   lifecycle/state machines, queues/jobs, outbox/messaging, external integrations, or meaningful
-  user-facing business logic. Claude stage 04 uses mandatory base roles plus triggered specialist proving
-  roles; 04b stress-tests the risky surface independently.
-- **Profile C — Full classic required in Claude:** maximum cost of error. Claude uses the full role set;
-  Codex may deliberately choose its exceptional heavy multi-agent mode.
+  user-facing business logic. Stage 04 uses a Developer code owner, Tester/Validator, triggered
+  Architect/Security roles and a fresh wave Reviewer; 04b stress-tests the risky surface independently.
+- **Profile C — Full proving-role separation:** maximum cost of error. Every C wave uses the full role set;
+  when the whole task is C, every wave stays C unless the approved plan records a specific evidence-backed lower-risk exception;
+  the lead orchestrates/integrates, and a fresh cross-wave readiness review runs before 04b.
+
+For R/C, stage 04 may hand off only when all R/X evidence and validation are green on the current
+fingerprint, no unresolved A/B or systemic C remains, and a fresh stage-04 Reviewer scores at least
+`8.0/10`. If implementation introduces an unplanned owner layer/trust boundary/profile trigger, or the
+task-owned path set materially exceeds the planned baseline (default signal: >25%), stop
+`REPLAN_REQUIRED` rather than widening 04/04b silently.
+
+For R/C, 04b starts with isolated risk and integration reviewers on the same fingerprint, consolidates
+one remediation batch, and uses a fresh final reviewer. Three failed outer attempts stop terminally as
+`NEEDS_REMEDIATION` with `replan_required = true`; only `PASS` may enter 05. Keep the attempt budget hidden
+from scoring reviewers.
 
 Choose the profile by the most dangerous touched risk, not by the average size of the diff. **List YOUR
 project's Profile-R/C triggers here** — keep generic patterns, add your stack's specifics:

@@ -1,6 +1,6 @@
 ---
 name: tms-implement
-description: "Pipeline stage 04 — profile-aware Claude implementation: inline main-agent work for M, bounded evidence/test assistance for E, real proving-role mobs for R/C, validation, risk handoff, follow-up and launch capture; also supports automatic remediation re-entry from active 04b"
+description: "Pipeline stage 04 — profile-aware Claude implementation: inline lead work for M, bounded evidence/test assistance for E, real proving-role separation for R/C, scope-drift control, an R/C readiness floor before 04b, validation, risk handoff, follow-up and launch capture; also supports bounded remediation re-entry from active 04b"
 allowed-tools:
   - Read
   - Write
@@ -29,6 +29,8 @@ When an active `tms-loop-review` attempt routes verified defects back to repeat 
 - never stage or commit;
 - return directly to the same 04b invocation without asking the user to restart stage 04.
 
+If remediation introduces an unplanned trust boundary/owner layer/profile trigger or material path growth beyond the plan's scope-drift baseline, write `REPLAN_REQUIRED` and return terminal `NEEDS_REMEDIATION` to 04b instead of starting another review attempt.
+
 The next 04b reviewer must be fresh and must not receive prior reviewer reasoning, scores, round budget, or fix explanations.
 
 ## Scope and evidence setup
@@ -36,6 +38,7 @@ The next 04b reviewer must be fresh and must not receive prior reviewer reasonin
 1. Read `00_ticket.md`, approved `02_design.md`, `02b_gap_audit.md`, and `03_delivery_plan.md`.
 2. Record `base_sha`, a task-owned path manifest, and the starting implementation/package fingerprints. Fail closed on mixed ownership.
 3. Reuse the M/E/R/C profiles and canonical R-ID ledger from the plan; do not silently reclassify or redefine them.
+4. Read the expected paths/owner layers and scope-drift baseline. Stage 04 may refine a bounded same-owner path list, but it may not quietly redesign the task.
 
 ## Profile-aware execution and model evidence
 
@@ -44,13 +47,13 @@ Use the profile of each wave, not one global mode:
 - **M:** the lead implements inline and performs local Developer/Tester/Reviewer self-checks. Do not dispatch a coding mob.
 - **E:** the lead implements inline; dispatch one bounded read-only Architect/evidence pass and a Tester to isolate the evidence map and validation output. Keep final integration and the local Reviewer self-check with the lead.
 - **R:** dispatch Developer + Tester and every triggered Architect or Security/Privacy/Money proving role. Add Reviewer before the wave gate. Corrections return to Developer at the owning layer.
-- **C:** use the full role set, strongest judgement tier for Architect/Security, a mandatory per-invocation strongest-available model override for Reviewer, and an explicit adversarial pass before 04b.
+- **C:** use the full role set for every wave classified C. If the task is C as a whole, treat every implementation wave as C unless the approved plan records a specific evidence-backed lower-risk exception. Keep the lead as orchestrator/integration owner and Developer as code owner; use the strongest judgement tier for Architect/Security and Reviewer, plus a fresh adversarial cross-wave integration pass before 04b.
 
 The user may explicitly request a lighter or heavier mode. Record the override and residual risk; never silently downgrade R/C.
 
 The lead remains the single integration owner in every profile. The code owner is the lead for M/E and the Developer agent for R/C.
 
-Agent defaults are defined in `agents/`: Sonnet for Developer/Tester/Reviewer and Opus for Architect/Security. Profile C must override Reviewer per invocation to the strongest available judgement model. For every dispatched role record `role | preferred model | configured/default model | actual model or runtime-selected/unknown | permission source/evidence`. `permissionMode` frontmatter applies to copied project/user agents but is ignored for plugin-shipped agents; plugin dispatches must record parent/runtime permission evidence or `parent override/unknown`, never the ignored field as enforced. Never claim a model or permission boundary that the runtime did not expose. Never use Fast mode.
+Agent defaults are defined in `agents/`: use a balanced strong tier for Developer, a cheaper capable tier for known validation/evidence, and Opus/strongest judgement only for Architect/Security and Profile-C Reviewer decisions. Profile C must override Reviewer per invocation to the strongest available judgement model. For every dispatched role record `role | preferred model | configured/default model | actual model or runtime-selected/unknown | permission source/evidence`. `permissionMode` frontmatter applies to copied project/user agents but is ignored for plugin-shipped agents; plugin dispatches must record parent/runtime permission evidence or `parent override/unknown`, never the ignored field as enforced. Never claim a model or permission boundary that the runtime did not expose. Never use Fast mode.
 
 ## Per-wave loop
 
@@ -59,7 +62,9 @@ Agent defaults are defined in `agents/`: Sonnet for Developer/Tester/Reviewer an
 3. Keep the lead as integration owner. Use the lead as code owner for M/E and Developer as code owner for R/C.
 4. Run the applicable Tester/Architect/Security/Reviewer checks. Each role rereads only the narrow evidence it must verify.
 5. Verify findings before fixing. Batch related corrections at the owning layer. If a new risk trigger appears, add an append-only `X-04-*` entry and dispatch the missing role. If it meets Profile C triggers, record an execution escalation to C without rewriting the planned profile or R-ID history.
-6. Rerun affected validation after every code/test/contract/SQL/config fix. A wave passes only when acceptance, applicable proving roles, and changed-surface validation are green.
+6. Compare actual paths, owner layers and triggers with the plan after every wave. Stop with `REPLAN_REQUIRED` on a new unplanned trust boundary/owner layer/profile trigger, or material path growth (default signal: more than 25% beyond planned paths) without a bounded same-owner explanation.
+7. Rerun affected validation after every code/test/contract/SQL/config fix. A wave passes only when acceptance, applicable proving roles, and changed-surface validation are green.
+8. For every R/C wave, use a fresh stage-04 Reviewer on the current fingerprint. Require all R/X evidence, no unresolved A/B or systemic C, and score at least `8.0/10` without contradictory findings. After all C waves, run a fresh adversarial cross-wave integration review under the same gate. These reviews are implementation evidence, never reusable as independent 04b scoring evidence.
 
 ## Risk-surface sweep and validation ledger
 
@@ -80,6 +85,8 @@ Write `docs/$1/04_implementation.md` as work progresses:
 - files and behavior changed;
 - R/X/V ledgers and fingerprint history;
 - deviations and fixes;
+- scope-drift comparisons and any `REPLAN_REQUIRED` stop;
+- per-wave R/C Reviewer scores/fingerprints plus the final C integration review;
 - an orchestrator-only `04b handoff` containing the task-owned diff scope, author risk map, dangerous invariants, required tests, adjacent surfaces, and known residuals.
 
 The 04b handoff is author input, not proof. Stage 04b audits it, then derives a sanitized neutral reviewer brief; it never forwards the handoff, author findings/fixes, searches/results, suspicions, scores, or remediation history wholesale to a scoring reviewer.
@@ -95,4 +102,4 @@ Before leaving stage 04:
 
 Stage 04 never stages or commits. Leave the complete task-owned working-tree package for 04b, 05, and the one closing commit after successful 06.
 
-Name follow-ups, launch-playbook additions, validation, profiles, and what 04b must stress-test. Stop for confirmation before 04b unless this was automatic remediation inside an already active 04b invocation.
+Name follow-ups, launch-playbook additions, validation, profiles, actual coding/proving roles, scope-drift result, R/C readiness scores, and what 04b must stress-test. Stop for confirmation before 04b unless this was automatic remediation inside an already active 04b invocation; a `REPLAN_REQUIRED` result always stops as terminal `NEEDS_REMEDIATION`.

@@ -20,6 +20,8 @@ test/lint/build commands, and M/E/R/C risk triggers).
 
 Rules:
 - Implement only the wave brief you were given (scope, files, acceptance). Do not widen scope.
+- You are not alone in the codebase: preserve unrelated changes, never revert another worker, and adapt
+  your implementation to the current shared state.
 - Make the smallest coherent change at the owning layer (see "Minimal Sufficient Change" and "Root Cause
   Discipline" in AGENTS.md). No speculative abstractions, no "while I'm here" cleanup.
 - Match the approved `02_design.md` and `03_delivery_plan.md`. If the design appears wrong mid-wave, STOP
@@ -28,6 +30,6 @@ Rules:
   tenant scoping, no secrets in code/logs).
 - Follow the repo's existing patterns, package manager, and style.
 
-Report back: what you changed (files + summary), any deviation from the brief and why, any new risk
+Report back: what you changed (files + summary), planned-vs-actual paths/owner layers, any deviation from the brief and why, any new risk
 trigger that needs an append-only X-ID or stronger proving role, and the actual model if the runtime
 exposes it (otherwise `runtime-selected/unknown`).

@@ -168,8 +168,9 @@ around it.
 - **Who works.** The lead.
 - **Input → Output.** `02_design.md` (with the blockers folded in) → an `03_delivery_plan.md` file: a list
   of waves, and **each wave has its own risk profile M/E/R/C** with the reason for the choice.
-- **What the agent does.** Divides the work into finished units, notes for each which files will be
-  created or changed, what the main agent must self-check in 04, and how deep 04b must be. It also writes
+- **What the agent does.** Divides the work into finished units, notes for each expected files/owner
+  layers, code and proving-role ownership, scope-drift triggers, the stage-04 readiness gate, and how deep
+  04b must be. It also writes
   one canonical append-only risk ledger with stable R-IDs, invariants, proof, owner layer, failure signal,
   owning wave, and the adjacent search map. Each wave references its owning R-IDs.
 - **Where you check.** You check whether the agent invented anything extra: is the plan split logically,
@@ -183,36 +184,34 @@ around it.
 
 - **Purpose.** Write the code per the approved plan while keeping the implementation context small enough
   to reason about.
-- **Who works.** In Codex, the main agent normally implements and performs explicit role self-checks. In
-  Claude, M stays with the lead, E uses one bounded Architect/evidence pass plus Tester, R always dispatches
-  Developer/Tester/Reviewer plus the triggered Architect/Security roles, and C uses the full set. One integration
-  owner remains responsible for each wave.
+- **Who works.** In both tools M stays with the lead, E uses bounded Architect/evidence and validation
+  help, R dispatches a Developer code owner, Validator/Tester, fresh wave Reviewer and triggered
+  Architect/Security roles, and C uses the full set on every wave. One lead remains integration owner.
 - **Input → Output.** `03_delivery_plan.md` → code in the repository + an `04_implementation.md` file (a
   log of the waves).
-- **What the main agent does (one wave).** It reads the plan for the current wave only → implements the
-  smallest coherent change → runs targeted tests/checks → verifies architecture, contracts, security,
-  privacy, money, and launch implications when relevant → records what passed and what 04b must
-  stress-test. On Profile R/C waves it also performs a bounded risk-surface sweep, checks the invariant
-  table adversarially, and writes a compact 04b handoff as an orchestrator-only author risk map. Stage 04b
+- **What the lead does (one wave).** It reads the current wave, routes roles by profile, integrates the
+  smallest coherent change, verifies findings, runs targeted checks and compares actual scope with the
+  plan. R/C cannot advance until all R/X evidence and validation are green, no A/B or systemic C remains,
+  and a fresh stage-04 Reviewer scores the exact fingerprint at least 8/10. Profile C adds a fresh
+  cross-wave review. Stage 04 then writes a compact 04b handoff as an orchestrator-only author risk map. Stage 04b
   audits it and derives a sanitized neutral brief for the independent reviewer; author findings, fixes,
-  searches, and remediation history are not forwarded. The next wave starts only after the current wave
-  is locally coherent.
+  searches, and remediation history are not forwarded. A new owner layer/trust boundary/profile trigger
+  or material unexplained path growth stops `REPLAN_REQUIRED`.
 - **Where you check.** The lead shows you the result wave by wave. At the end the code **does not move on
   by itself**. Stage 04 does not commit: the task-owned package stays in the worktree for independent
   04b, stage-05 testing, and one closing commit after successful 06.
 - **When to go on.** After all the waves have passed — on to `04b_loop_review`.
 
-Why stage 04 works this way. Multi-agent implementation is expensive because every role has to rebuild
-enough context to act. Bounded M/E work preserves one implementation thread; Claude buys real proving-role
-separation for R/C, where the failure cost justifies it. In every profile, 04b still inspects the finished
-diff independently.
+Why stage 04 works this way. Role separation is expensive, so bounded M/E preserves one implementation
+thread. R/C buys real proving roles in both tools because fixing a local wave is cheaper than rebuilding a
+large system inside 04b. In every profile, 04b still inspects the finished diff independently.
 
 ---
 
 ## Stage 04b — Loop review (`/tms-loop-review`)
 
 - **Purpose.** Independently review the implementation diff before the test report, fix confirmed
-  findings, and make the review evidence durable. This is the quality backstop for the cheaper default 04.
+  findings, and make the review evidence durable. It is a quality backstop, not delayed implementation.
 - **Who works.** The lead plus fresh independent reviewer subagents. The reviewer context is kept separate
   from the implementation context so it can inspect the diff without inheriting the implementer's
   assumptions.
@@ -222,13 +221,10 @@ diff independently.
   04. Committed or mixed ranges are accepted only for legacy tasks or explicitly requested standalone
   reviews. Then the orchestrator audits the 04b handoff instead of trusting it and derives a sanitized
   neutral reviewer brief from the contract, current scope/fingerprint, invariants, and surfaces. The
-  independent reviewer never receives author findings/fixes or remediation history. The loop then
-  runs a bounded review/fix/re-review loop until validation is green and the latest independent reviewer
-  either scores the result high enough or reports no actionable findings. The depth scales by risk: small
-  tasks get a narrow diff review, ordinary features get fix + re-review, and risk-heavy work gets the
-  classic iterative loop with broad first-reviewer coverage. If the loop exposes repeated blocker-like
-  defects, it automatically switches to a separately recorded repeat-04 remediation cycle in the same
-  session, then starts a fresh 04b attempt with a new reviewer.
+  independent reviewers never receive author findings/fixes or remediation history. R/C starts with an
+  isolated risk reviewer and integration reviewer on the same fingerprint, consolidates their findings
+  into one repeat-04 batch, validates, then uses one fresh final reviewer. Three failed outer attempts or
+  `REPLAN_REQUIRED` stop terminally with stage 05 forbidden and the earliest stage to revisit.
 - **Where you check.** You read the fixes, rejected/deferred findings, validation results, and final
   acceptance signal. If the stage was skipped, the file must say why and where that review debt is tracked.
 - **When to go on.** Only after a normalized `PASS` — on to `05_test_report`. 04b never commits:

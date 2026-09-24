@@ -45,6 +45,14 @@ All notable changes to tms-pipeline are documented here. The format follows
   design gap audit, and R/C risk review.
 
 ### Changed
+- Stage 04 is now profile-aware in both tool trees: M stays inline, E uses bounded evidence/test help,
+  and R/C requires separate Developer and proving roles plus an `8.0/10` author-stage readiness floor.
+  Material scope drift stops as `REPLAN_REQUIRED` instead of expanding silently inside 04/04b.
+- Profile R/C 04b now starts with isolated risk and integration reviewers on the same fingerprint,
+  consolidates one remediation batch, and uses a fresh final reviewer. Three failed outer attempts stop
+  terminally for replan instead of consuming an unbounded review session.
+- Codex now ships dedicated stage-04 Developer, Architect, Security/Privacy/Money, and wave Reviewer TOML
+  roles; strongest model spend is concentrated on high-risk proving judgement rather than routine work.
 - Claude stage 04 is now profile-aware instead of always running a coding mob: M stays inline, E uses
   bounded evidence/test help, R always dispatches Developer/Tester/Reviewer plus triggered specialist
   roles, and C keeps the full strongest role set. Claude role agents now declare tool-native model and

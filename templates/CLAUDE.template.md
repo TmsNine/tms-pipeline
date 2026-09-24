@@ -35,7 +35,7 @@ Use the profile already approved in `03_delivery_plan.md`; do not replace it wit
 - **M — Mechanical/bounded:** lead implements inline and performs local Developer/Tester/Reviewer self-checks; no coding mob; narrow 04b.
 - **E — Evidence-heavy:** lead implements inline; one bounded read-only Architect/evidence pass and Tester isolate search/log volume; standard 04b.
 - **R — Risk review required:** Developer + Tester plus every triggered Architect/Security role and a stage-04 Reviewer; risk-focused 04b.
-- **C — Classic maximum-risk:** full role set, strongest judgement models, a mandatory strongest-available per-invocation Reviewer override, broad author risk sweep, and broad first-pass plus fresh final 04b reviewer.
+- **C — Classic maximum-risk:** full role set for every C wave; if the whole task is C, every wave stays C unless the approved plan records a specific evidence-backed lower-risk exception; lead as orchestrator/integration owner; strongest judgement reserved for Architect/Security and Reviewer; a fresh cross-wave readiness review before 04b.
 
 Choose by the most dangerous touched risk, not average diff size. Escalate when the implementation exposes a stronger trigger; record an append-only X-ID instead of silently relabelling history.
 
@@ -46,9 +46,10 @@ For every wave:
 1. Resolve profile, scope, acceptance, R-IDs and validation before editing.
 2. Keep the lead as integration owner; use the lead as code owner for M/E and Developer as code owner for R/C.
 3. Give every subagent a compact brief: task/wave, profile, `base_sha`, exact paths/diff, current fingerprint, R-IDs, neutral acceptance/invariants, allowed actions, evidence required, and not-in-scope items.
-4. Use Sonnet defaults for Developer/Tester/Reviewer and Opus for Architect/Security; Profile C must override Reviewer per invocation to the strongest available judgement model. Record preferred/configured/actual model and permission evidence; use `runtime-selected/unknown` when runtime does not expose the result. `permissionMode` frontmatter applies to copied project/user agents but is ignored for plugin-shipped agents, which must record parent/runtime permission evidence instead.
+4. Use a balanced strong tier for Developer and R-level Architect/Reviewer, a cheaper capable tier for known validation/evidence, and Opus/strongest judgement for Security plus Profile-C Architect/Reviewer decisions. Record preferred/configured/actual model and permission evidence; use `runtime-selected/unknown` when runtime does not expose the result. `permissionMode` frontmatter applies to copied project/user agents but is ignored for plugin-shipped agents, which must record parent/runtime permission evidence instead.
 5. Verify and batch genuine findings at the owning layer; rerun affected validation after fixes.
-6. Pass only after acceptance, applicable proving roles, and changed-surface validation are green. Never use Fast mode.
+6. Compare actual paths/owner layers/triggers with the plan. Stop `REPLAN_REQUIRED` on a new trust boundary/owner layer/profile trigger or material path growth (default signal: >25%) without a bounded same-owner explanation.
+7. Pass R/C only after acceptance and validation are green on the current fingerprint, every R/X-ID is evidenced, no unresolved A/B or systemic C remains, and a fresh stage-04 Reviewer scores at least `8.0/10` without contradiction. Profile C also needs a fresh cross-wave integration review. Never use Fast mode.
 
 Record R/X/V ledgers, task-owned paths, implementation/package fingerprints, and the 04b author handoff in `04_implementation.md`.
 
@@ -61,7 +62,7 @@ An active `tms-loop-review` invocation may call stage 04 back automatically. In 
 - fix and validate owned defects;
 - refresh fingerprints and the handoff;
 - do not stop for confirmation, stage, or commit;
-- return directly to the same 04b invocation for a fresh reviewer.
+- return directly to the same 04b invocation for a fresh reviewer unless scope drift requires terminal `REPLAN_REQUIRED`.
 
 ### Stage-04 close
 
@@ -69,9 +70,9 @@ Capture follow-ups and pre-launch manual actions per `AGENTS.md`. Stage 04 never
 
 ## Stage 04b — Independent and atomic
 
-Every scoring pass uses a fresh read-only Agent with a self-contained prompt. Do not reveal parent reasoning, prior findings/scores/fixes, round number, remaining budget, or the acceptance target.
+Every scoring pass uses fresh read-only Agents with self-contained prompts. R/C begins with an isolated risk reviewer and integration reviewer on the same fingerprint, run in parallel when possible; the controller consolidates findings into one repeat-04 batch, validates, then uses one fresh final reviewer. Do not reveal parent reasoning, prior findings/scores/fixes, round/attempt number, remaining budget, or the acceptance target.
 
-The per-attempt checkpoint limits orchestration, not quality. If implementation work remains, 04b persists `NEEDS_REMEDIATION`, automatically runs repeat 04, and starts a fresh attempt. It does not ask the user to restart 04.
+The per-attempt checkpoint limits orchestration, not quality. If implementation work remains, 04b persists `NEEDS_REMEDIATION`, automatically runs repeat 04, and starts a fresh attempt while fewer than three outer attempts have failed. Attempt 3 failure or `REPLAN_REQUIRED` stops terminally with stage 05 forbidden and the earliest stage to revisit; it does not start Attempt 4.
 
 `PASS` is atomic: validation and a fresh independent review must cover the exact same final implementation fingerprint, and no implementation change may follow that reviewer. Any later code/test/SQL/contract/config edit immediately returns the artifact to `NOT_ACCEPTED`.
 

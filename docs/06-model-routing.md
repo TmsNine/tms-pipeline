@@ -25,10 +25,11 @@ or model was selected, the skill must not claim enforcement; record
 | 02 Design | Sol high | Sol xhigh for R/C; Max only for one unresolved Profile-C decision after a normal strong pass | A design mistake propagates into every later stage. |
 | 02b Gap audit | Sol high | Sol xhigh for security/privacy/money/tenant/migration/lifecycle risk | This is independent risk judgement, not checklist execution. |
 | 03 Delivery plan | Terra high | Luna medium for obvious M; Sol high for unresolved R/C ambiguity | Planning decomposes an approved design but must not under-classify risk. |
-| 04 Implementation M/E/R | Terra high | Sol high when implementation exposes a critical X-ID | Terra balances capability and cost for normal engineering; evidence helpers can use Terra medium. |
-| 04 Implementation C | Sol high | Sol xhigh for a difficult security/data-integrity branch | Maximum-cost-of-error work needs stronger judgement before 04b. |
+| 04 Implementation M/E | Terra high lead; Luna/Terra bounded helpers | Sol high only when implementation exposes a critical X-ID | Bounded work stays cheap without losing targeted evidence. |
+| 04 Implementation R | Terra high Developer/Architect; Luna Validator; Sol high wave Reviewer/Security when triggered | Sol xhigh for a difficult money/security decision | Real role separation catches defects while the wave is still local. |
+| 04 Implementation C | Terra high Developer by default; Luna Validator; Sol high/xhigh Architect/Security/wave Reviewer | Sol high Developer only for a difficult C coding branch | Spend strongest judgement on proving roles, not routine code/log collection. |
 | 04b Review M/E | Fresh Terra high | A new fresh Terra high after every fix | Context independence matters more than one oversized model call. |
-| 04b Review R/C | Sol xhigh broad first pass; fresh Sol high/xhigh final pass | Max only for a genuine unresolved disagreement; never reveal round budget or PASS threshold | The reviewer must search systemically without optimizing for the orchestrator's counter. |
+| 04b Review R/C | Sol xhigh risk reviewer + Terra/Sol high integration reviewer on the same fingerprint; fresh Sol high/xhigh final pass | Max only for a genuine unresolved disagreement; never reveal attempt budget or PASS threshold | Orthogonal first-pass coverage is batched before one final confirmation. |
 | 05 Test report | Luna medium | Terra high for ambiguous failures; Sol high for R/C diagnosis | Known commands and compact pass/fail reporting are cheap; root-cause judgement is not. |
 | 06 Review gate | Terra high for straightforward `go` | Sol high/xhigh for `conditional_go`, `no-go`, R/C, partial validation, or manual gates | A cheap summarizer must not issue the final verdict. |
 | Full codebase audit | Terra for zone maps; Terra/Sol finder and skeptic by risk | Ultra only for deliberate non-scoring synthesis of genuinely independent zones | Several independent zones beat one undifferentiated giant context. |
@@ -40,9 +41,9 @@ Claude aliases are tool-native defaults, not direct quality equivalents of Sol/T
 | Stage-04 role / profile | Default | Escalation and evidence |
 |---|---|---|
 | M | Lead implements inline | No coding subagent; record lead model when exposed |
-| E | Lead inline; one bounded Architect/evidence pass + Tester | Architect `opus`, Tester `sonnet`; strengthen judgement per invocation when needed |
-| R | Developer `sonnet`, Tester `sonnet`, Reviewer `sonnet`; triggered Architect/Security `opus` | Record preferred, configured and actual model; unknown stays `runtime-selected/unknown` |
-| C | Full role set | Keep Architect/Security on `opus`; Reviewer must use a per-invocation strongest-available model override |
+| E | Lead inline; one bounded Architect/evidence pass + Tester | Architect/Tester `sonnet`; strengthen judgement per invocation when needed |
+| R | Developer/Tester/Architect/Reviewer `sonnet`; triggered Security `opus` | Record preferred, configured and actual model; unknown stays `runtime-selected/unknown` |
+| C | Full role set | Override Architect/Reviewer to the strongest available tier; keep Security on `opus` |
 
 Agent files also set tool allowlists and permission declarations. Claude Code may override model choice
 through environment or a per-invocation selection; its documented model precedence is environment →

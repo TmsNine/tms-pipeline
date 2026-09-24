@@ -75,9 +75,14 @@ The public pipeline currently has 9 durable task artifacts:
 `04_implementation` → `04b_loop_review` → `05_test_report` → `06_review_gate`.
 
 - `04b_loop_review` is the independent review/fix loop between implementation and the test report.
-- Stage 04 is profile-aware in both tools. Codex defaults to mono/main-agent implementation with explicit
-  self-checks; Claude Code keeps M inline, uses bounded evidence/test help for E, and reserves real
-  proving-role mobs for R/C. Stage 04b remains the independent quality backstop.
+- Stage 04 is profile-aware in both tools: M stays inline, E uses bounded evidence/test help, and R/C
+  requires real proving-role separation before the work may reach 04b. Profile C keeps the lead as
+  orchestrator/integration owner rather than the sole code author. Stage 04b remains the independent
+  quality backstop, not a delayed implementation stage.
+- R/C stage 04 requires an evidence-backed fresh Reviewer readiness score of at least 8/10 with no
+  unresolved A/B or systemic C. Material unplanned scope drift stops for replan.
+- R/C stage 04b starts with isolated risk and integration reviewers, batches remediation, and stops
+  terminally for replan after three failed outer attempts; the cap is never revealed to scoring reviewers.
 - Keep templates, examples, README, methodology docs, deep-dive docs, and skills consistent with this
   9-artifact chain.
 - When changing process semantics, update the skill text first, then the docs/templates that teach it.
