@@ -1,43 +1,56 @@
-# Loop Review: Export reports list to CSV
+# ACME-101 — 04b Code review
 
-Date: 2026-01-15
+Date: 2026-01-18
+Reviewed diff: `git diff 7b90e11 -- shared/ api/ web/src/pages/ e2e/reports-export.spec.ts` (base 7b90e11)
+Passes: 4 of 5 · Outcome: stagnation
 
-**Status:** PASS
+Pass 1 — code. Pass 2 — end-to-end: walked the vertical from `01_research.md` for the export and quoted
+the supplying line at every hop, from the button's `href` to the download header; no break. Pass 3 — code, after the fix. Pass 4 — code. Passes 3 and 4 changed no
+product file and brought only repeated or non-blocking comments: the stagnation rule ended the loop. No
+visual pass: the diff adds one existing `Button` and no new screen.
 
-## Scope resolved
-- Source: worktree changes for ACME-101.
-- Files reviewed: `api/src/lib/csv.ts`, `api/src/lib/reportsQuery.ts`, `api/src/routes/reports.ts`,
-  `web/src/pages/ReportsList.tsx`.
-- Accepted implementation fingerprint: `sha256:3333333333333333333333333333333333333333333333333333333333333333`.
-- Package fingerprint at handoff: `sha256:4444444444444444444444444444444444444444444444444444444444444444`.
-- Review depth: classic — export path touches data access and CSV injection risk.
-- Stage-04 handoff: present and mostly complete; orchestrator expanded the sanitized neutral reviewer
-  scope to include response-header contract coverage without exposing author history.
+## Blocking findings
 
-## Loop result
-- Outer attempt / reviewer rounds / fix rounds: 1 / 3 / 1.
-- First-pass pair: risk reviewer checked CSV injection and org scoping; integration reviewer independently
-  checked filter parity, cap semantics, response headers, frontend propagation and tests on the same fingerprint.
-- Risk-map completeness: expanded — stage 04 covered CSV contents but had not asserted the download
-  filename contract in `Content-Disposition`.
-- Consolidated remediation: one Class C response-contract test gap fixed as one batch; zero A/B;
-  replan not required.
-- Final acceptance: no actionable findings after the fix round.
+| # | File:line | Reproduction on current code | What the user sees | Fix | Status |
+|---|---|---|---|---|---|
+| B-1 | `api/src/lib/csv.ts:9` | Create a report titled `=HYPERLINK("https://example.test","open")`, export, open the file in a spreadsheet | The cell becomes a live formula link instead of the title text; a report title can make a manager's spreadsheet run a formula | Cells starting with `=`, `+`, `-`, `@`, tab or carriage return get a leading `'`; case added to `csv.test.ts` | fixed in pass 1, confirmed in pass 3 |
 
-## Findings and fixes
-| Class | Confidence | Path:line / finding | Action | Evidence |
+## Where the other findings went
+
+| # | File:line | What | Route | Details |
 |---|---|---|---|---|
-| C | High | `api/src/routes/reports.test.ts` — missing assertion for `Content-Disposition: attachment; filename=reports.csv`. | Fixed by adding the response-header assertion. | `V-04b-01` PASS. |
+| N-1 | `api/src/routes/reports.ts:69` | Comment above the export route still says "list handler" after the copy | fixed now | Comment corrected; inside File Ownership, one line |
+| N-2 | `web/src/pages/ReportsList.tsx:29` | No progress sign while a large export is prepared; near the cap it takes about 4 s and managers press twice | backlog proposal | "Show that the export is being prepared." Double clicks give two downloads and managers already ask which file is the right one |
+| N-3 | `api/src/routes/reports.ts:74` | The export builds the whole file in memory | trigger register | Trigger: the first request to raise the 10,000-row cap. At today's cap the file stays under 5 MB; above it, memory per request grows with the cap and a person will notice slow or failed downloads |
+| N-4 | `api/src/lib/csv.ts:3` | Rename `toCsv` to `serializeCsv` | dropped | Preference; the name matches `toPdf` in `api/src/lib/pdf.ts` |
+
+## Trust in the tests
+
+- `csv.test.ts` — would fail if escaping or the formula guard regressed; asserts the exact output string;
+  mocks nothing.
+- `reportsQuery.test.ts` — would fail if an org id from the request reached the query; asserts the
+  generated where clause, not a mock call.
+- `reports-export.test.ts` — real test database with two orgs; would fail on a cross-org row, a lost filter
+  or a missing truncation line; mocks only the session.
+- `ReportsList.test.tsx` — asserts the link's `href`; would fail if a filter were dropped.
+- `reports-export.spec.ts` — the only test that crosses every seam with no mock; reads the downloaded file.
+
+No behaviour changed without a test.
+
+## Understanding of the change
+
+The export is the list's query without paging, capped at 10,000 rows, serialised by one pure helper with
+the table's own column definition. Invariants: org id only from the session; filters only through
+`parseReportFilters`; column order only from `REPORT_COLUMNS`. All three reviewers reconstructed this
+without help.
+
+## Rejected findings
+
+- Pass 4: "`limit(10001)` is an off-by-one." Rejected: the extra row is how truncation is detected
+  (plan, Normative contracts); the cut-at-10,000 test proves 10,000 data rows plus the note.
 
 ## Validation
-| V-ID | Command / signal | Fingerprint | Result | Covers |
-|---|---|---|---|---|
-| V-04b-01 | `npm test -- csv reports-export` | `sha256:3333333333333333333333333333333333333333333333333333333333333333` | PASS | R-CSV-01..04, response-header finding |
-| V-04b-02 | `npm run typecheck` | `sha256:3333333333333333333333333333333333333333333333333333333333333333` | PASS | AC |
 
-## Deferred follow-ups
-- None.
-
-## Notes
-- The loop fixed test coverage only; no product behavior changed after `04_implementation.md`.
-- No commit was created in 04b; the task-owned package remains for 05/06 and the single closing commit.
+- Before pass 1: `npm run check` → exit 0, `check: 3 packages OK`.
+- After the B-1 and N-1 fixes: row 1 → exit 0, `10 passed, 0 failed`; `npm run check` → exit 0.
+- Passes 2–4: no product change; no re-run needed.

@@ -1,136 +1,74 @@
-# Implementation Log: Export reports list to CSV
+# ACME-101 — 04 Implementation
 
-Date: 2026-01-15
+Date: 2026-01-17
+Plan: docs/ACME-101/03_plan.md
 
-## Scope and fingerprints
-- Evidence note: the base and fingerprints in this documentation-only worked example are illustrative,
-  format-valid values; a real task must record actual `task-fingerprint.mjs` output.
-- Base SHA: `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`.
-- Task-owned tracked paths: reports API/UI source, tests, and `docs/ACME-101/`.
-- Task-owned untracked paths: `api/src/lib/csv.ts`, `api/src/lib/reportsQuery.ts`.
-- Starting implementation fingerprint: `sha256:1111111111111111111111111111111111111111111111111111111111111111`.
-- Final implementation fingerprint: `sha256:2222222222222222222222222222222222222222222222222222222222222222`.
-- Package fingerprint (normalized evidence fields): `sha256:4444444444444444444444444444444444444444444444444444444444444444`.
-- Fingerprint helper: `tms-task-fingerprint-v1`; source: `worktree`; base: `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`.
-- Implementation manifest (one repo-relative POSIX path per line):
+One executor for the whole plan; no phase was handed to a developer subagent.
 
-```text
-api/src/lib/csv.ts
-api/src/lib/reportsQuery.ts
-api/src/routes/reports.test.ts
-api/src/routes/reports.ts
-web/src/pages/ReportsList.tsx
-```
+## Phase 1 — Shared query, columns and CSV helper
 
-- Package manifest: the implementation paths above plus these repo-local pipeline paths:
+Files: `shared/reportColumns.ts`, `api/src/services/reportsQuery.ts`, `api/src/services/reportsQuery.test.ts`,
+`api/src/lib/csv.ts`, `api/src/lib/csv.test.ts`, `api/src/routes/reports.ts`
 
-```text
-docs/ACME-101/00_ticket.md
-docs/ACME-101/01_research.md
-docs/ACME-101/02_design.md
-docs/ACME-101/02b_gap_audit.md
-docs/ACME-101/03_delivery_plan.md
-docs/ACME-101/04_implementation.md
-docs/ACME-101/04b_loop_review.md
-docs/ACME-101/05_test_report.md
-docs/ACME-101/06_review_gate.md
-```
+**Done:** `REPORT_COLUMNS`, `parseReportFilters`, `buildReportsQuery` and `toCsv` exactly as in the plan's
+contracts. `listReports` now calls `buildReportsQuery(parseReportFilters(req.query), req.user.orgId)` and
+adds its paging on top; the inline query is gone.
+**Test:** `csv.test.ts` (escaping: comma, quote, newline, empty cell, header order — 5 cases) and
+`reportsQuery.test.ts` (org id only from the argument, unknown params dropped, period and status applied,
+no filters — 4 cases). Both red first with "Cannot find module" for the two files, as the plan said.
+**Checks:** row 1 → exit 0, `9 passed, 0 failed`. Row 2 → exit 0, `Tests: 6 passed` (list unchanged).
+**Deviations:** none.
 
-## Wave-by-wave execution
+## Phase 2 — Export endpoint
 
-### Wave 1 — CSV helper + shared query/columns
-- Profile: R — shared query + CSV injection surface
-- Integration owner: lead; code owner: Developer agent.
-- Status: pass
-- What was done: extracted `buildReportsQuery`; added `toCsv()` with RFC-4180 escaping and formula-injection
-  neutralization (cells leading with `= + - @` prefixed with `'`).
-- What changed: `api/src/lib/csv.ts` (new), `api/src/routes/reports.ts`, `api/src/lib/reportsQuery.ts` (new).
-- Actual roles: Developer / Tester / Architect / Security-Privacy-Money / fresh stage-04 Reviewer.
-- Planned-vs-actual scope: aligned; no new owner layer; path growth within planned set.
-- Risk-surface sweep: searched CSV formula triggers, shared query call sites, and reports route tests; no
-  second export query path found.
-- Stage-04 readiness review: current fingerprint scored 8.8/10; no A/B/systemic C; all R-CSV evidence green.
-- Validation: CSV unit tests pass, including escaping and formula-injection cases.
-- 04b must stress-test: CSV escaping/injection handling and list/export query parity.
+Files: `api/src/routes/reports.ts`, `api/test/reports-export.test.ts`
 
-| Role | Self-check / dispatched | Preferred model | Configured/default | Actual | Permission source/evidence |
-|---|---|---|---|---|---|
-| Developer | dispatched | Sonnet | `sonnet` | `runtime-selected/unknown` | copied project agent: `acceptEdits`; parent override unknown |
-| Tester | dispatched | Sonnet | `sonnet` | `runtime-selected/unknown` | copied project agent: `dontAsk`; parent override unknown |
-| Architect | dispatched | Sonnet | `sonnet` | `runtime-selected/unknown` | copied project agent: `plan`; parent override unknown |
-| Security / Privacy / Money | dispatched | Opus | `opus` | `runtime-selected/unknown` | copied project agent: `plan`; parent override unknown |
-| Reviewer | dispatched | Sonnet | `sonnet` | `runtime-selected/unknown` | copied project agent: `plan`; parent override unknown |
+**Done:** `GET /api/reports/export.csv` under the same `requireUser` router as the list; `limit(10001)`;
+first 10,000 rows plus the truncation line when 10,001 came back; headers as in the contract.
+**Test:** `reports-export.test.ts`, 5 cases: own org + filtered + header order; cut at 10,000; download
+headers; 401 without a session; unknown query params ignored. Red first: 404 on every case (route absent).
+**Checks:** row 3 → exit 0, `Tests: 5 passed`.
+**Deviations:** none.
 
-### Wave 2 — Export endpoint
-- Profile: R — data-access path that must enforce org scoping
-- Integration owner: lead; code owner: Developer agent.
-- Status: pass
-- What was done: `GET /api/reports/export.csv` reusing the shared query with `req.user.orgId`; 10k cap +
-  truncation note row.
-- What changed: `api/src/routes/reports.ts`.
-- Actual roles: Developer / Tester / Architect / Security-Privacy-Money / fresh stage-04 Reviewer.
-- Planned-vs-actual scope: aligned; no new auth/data owner.
-- Risk-surface sweep: searched org scoping, export route auth fixture setup, cap/truncation handling, and
-  route-level mocks; truncation endpoint assertion added before handoff.
-- Stage-04 readiness review: current fingerprint scored 8.7/10; no A/B/systemic C; all R-CSV evidence green.
-- Validation: export integration tests prove org isolation, filter fidelity, and cap behavior.
-- 04b must stress-test: org scoping, filter fidelity, and truncation semantics.
+## Phase 3 — Export button
 
-### Wave 3 — Frontend button + toast
-- Profile: M — UI wiring, no new data flow
-- Integration owner and code owner: lead inline; no coding mob.
-- Status: pass
-- What changed: `web/src/pages/ReportsList.tsx`.
-- Self-check roles covered: Developer / Tester / Reviewer
-- Risk-surface sweep: checked active filter state and loading-state wiring only; no new API semantics.
-- Validation: UI smoke proves the download link includes active filters and the loading state is stable.
-- 04b must stress-test: narrow diff review for filter propagation and user-visible states.
+Files: `web/src/pages/ReportsList.tsx`, `web/src/pages/ReportsList.test.tsx`, `e2e/reports-export.spec.ts`
 
-Final R cross-wave integration review: 8.6/10 on the final implementation fingerprint; no A/B/systemic C,
-all R-CSV-01..04 evidenced. Stage 04 is ready for independent 04b.
+**Done:** "Export to CSV" `Button` above the table, rendered as a link to
+`/api/reports/export.csv?${new URLSearchParams(filters)}`, disabled while filters load. `COLUMNS` replaced
+by `REPORT_COLUMNS`. The end-to-end spec seeds two orgs, clicks the button in a real browser and reads the
+downloaded file.
+**Test:** "export link carries filters" — red first (no element named "Export to CSV"). Existing 3 cases
+now import `REPORT_COLUMNS`.
+**Checks:** row 4 → exit 0, `Tests: 4 passed`. Row 6 → exit 0, `1 passed`.
+**Deviations:** none.
 
-## R/X/V evidence
+## Seams
 
-| R-ID | Invariant | Owner layer | Required proof | Result |
-|---|---|---|---|---|
-| R-CSV-01 | Formula cells cannot execute. | CSV helper | CSV unit tests | PASS |
-| R-CSV-02 | List/export filters match. | Shared reports query | Route parity tests | PASS |
-| R-CSV-03 | Export stays organization-scoped. | Export route/shared query | Two-org integration test | PASS |
-| R-CSV-04 | Large export is capped with a note. | Export response builder | Endpoint cap test | PASS |
-
-| X-ID | Newly exposed risk | Evidence | Disposition |
+| Seam from the plan | Producer line | Consumer line | Agree |
 |---|---|---|---|
-| X-04-01 | Endpoint test originally omitted the truncation note row. | Author self-review of route tests. | Fixed before 04b handoff. |
+| Page → export URL | `ReportsList.tsx:29` `href={'/api/reports/export.csv?' + new URLSearchParams(filters)}` | `reports.ts:71` `router.get('/export.csv', …)` reads `req.query` | yes |
+| URL → route | `reports.ts:10` `router.use(requireUser)` sets `req.user` | `reports.ts:72` `req.user.orgId` | yes |
+| Route → query | `reports.ts:72` `buildReportsQuery(parseReportFilters(req.query), req.user.orgId)` | `reportsQuery.ts:14` `(filters: ReportFilters, orgId: string)` | yes |
+| Query → rows | `reportsQuery.ts:21` selects `id, title, owner, status, createdAt` | `reports.ts:74` `rows.slice(0, 10000)` | yes |
+| Rows → file | `reports.ts:76` `toCsv(page, REPORT_COLUMNS)` | `csv.ts:3` `(rows, columns: readonly ReportColumn[])` | yes |
+| File → person | `reports.ts:78` `Content-Disposition: attachment; filename="reports.csv"` | `reports-export.spec.ts:22` `page.waitForEvent('download')` | yes |
+| List route → query | `reports.ts:31` same call plus `.limit(50).offset(page * 50)` | `reportsQuery.ts:14` | yes |
 
-| V-ID | Command / signal | Scope | Implementation fingerprint | Result | Fresh/reused | Covers |
-|---|---|---|---|---|---|---|
-| V-04-01 | `npm test -- csv reports-export` | API CSV/export | `sha256:2222222222222222222222222222222222222222222222222222222222222222` | PASS | fresh | R-CSV-01..04, X-04-01 |
-| V-04-02 | `npm run typecheck` | API + web | `sha256:2222222222222222222222222222222222222222222222222222222222222222` | PASS | fresh | AC |
+## Whole-task check
 
-## 04b handoff — orchestrator-only author risk map
-- Reviewer isolation: 04b audits this section but sends the scoring reviewer only the current contract,
-  exact scope/fingerprint, neutral invariants/surfaces, constraints, and validation expectations.
-- Resolved task-owned files: `api/src/lib/csv.ts`, `api/src/lib/reportsQuery.ts`,
-  `api/src/routes/reports.ts`, `web/src/pages/ReportsList.tsx`, related tests.
-- Base SHA and task-owned scope for 04b: worktree changes for ACME-101 from the recorded illustrative base.
-- Dangerous invariants: CSV injection neutralization, org scoping, list/export filter parity, 10k cap.
-- Searches/risk-surface sweeps performed in 04: CSV trigger characters, shared query call sites, export
-  route auth fixtures, frontend active filter propagation.
-- Scope-drift result: aligned with planned files/owner layers; no replan trigger.
-- Stage-04 Reviewer evidence: Wave 1 8.8, Wave 2 8.7, final R integration 8.6 on recorded fingerprints.
-- Adjacent surfaces checked: list reports endpoint, export endpoint tests, CSV unit tests, UI smoke.
-- Validation: `npm test -- csv reports-export`, `npm run typecheck`; no manual launch action.
-- Final implementation fingerprint for 04b: `sha256:2222222222222222222222222222222222222222222222222222222222222222`.
-- Package fingerprint (normalized evidence fields) and task-owned manifest: `sha256:4444444444444444444444444444444444444444444444444444444444444444`; paths listed above.
-- Reviewer stress-test prompts: try to prove formula injection is still possible; try to find a route path
-  where export skips `req.user.orgId`; try to make list/export filters diverge.
+`npm run check` (repo root) → exit 0, `check: 3 packages OK` (build, type-check and tests of `api`, `web`,
+`shared`). No red lines.
+Security: one pass — the diff touches a tenant predicate and input at a trust boundary (security triggers
+in `AGENTS.md`). `tms-security` found one issue: the `period` validation the list and the export share
+(`reports.ts:18`) answered 400 with the raw query value inside the message, and the export now reaches it
+from a link a person can be sent. Fixed inside `api/src/routes/reports.ts` with a fixed message; the
+re-check made no further change, so it was the last one. Org scoping and the guard were confirmed.
 
-## Deviations from plan
-- None.
+## Stops and returns to the owner
 
-## Follow-ups captured (per AGENTS.md)
-- ACME-118 "Reports export polish" (bundle: toast copy, i18n keys, button loading state) → backlog,
-  priority Could.
+None. Nothing outside File Ownership was needed.
 
-## Pre-launch manual actions captured
-- None (additive, no migration, no env/config).
+## Summary
+
+Phases 1–3 green. 10 files (7 created, 3 changed), about 260 lines added and 40 removed, most of them tests.

@@ -30,8 +30,10 @@ the source templates and packaged skills.
 ## Repository Layout
 
 - `skills/` — Claude Code skill tree. These names are the Claude-facing `/tms-*` commands.
-- `codex-skills/` — Codex skill tree. These use Codex-native numbered names such as `tms-00-ticket`.
-- `agents/` — role-agent prompts shared by the methodology.
+- `codex-skills/` — Codex skill tree. Stage skills, `tms-run`, `tms-new` and `tms-ui-screen` share the
+  Claude names; the audit and refactoring skills use Codex-native numbered names (`tms-90-audit-scope` …
+  `tms-96-ui-refactoring`).
+- `agents/` — Claude Code role agents; each pins its model by full id and its effort.
 - `codex-agents/` — Codex-native TOML role configs installed into `~/.codex/agents`.
 - `commands/` — onboarding command sources, currently `/tms-init`.
 - `installer/` — zero-dependency Node installer and tests.
@@ -44,7 +46,7 @@ Use `rg --files` for discovery instead of assuming this list is exhaustive.
 
 ## Public-Release Rules
 
-- Never publish private project facts, private paths, customer/school names, real tickets from another
+- Never publish private project facts, private paths, customer names, real tickets from another
   repo, secrets, tokens, credentials, or local machine details.
 - Examples must be synthetic or clearly generic. Use placeholder IDs like `ACME-101`, not real backlog IDs
   from customer work.
@@ -56,8 +58,9 @@ Use `rg --files` for discovery instead of assuming this list is exhaustive.
 
 ## Skill Trees And Manifests
 
-- Claude Code skills live in `skills/`; Codex skills live in `codex-skills/`. Keep behavior aligned, but
-  do not force byte-for-byte identity. Preserve tool-native naming, frontmatter, and model/tool wording.
+- Claude Code skills live in `skills/`; Codex skills live in `codex-skills/`. The eight stage skills,
+  `tms-run` and `tms-ui-screen` are byte-identical in both trees (a test enforces it). The audit and
+  refactoring skills keep tool-native naming and runtime-specific sections.
 - `.claude-plugin/plugin.json` must list every directory under `skills/`.
 - `.codex-plugin/plugin.json` must list every directory under `codex-skills/`.
 - If adding, renaming, or removing a skill, update manifests and run the tests that enforce manifest/disk
@@ -69,23 +72,23 @@ Use `rg --files` for discovery instead of assuming this list is exhaustive.
 
 ## Pipeline Methodology Canon
 
-The public pipeline currently has 9 durable task artifacts:
+The public pipeline has eight stages, each run in a fresh context and each leaving one artifact in
+`docs/<TASK-ID>/`:
 
-`00_ticket` → `01_research` → `02_design` → `02b_gap_audit` → `03_delivery_plan` →
-`04_implementation` → `04b_loop_review` → `05_test_report` → `06_review_gate`.
+`00_ticket` → `01_research` → `02_design` → `03_plan` → `04_implementation` → `04b_review` →
+`05_test_report` → `06_review_gate`, orchestrated by `tms-run`.
 
-- `04b_loop_review` is the independent review/fix loop between implementation and the test report.
-- Stage 04 is profile-aware in both tools: M stays inline, E uses bounded evidence/test help, and R/C
-  requires real proving-role separation before the work may reach 04b. Profile C keeps the lead as
-  orchestrator/integration owner rather than the sole code author. Stage 04b remains the independent
-  quality backstop, not a delayed implementation stage.
-- R/C stage 04 requires an evidence-backed fresh Reviewer readiness score of at least 8/10 with no
-  unresolved A/B or systemic C. Material unplanned scope drift stops for replan.
-- R/C stage 04b starts with isolated risk and integration reviewers, batches remediation, and stops
-  terminally for replan after three failed outer attempts; the cap is never revealed to scoring reviewers.
-- Keep templates, examples, README, methodology docs, deep-dive docs, and skills consistent with this
-  9-artifact chain.
-- When changing process semantics, update the skill text first, then the docs/templates that teach it.
+- Two owner stops: after design (02) and at the gate (06). The lead signs the plan (03). Only a human
+  writes `go`; the lead may sign `conditional_go` when only execution remains.
+- Stage 04 has one executor for the whole plan and one security pass over the assembled diff when a
+  security trigger fires. No risk profiles, no per-phase escorts, no fingerprints.
+- Stage 04b runs up to five fresh independent read-only review passes with a stagnation rule, routes
+  every finding (fixed / backlog proposal / trigger register / dropped) and holds no score or verdict.
+- File Ownership in the plan is a hard boundary for implementation.
+- Model and effort are pinned per agent role (`agents/*.md`, `codex-agents/*.toml`).
+- Keep templates, the worked example, README, methodology docs, deep-dive docs, and skills consistent
+  with this chain. When changing process semantics, update the skill text first, then the docs and
+  templates that teach it.
 
 ## Installer Rules
 

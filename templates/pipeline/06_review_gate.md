@@ -1,44 +1,39 @@
-# Review Gate: [TASK_NAME]
+# <TASK-ID> — 06 Review gate
 
-Date: [DATE]
+Date: <YYYY-MM-DD>
 
-## Fingerprint closure
-- Accepted 04b implementation fingerprint: ...
-- Stage-05 implementation fingerprint: ...
-- Current implementation fingerprint: ...
-- Closing package fingerprint (normalized evidence fields): ...
-- Fingerprint helper: `tms-task-fingerprint-v1`; worktree/index package match: yes/no
-- Worktree observed task-owned paths / package manifest: exact match yes/no
-- Staged paths / package manifest: exact match yes/no
-- Match: yes/no
+## Gate decision
 
-## Verify against the design contract (`02_design.md`)
-- [ ] Acceptance criteria met
-- [ ] No design drift (implementation matches the approved design)
-- [ ] Change-surface triggers handled (contracts, auth, async, persistence, copy)
-- [ ] Normalized 04b status is exactly `PASS`
-- [ ] Implementation fingerprint matches accepted 04b and stage 05
-- [ ] Validation evidence present (`05_test_report.md`)
-- [ ] Follow-ups + pre-launch manual actions captured (per AGENTS.md)
-- [ ] Documentation base updated — delivered behavior/decisions folded into the owning docs so the vault reflects reality
+<filled by the owner: go / fix first / not now — or conditional_go signed by the lead, with its one-line condition and the document that closes it>
 
-## Verdict
-- [ ] **go** — ships as-is
-- [ ] **conditional_go** — ships once named conditions are met (list them + route to launch playbook)
-- [ ] **no-go** — blocker(s) remain (list them)
+## Proof that the task works
 
-## Conditions / comments
-- ...
+A reproducible command or run showing the target behaviour, and what it showed.
+No such run — name the condition that would produce it; that becomes the
+`conditional_go` condition.
 
-## Backlog / status updated
-- [ ] Task status reflects actually-delivered scope (not the original ticket wording)
+This field is filled first and may not be empty. "Reviewers find nothing more"
+is not proof.
 
-## Closing commit
-- [ ] Eligible for exactly one task-scoped commit after successful external sync and fingerprint checks
-- Staged package fingerprint (normalized evidence fields): ...
-- Commit blocker: none / ...
-- The actual commit SHA is reported after success in chat or another external status surface; it is not stored in this repo-local artifact.
+## Acceptance review
 
-## Pipeline metrics
-- Profile / waves / review-fix rounds / findings / remediation cycles / V-ID freshness / primary signal /
-  manual gates / available time-subagent-token data / verdict
+| ID from 02 | Behaviour | Done | Evidence |
+|---|---|---|---|
+
+## What 04b did
+
+The route table from `04b_review.md` as it is: fixed now · backlog proposal ·
+trigger register · dropped with a reason. Plus, if any, the blocking finding
+04b could not close and what it would take.
+
+## Validation summary
+
+Primary signal, secondary signal, what was not run.
+
+## Left for a human
+
+Migrations, environment, live smoke, UAT — and in which launch-playbook document.
+
+## Proposed follow-ups
+
+What we consider separate work and why. The owner decides.

@@ -17,8 +17,9 @@ Both run in CI on every push and PR. Please make them green before opening a PR.
 ## Repository layout
 
 ```
-skills/        16 tms-* skills (pipeline + audit + refactoring + bootstrap)
-agents/        5 mob roles
+skills/        17 tms-* skills (8 stages + orchestrator + audit + refactoring + screen + bootstrap)
+agents/        9 Claude Code role agents (model + effort pinned per role)
+codex-agents/  6 Codex TOML role agents
 commands/      /tms-init onboarding command
 installer/     core engine + the `npx tms-pipeline` wizard  (installer/test/ holds the tests)
 templates/     AGENTS/CLAUDE templates, pipeline forms, doc-base skeletons, worked example

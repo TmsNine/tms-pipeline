@@ -1,38 +1,51 @@
-# Test Report: Export reports list to CSV
+# ACME-101 — 05 Test report
 
-Date: 2026-01-15
+Date: 2026-01-18
 
-## Freshness
-- 04b normalized status: `PASS`.
-- Implementation fingerprint: `sha256:3333333333333333333333333333333333333333333333333333333333333333` / accepted 04b `sha256:3333333333333333333333333333333333333333333333333333333333333333` — match.
-- Package fingerprint (normalized evidence fields): `sha256:5555555555555555555555555555555555555555555555555555555555555555`.
-- Fingerprint helper: `tms-task-fingerprint-v1`; source: `worktree`; manifests match stage 04.
+## Primary signal
 
-## Automated checks
-| V-ID | Type | Command | Implementation fingerprint | Result | Covers |
+Run by hand on the local stack (`npm run dev`, seeded data), as the plan's manual scenario says:
+
+1. Signed in as a manager of org A. Opened Reports, set Status = Open, Period = 2025-12. The list showed
+   "42 reports".
+2. Pressed "Export to CSV". `reports.csv` downloaded.
+3. Opened it in a spreadsheet: header `Title, Owner, Status, Created`, 42 data rows, all Status = Open, none
+   of org B's titles. The seeded title `=HYPERLINK(...)` shows as plain text.
+
+Evidence: `docs/ACME-101/evidence/export-org-a.png`, `docs/ACME-101/evidence/reports.csv`.
+
+Not run live: the same on production with real data — see "Manual runtime smoke".
+
+## Checks run
+
+| # | Command | Directory | Exit code | Marker from the plan found | Verdict |
 |---|---|---|---|---|---|
-| V-05-01 | Targeted tests | `npm test -- csv reports-export` | `sha256:3333333333333333333333333333333333333333333333333333333333333333` | PASS (13 tests) | AC, R-CSV-01..04 |
-| V-05-02 | Typecheck | `npm run typecheck` | `sha256:3333333333333333333333333333333333333333333333333333333333333333` | PASS | AC |
-| V-05-03 | Lint | `npm run lint` | `sha256:3333333333333333333333333333333333333333333333333333333333333333` | PASS | changed surface |
-| V-05-04 | Build | `npm run build` | `sha256:3333333333333333333333333333333333333333333333333333333333333333` | PASS | API + web |
+| 1 | `npm test --workspace api -- src/lib/csv.test.ts src/services/reportsQuery.test.ts` | repo root | 0 | yes — `10 passed, 0 failed` | green |
+| 2 | `npm test --workspace api -- test/reports.test.ts` | repo root | 0 | yes — `Tests: 6 passed` | green |
+| 3 | `TZ=UTC npm test --workspace api -- test/reports-export.test.ts` | repo root | 0 | yes — `Tests: 5 passed` | green |
+| 4 | `npm test --workspace web -- src/pages/ReportsList.test.tsx` | repo root | 0 | yes — `Tests: 4 passed` | green |
+| 5 | `npm run check` | repo root | 0 | yes — `check: 3 packages OK` | green |
+| 6 | `TZ=UTC npm run e2e -- reports-export.spec.ts` | repo root | 0 | yes — `1 passed` | green |
 
-Coverage of note:
-- `toCsv()` — comma, quote, newline, empty cell, and formula-injection (`=`,`+`,`-`,`@`) cases.
-- export endpoint — org isolation (user A cannot see org B rows), filter fidelity, 10k cap + note row,
-  and attachment filename header.
+Rows in the plan: `6`. Rows here: `6`. No mismatch.
 
-## Smoke / manual (user-visible behavior)
-| Scenario | Expectation | Result |
-|---|---|---|
-| Click Export with filters active | CSV downloads with exactly the filtered rows | PASS |
-| Open CSV in a spreadsheet | Columns match the table order; no formula executes | PASS |
-| Export >10k matching rows | File capped at 10k + final note row; toast shown | PASS |
+## Secondary signal
 
-## Producer + consumer
-- Filter contract and column order shared from one definition; list and export verified consistent.
+Row 5 is the project's task check: build, type-check and all tests of `api`, `web` and `shared` — 212
+tests, 0 failed. Logs: `.scratch/ACME-101/check.log`. Lint is part of the same command: 0 problems.
 
-## Verdict
-- **Primary signal status:** met — filtered, permitted CSV downloads correctly.
-- **Secondary signal status:** all green (tests/typecheck/lint/build).
-- V-ID freshness: V-05-01..04 rerun after the last implementation change.
-- Blockers: none.
+## Known caveats
+
+None. The known-test-debt register (read from the main branch) lists nothing under `api`, `web` or
+`shared`, and nothing was red.
+
+## Not run
+
+- Export on production with real data volume — needs the production environment, which this stage does
+  not have. Goes to the gate as unverified.
+
+## Manual runtime smoke
+
+After rollout, a manager exports a filtered list on production and compares the row count with the list's
+total. Recorded in the launch playbook (`AGENTS.md` → *Pre-Launch Manual Action Capture*):
+`docs/playbook/rollout.md`, step "ACME-101 — reports CSV export smoke".

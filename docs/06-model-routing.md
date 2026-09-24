@@ -1,82 +1,104 @@
 # Model routing for tms-pipeline
 
-> Current as of July 12, 2026. The Russian version is canonical:
-> [06-model-routing.ru.md](06-model-routing.ru.md).
+> Which model and reasoning effort run each part of the pipeline, and how to change them. The Russian
+> version is [06-model-routing.ru.md](06-model-routing.ru.md).
 
-This memo answers a practical question: which model and reasoning effort should run each stage so the
-pipeline does not buy maximum capability for mechanical work or save money on high-blast-radius
-judgement.
+## The rule: model and effort belong to the role
 
-OpenAI currently describes **GPT-5.6 Sol** as the flagship for complex reasoning and coding,
-**GPT-5.6 Terra** as the intelligence/cost balance, and **GPT-5.6 Luna** as the cost-sensitive,
-high-volume option. Source: [official OpenAI model catalog](https://developers.openai.com/api/docs/models).
+You start one chat and never switch the model or the effort by hand between stages. Every agent role
+ships with its model and effort written into its own definition file, and `tms-run` dispatches each
+stage to the agent that owns it. The right setting follows the role automatically.
 
-Model names and availability may vary by Codex host and account. If the runtime cannot prove that a role
-or model was selected, the skill must not claim enforcement; record
-`actual model = runtime-selected/unknown`.
+How the settings were chosen:
 
-## Codex recommended route
+- **Cheaper tier** for work that collects and reports: search, inventories, running checks, assembling
+  the test report and the gate page.
+- **Top tier** for everything that decides: what the task actually is, the design, the plan and its
+  seams, writing the code of one chain, any judgement about what a person using the product will see,
+  and every review pass.
+- **Effort is the first lever, not a weaker model:** medium for routine stages, high where judgement is
+  the product (design, plan, review, security).
+- **One dependent chain, one executor.** Stage 04 is written by one strong agent at medium effort rather
+  than by a coordinator plus workers: a coordinator re-reads the plan and every report on every step, and
+  a defect between two individually correct phases is invisible inside either of them.
 
-| Stage / work | Default | Escalate when | Why |
+## Claude Code: agents and their pinned models
+
+The agent files live in `agents/` in this repository and are installed into `~/.claude/agents/` (or
+loaded from the plugin).
+
+| Agent | Model | Effort | Runs |
 |---|---|---|---|
-| 00 Ticket | Luna medium | Terra medium when scope is genuinely disputed | Indexing and classification are bounded. |
-| 01 Research — lead | Terra high | Sol high/xhigh for auth, tenant scope, payments, PII, migrations, queues, or lifecycle | The lead judges which facts carry the design. |
-| 01 Research — explorers | Terra medium | Terra high for a large cross-module map | Collectors return `path:line` evidence and make no product decision. |
-| 02 Design | Sol high | Sol xhigh for R/C; Max only for one unresolved Profile-C decision after a normal strong pass | A design mistake propagates into every later stage. |
-| 02b Gap audit | Sol high | Sol xhigh for security/privacy/money/tenant/migration/lifecycle risk | This is independent risk judgement, not checklist execution. |
-| 03 Delivery plan | Terra high | Luna medium for obvious M; Sol high for unresolved R/C ambiguity | Planning decomposes an approved design but must not under-classify risk. |
-| 04 Implementation M/E | Terra high lead; Luna/Terra bounded helpers | Sol high only when implementation exposes a critical X-ID | Bounded work stays cheap without losing targeted evidence. |
-| 04 Implementation R | Terra high Developer/Architect; Luna Validator; Sol high wave Reviewer/Security when triggered | Sol xhigh for a difficult money/security decision | Real role separation catches defects while the wave is still local. |
-| 04 Implementation C | Terra high Developer by default; Luna Validator; Sol high/xhigh Architect/Security/wave Reviewer | Sol high Developer only for a difficult C coding branch | Spend strongest judgement on proving roles, not routine code/log collection. |
-| 04b Review M/E | Fresh Terra high | A new fresh Terra high after every fix | Context independence matters more than one oversized model call. |
-| 04b Review R/C | Sol xhigh risk reviewer + Terra/Sol high integration reviewer on the same fingerprint; fresh Sol high/xhigh final pass | Max only for a genuine unresolved disagreement; never reveal attempt budget or PASS threshold | Orthogonal first-pass coverage is batched before one final confirmation. |
-| 05 Test report | Luna medium | Terra high for ambiguous failures; Sol high for R/C diagnosis | Known commands and compact pass/fail reporting are cheap; root-cause judgement is not. |
-| 06 Review gate | Terra high for straightforward `go` | Sol high/xhigh for `conditional_go`, `no-go`, R/C, partial validation, or manual gates | A cheap summarizer must not issue the final verdict. |
-| Full codebase audit | Terra for zone maps; Terra/Sol finder and skeptic by risk | Ultra only for deliberate non-scoring synthesis of genuinely independent zones | Several independent zones beat one undifferentiated giant context. |
+| `tms-stage` | `claude-opus-5-5` | medium | stages 01, 04, 04b |
+| `tms-stage-deep` | `claude-opus-5-5` | high | stage 02, then 03 (the same agent, resumed) |
+| `tms-stage-light` | `claude-sonnet-5` | medium | stages 05, 06 |
+| `tms-reviewer`, `tms-security`, `tms-architect` | `claude-opus-5-5` | high | review passes, the security pass |
+| `tms-developer` | `claude-opus-5-5` | medium | bounded fixes |
+| `tms-explorer` | `claude-sonnet-5` | medium | research fan-out |
+| `tms-tester` | `claude-sonnet-5` | low | named checks |
 
-## Claude Code role route
+Stage 00 (the ticket) runs in your own chat, without a separate agent: it needs your exact words, and
+they live in that chat.
 
-Claude aliases are tool-native defaults, not direct quality equivalents of Sol/Terra/Luna:
+Three rules keep this working:
 
-| Stage-04 role / profile | Default | Escalation and evidence |
-|---|---|---|
-| M | Lead implements inline | No coding subagent; record lead model when exposed |
-| E | Lead inline; one bounded Architect/evidence pass + Tester | Architect/Tester `sonnet`; strengthen judgement per invocation when needed |
-| R | Developer/Tester/Architect/Reviewer `sonnet`; triggered Security `opus` | Record preferred, configured and actual model; unknown stays `runtime-selected/unknown` |
-| C | Full role set | Override Architect/Reviewer to the strongest available tier; keep Security on `opus` |
+- **Pin by full model id, never by a short alias.** An alias can resolve to different models over time,
+  so the same pipeline would silently run on different models from one week to the next.
+- **Never dispatch a stage as `general-purpose`.** A general-purpose agent inherits whatever model the
+  chat happens to run on, so most of the work would run on whatever the chat was started with. Always
+  dispatch by the named agent type.
+- **For search use `tms-explorer`,** not the built-in `Explore` agent, so research fan-out stays on the
+  model and effort chosen for it.
 
-Agent files also set tool allowlists and permission declarations. Claude Code may override model choice
-through environment or a per-invocation selection; its documented model precedence is environment →
-invocation → agent frontmatter → main conversation. `permissionMode` applies to copied project/user agents
-but is ignored for plugin-shipped agents, so plugin runs must record parent/runtime permission evidence.
-Never claim enforcement merely because frontmatter contains a value. Source: [official Claude Code subagent documentation](https://code.claude.com/docs/en/sub-agents).
+### Changing the models
 
-## Hard constraints
+The ids above are what this release ships with. If your plan does not include one of these models, or a
+newer model changes what "top tier" and "cheaper tier" mean for you, edit the `model:` (full id) and
+`effort:` lines in the frontmatter of each agent file in `~/.claude/agents/`. Keep the split between the
+two tiers; change the ids, not the roles.
 
-- Never use **Fast mode** for pipeline stages.
-- Never use **Ultra for scoring review**. Context size does not replace reviewer independence.
-- **Max is not a normal default.** It is a targeted escalation for one difficult decision.
-- Any code/test/SQL/contract/config change invalidates the previous 04b acceptance; rerun validation and
-  use a fresh reviewer on the same final state.
-- A cheap evidence agent never makes product, architecture, security, privacy, payment, or final-stage
-  decisions.
+Editing is easiest when the agents were copied by the installer. Agents loaded from the plugin live inside
+the plugin's own folder and are replaced on the next plugin update, so if you want your own ids, install
+by copying instead of using the plugin.
 
-## When GPT-5.6 is unavailable
+### `permissionMode`
 
-Current skill fallbacks are:
+Some agent files also declare `permissionMode` (for example, read-only planning mode for reviewers).
+Claude Code applies it to agents copied into `~/.claude/agents/` or a project's `.claude/agents/`, but
+**ignores it for agents shipped inside a plugin**; there the agent runs with the permissions of the chat
+that started it. The same is true of any frontmatter value: a declared setting is not proof that it was
+applied. Source: [Claude Code subagent documentation](https://code.claude.com/docs/en/sub-agents).
 
-- Luna → `gpt-5.4-mini`;
-- Terra → `gpt-5.4`;
-- Sol → `gpt-5.5`.
+## Codex: helper roles and their settings
 
-These are tms-pipeline fallback rules, not claims of identical quality. When the model family changes,
-check the [official catalog](https://developers.openai.com/api/docs/models), then update the Codex skill
-model strings and `codex-agents/*.toml`, and update this memo last.
+Codex has no stage agents. A stage runs on your Codex session's own model and effort; give stages 02 and
+03 (design and plan) the deeper setting, as the table in `tms-run` says. What Codex does have are helper
+roles, as TOML files in `codex-agents/`, installed into `~/.codex/agents/`. Each file sets three fields:
+
+- `model` — the model id;
+- `model_reasoning_effort` — the effort (`low`, `medium`, `high`, `xhigh`);
+- `sandbox_mode` — `read-only` for roles that only look, `workspace-write` for roles that may write.
+
+As shipped:
+
+| Role | `model` | `model_reasoning_effort` | `sandbox_mode` |
+|---|---|---|---|
+| `tms_explorer` | `gpt-5.6-terra` | medium | read-only |
+| `tms_developer` | `gpt-5.6-terra` | high | workspace-write |
+| `tms_architect` | `gpt-5.6-terra` | high | read-only |
+| `tms_reviewer` | `gpt-5.6-terra` | high | read-only |
+| `tms_security` | `gpt-5.6-sol` | xhigh | read-only |
+| `tms_validator` | `gpt-5.6-luna` | medium | workspace-write |
+
+To change a model, edit the `model` and `model_reasoning_effort` lines in the matching file in
+`~/.codex/agents/`. Model names and availability vary by Codex host and account; check the
+[OpenAI model catalog](https://developers.openai.com/api/docs/models) for the ids your account offers.
 
 ## What matters more than the model name
 
-1. A clean stage input from the previous artifact.
-2. Fresh isolated context for design audit and scoring review.
-3. An exact task-owned diff and fingerprint.
-4. Strong models only where the agent makes a high-blast-radius decision.
-5. An honest non-PASS whenever the evidence does not match the final implementation.
+1. A clean stage input: each stage gets the previous artifact and the ticket, never the previous
+   conversation.
+2. Fresh, independent context for every review pass in 04b.
+3. Strong models where a decision is made, cheap ones where evidence is collected.
+4. Honest evidence: a check counts only with its exit code and output, not because a setting says it
+   should have run.

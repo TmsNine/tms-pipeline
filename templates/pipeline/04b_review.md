@@ -1,38 +1,44 @@
-# Loop Review: [TASK_NAME]
+# <TASK-ID> — 04b Code review
 
-Date: [DATE]
+Date: <YYYY-MM-DD>
+Reviewed diff: <command and base SHA>
+Passes: <N of 5> · Outcome: <no blocking | a blocking finding remains | stagnation>
 
-**Status:** PASS / NOT_ACCEPTED / SKIPPED / NEEDS_REMEDIATION / BLOCKED
+## Blocking findings
 
-## Scope resolved
-- Base SHA / legacy range: ...
-- Files reviewed: ...
-- Accepted implementation fingerprint: ...
-- Package fingerprint at handoff: ...
-- Review depth: narrow / standard / classic
-- Stage-04 handoff: present/complete enough / expanded / missing
+Sorted by severity of consequence, heaviest first.
 
-## Loop result
-- Outer attempt / reviewer rounds / fix rounds: ... / maximum 3 attempts
-- R/C first-pass pair: risk reviewer scope/result + integration reviewer scope/result
-- Risk-map completeness: accepted / expanded / missing — ...
-- Consolidated remediation batch: ...
-- Loop health: verified A/B count, reopened R/X IDs, repeat-04 cycles, converging / terminal replan required
-- Final acceptance: score / no actionable findings
-- Terminal non-PASS: [replan_required true/false, earliest stage 02/03/04, non-converging invariants]
+| # | File:line | Reproduction on current code | What the user sees | Fix | Status |
+|---|---|---|---|---|---|
 
-## Findings and fixes
-| Class | Confidence | Path:line / finding | Action | Evidence |
+Empty is a valid and frequent result.
+
+## Where the other findings went
+
+| # | File:line | What | Route | Details |
 |---|---|---|---|---|
-| A/B/C/D | High/Medium/Low | ... | fixed / rejected / deferred | ... |
+
+Route is one of four: `fixed now` (what was fixed) · `backlog proposal` (one
+line for the gate: what the work is and how it will get in the way of ordinary
+work) · `trigger register` (which event was recorded and why a person will
+notice it) · `dropped` (why). No row may be left without a route.
+
+## Trust in the tests
+
+For each added or changed test: would it fail for a plausible regression? does
+it assert an observable contract? does it avoid mocking its own result? If
+behaviour changed without tests — is that justified.
+
+## Understanding of the change
+
+What the change is responsible for, how the main flow goes, which invariants it
+holds. If the reviewer could not reconstruct it — what stayed unclear and which
+future change that makes risky.
+
+## Rejected findings
+
+What was rejected and on what evidence.
 
 ## Validation
-| V-ID | Command / signal | Fingerprint | Result | Covers |
-|---|---|---|---|---|
-| V-... | `...` | ... | PASS/FAIL | AC/R/X |
 
-## Deferred follow-ups
-- [TICKET-ID] [area] [driver] -> [backlog path]
-
-## Notes
-- ...
+Commands and results per pass.

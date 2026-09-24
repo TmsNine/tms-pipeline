@@ -12,19 +12,20 @@ First time here? Start with the overview: [getting started](01-getting-started.m
 
 Onboarding tms-pipeline is split into two halves, on purpose:
 
-1. **The installer** (`npx tms-pipeline` or `/plugin install`) — a terminal program that drops the
-   skills into your project and writes a starter `AGENTS.md`. A skill is a command like
-   `/tms-research` that you give the agent to run one step of the work. The installer never asks you
-   about your project, so it leaves almost every field in `AGENTS.md` marked `<<TODO>>` — these are
-   deliberate placeholders, not things it forgot.
+1. **The installer** (`npx tms-pipeline`, or `npx github:TmsNine/tms-pipeline` until the npm package is
+   published; for Claude Code, alternatively the plugin) — puts the skills and agent roles in place and
+   writes a starter `AGENTS.md` into your project. A skill is a command like `/tms-01-research` that you
+   give the agent to run one step of the work. The installer never asks you about your project, so it
+   leaves almost every field in `AGENTS.md` marked `<<TODO>>` — deliberate placeholders, not things it
+   forgot.
 2. **Agent-driven setup** (the `/tms-init` skill, run inside Claude Code or Codex) — reads your
    repository and fills in most of `AGENTS.md` for you, asking only about the things it couldn't work
    out from the code.
 
-This page is the final step before launch: a handful of `AGENTS.md` fields that need human judgement
-and are best settled in a short conversation with an agent reading the code alongside you. `/tms-init`
-leaves these marked `<<TODO>>`. Work through the ones that apply to your project — each comes with a
-ready prompt for the agent.
+This page is the final step before the first task: a handful of `AGENTS.md` fields that need human
+judgement and are best settled in a short conversation with an agent reading the code alongside you.
+`/tms-init` leaves these marked `<<TODO>>`. Work through the ones that apply to your project — each comes
+with a ready prompt for the agent.
 
 > How to use a prompt: open your project in Claude Code or Codex (you need only one of the two
 > tools), paste the prompt, let the agent read the code and propose a value, then confirm or correct
@@ -35,7 +36,7 @@ ready prompt for the agent.
 ## 1. `AUDIENCE_PROFILE` — who reads the output
 
 Sets the tone and level of detail every pipeline stage writes at (a non-technical product owner vs a
-senior engineer).
+senior engineer). `/tms-init` asks this, but it is worth a second look.
 
 > **Prompt:** "Look at who actually reads this project's task documents and reviews — am I a solo
 > engineer, a team with product managers, an agency reporting to a client? Propose a one-line
@@ -49,17 +50,18 @@ Baseline context so the research and design stages don't start blind.
 > two-sentence `PROJECT_ONE_LINER`: what the product is, who it's for, and the core stack. Facts
 > only."
 
-## 3. `PROFILE_C_TRIGGERS` — when a task needs risk handling and deeper review
+## 3. `SECURITY_TRIGGERS` — when a change gets a security check
 
-Every piece of work (a wave) gets a risk profile. In Codex, ordinary stage 04 work usually stays with the
-main agent and explicit self-check roles; the independent quality backstop is stage 04b, where a fresh
-reviewer checks the actual diff. Here you define what makes a task high-risk **in your domain**, so the
-pipeline knows when to use Profile R/C and make 04b more demanding.
+When a task touches anything on this list, stage 04 runs one read-only security review over the finished
+change, and stage 04b uses its strongest reviewer. When nothing on the list is touched, there is no
+security pass. So the list should name exactly what is dangerous **in your project**, with the paths
+where it lives — not generic advice.
 
-> **Prompt:** "Based on this codebase, list the concrete conditions that should turn on Profile R/C risk
-> handling and deeper 04b review — for example: touches authentication/authorization, payments, users'
-> private data (PII), separation between tenants, migrations, public API contracts, money math. Give me a
-> short list tailored to what this project actually has, not generic advice."
+> **Prompt:** "Based on this codebase, list the concrete changes that should trigger a security review:
+> for example, sign-in and permissions, separation between customers' data (tenants), validation of
+> data arriving from outside, secrets and signing keys, audit logs, money (prices, payments, refunds),
+> users' private data (PII). For each item that this project actually has, give the exact modules or
+> folders where it lives. Format it as a short list for `SECURITY_TRIGGERS`."
 
 ## 4. `PERSISTENCE_AND_TENANCY` — data model and isolation rules
 
@@ -82,18 +84,56 @@ backward compatibility, and what checks before merge.
 > forbidden. For example: can you drop a column outright (a destructive drop), or do you first ship
 > code that stops using it and drop it only in the next deploy?"
 
-## 6. `LAUNCH_STAGE_MAPPING` and `LAUNCH_PLAYBOOK_LOCATION` — pre-launch manual actions
+## 6. `KNOWN_TEST_DEBT_LOCATION` — tests that are already failing
+
+Many projects have a few tests that fail on the main branch for reasons unrelated to the current task.
+Without a list of them, the agent either calls every red test a new breakage or starts fixing someone
+else's problem. With the list, it checks first: a test on the list is named as known debt; a test not on
+the list is this task's breakage. The agent reads the list from the main branch, not from the task
+branch.
+
+> **Prompt:** "Run the project's test command on the main branch and list the suites that fail there
+> today, with a one-line reason for each if you can tell. Propose where to keep this list (a short file
+> next to the backlog is fine) and give me the path for `KNOWN_TEST_DEBT_LOCATION`. If everything is
+> green, propose the path for an empty list anyway."
+
+## 7. `TRIGGER_REGISTER_LOCATION` — findings that wait for an event
+
+Code review sometimes finds something that is not a problem today but will become one when a specific
+thing happens — "the first bulk import", "a second server", "the first customer in another time zone".
+Such findings do not belong in the backlog yet; they go to the trigger register, each with the event that
+makes it matter. This field says where that register lives.
+
+> **Prompt:** "Look at our backlog and docs. Propose where to keep a trigger register — a short table of
+> findings that matter only when a named event happens, with columns for the finding, the triggering
+> event and where it was found. It can be a section of the backlog. Give me the path or section for
+> `TRIGGER_REGISTER_LOCATION`."
+
+## 8. `ACCEPTED_SCREENS_LOCATION` — screens you have accepted (UI projects only)
+
+If your product has a user interface, keep a list of the screens you have accepted, each with a
+reference image. An accepted screen is the reference: changes to it go through `tms-ui-screen`, start
+from it, and are not redone in passing by another task. Skip and delete this field if there is no UI.
+
+> **Prompt:** "Find where this project keeps its screens and any screenshots or design references.
+> Propose a register of accepted screens — screen name, where it lives in the code, and a reference
+> image — and where to keep it. Give me the path for `ACCEPTED_SCREENS_LOCATION`. Do not mark any screen
+> as accepted yourself; list them as candidates for me to confirm."
+
+## 9. `LAUNCH_STAGE_MAPPING` and `LAUNCH_PLAYBOOK_LOCATION` — pre-launch manual actions
 
 Some pre-launch steps can't be done in code — a person does them by hand (flip a flag, run a migration
-on production, tell the team). These two fields set where such steps are recorded and how the pipeline
-stages point to them, so anything found mid-task doesn't get lost.
+on production, tell the team). These two fields set where such steps are recorded and which part of the
+playbook each kind of step goes to, so anything found mid-task doesn't get lost. The gate (06) also names
+the playbook document that closes a `conditional_go`.
 
 > **Prompt:** "Do we have a launch checklist or playbook — a list of manual actions to do before
-> shipping? If yes, where is it, and how should the pipeline stages route manual pre-launch actions
-> into it? If not, propose a minimal `LAUNCH_PLAYBOOK_LOCATION` and a 'stage → manual action'
-> mapping."
+> shipping? If yes, where is it, and which part of it should each kind of manual action go to
+> (migrations and settings, technical checks, live smoke test, owner acceptance, the launch decision)?
+> If not, propose a minimal `LAUNCH_PLAYBOOK_LOCATION` and a 'kind of action → document' mapping for
+> `LAUNCH_STAGE_MAPPING`."
 
-## 7. Pointers to where things live in the repo: `CODE_LAYOUT_HINT`, `DOC_INDEX_HINT`, `TRACEABILITY_LOCATION`, `DESIGN_SYSTEM_HINT`
+## 10. Pointers to where things live in the repo: `CODE_LAYOUT_HINT`, `DOC_INDEX_HINT`, `TRACEABILITY_LOCATION`, `DESIGN_SYSTEM_HINT`
 
 Four short pointers that help agents find their way around the repo faster. Each is one line:
 
@@ -117,8 +157,8 @@ Four short pointers that help agents find their way around the repo faster. Each
 - Re-read `AGENTS.md` end to end — no `<<TODO>>` should be left that matters for your first task.
 - If something genuinely isn't decided yet, leave an explicit `<<TODO>>` and settle it when the first
   relevant task reaches it. The pipeline writes any missing context straight into its report.
-- Start work: run the `/tms-ticket <your first ticket>` skill — it opens the first task and starts the
-  first pipeline stage.
+- Start work: run `/tms-run <your first ticket>` — it carries the task through all eight stages and stops
+  for you after the design and at the gate.
 
 See also: [getting started](01-getting-started.md) · [configuration reference](02-configuration.md) ·
 [methodology](00-methodology.md).

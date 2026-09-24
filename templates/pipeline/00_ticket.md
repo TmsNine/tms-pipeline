@@ -1,29 +1,31 @@
-# Ticket: [TASK_NAME]
+# <TASK-ID> — <short title>
 
-Date: [DATE]
-Ticket ID: [TICKET-ID]
+Status: OPEN
+Date: <YYYY-MM-DD>
+Priority: Must | Should | Could
+Source: <the owner's words / where it was found>
 
-## Driver / Why
-[The real-world need this task addresses, in plain language.]
+## Problem
 
-## Scope
-- In: [what this task covers]
-- Out: [what is explicitly excluded]
+One sentence from the user's side: what a person cannot do today.
 
-## Acceptance (3-5 observable pass/fail criteria)
-1. ...
-2. ...
+## Who it affects
 
-## Source links
-- Backlog row: [link]
-- Product / flow / architecture doc(s): [links from your documentation base]
+Which role or kind of user — and in which scenario.
 
-## Task mode
-- [ ] Direct  — cosmetic / copy / local edit, no runtime-behavior change
-- [ ] Investigation — root cause unclear, diagnose before patching
-- [ ] TDD-first — behavior / logic / contracts / auth / persistence / validation
+## How it shows up today
 
-## Preconditions checked
-- [ ] Item exists in the backlog and is the exact target
-- [ ] Relevant product/architecture docs identified
-- [ ] Open questions resolved or flagged
+What the person sees instead of the right behaviour. If there is a
+reproduction — the exact steps.
+
+## What becomes possible
+
+One or two sentences about the outcome the user will see.
+
+## What we do NOT do here
+
+Explicit boundaries: neighbouring surfaces that stay as they are.
+
+## Source
+
+The owner's words, a finding in task <ID>, a backlog row.

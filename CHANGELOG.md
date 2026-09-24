@@ -6,103 +6,80 @@ All notable changes to tms-pipeline are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-24
+
+The method is rebuilt around a simpler rule: every stage runs in its own fresh context, the owner stops
+the pipeline twice, and one executor writes the code.
+
 ### Added
-- `/tms-new` skill: a one-time guided bootstrap for a brand-new product (interview one question at a
-  time, then lay down an MVP doc set + folder structure) — framed explicitly as setup, not a feature
-  brainstorm.
-- `codex-skills/`: a Codex-native skill tree with numbered stage names and Codex-specific execution
-  guidance, kept separate from the Claude Code `skills/` tree.
-- `/tms-loop-review`: stage `04b_loop_review`, the task-ID-based review/fix loop that normally resolves
-  the uncommitted task-owned worktree before `05_test_report`; committed ranges remain a legacy or
-  explicitly standalone-review fallback.
-- Public root `AGENTS.md` for this repository, adapted from battle-tested project rules but stripped of
-  private/customer-specific context for public reuse.
-- `docs/04-stages-deep-dive.md` (+ `.ru.md`): an under-the-hood walkthrough of the delivery stages — which agents
-  run, on which model tiers, input/output, and where the human checkpoint is.
-- Human-in-the-loop is now an explicit through-line in the README and methodology (you review each
-  stage's artifact before the agent proceeds).
-- Zero-dependency test suite for the onboarding engine (`node --test`), covering token rendering, the
-  no-overwrite-without-`--force` rule, dry-run, Codex-asset gating, version-sync across the four manifest
-  files, and skill-manifest/disk parity.
-- GitHub Actions CI running the tests and a relative-markdown-link check on Node 18/20/22.
-- `scripts/check-links.mjs` and an `npm run check:links` script.
-- CLI flags: `--help`, `--version`, `--dry-run`, and `--answers <file.json>` for non-interactive runs.
-- Wizard now installs Codex skills/agents into `~/.codex` from `codex-skills/` (only when Codex is
-  selected).
-- Wizard can also install the skills for **Claude Code via npx** (an alternative to `/plugin install`):
-  a "Choose where" step (1 Claude / 2 Codex / 3 both / 0 skip) copies `skills/`, `agents/`, and
-  `commands/` into `~/.claude` when you pick Claude. New engine option `copyClaudeAssets` (gated on
-  `useClaude`), exposed via `--answers` and covered by a test.
-- "In 30 seconds" summary and a prominent link to the worked example
-  (`templates/example-task/ACME-101/`) in the README and getting-started docs.
-- `CONTRIBUTING.md`, `CHANGELOG.md`, issue templates, and a pull-request template.
-- `docs/05-manual-setup.md` (+ `.ru.md`): a "finish onboarding with your AI agent" tutorial with
-  ready-to-paste prompts for the deep judgement fields (Profile-C triggers, tenancy, migration policy,
-  doc-base hints) that `/tms-init` intentionally leaves as `<<TODO>>`.
-- `docs/06-model-routing.md` (+ `.ru.md`): a stage-by-stage Sol/Terra/Luna routing memo with reasoning
-  effort, escalation rules, fallbacks, and explicit Fast/Max/Ultra constraints.
-- `codex-agents/`: Codex-native TOML roles for evidence exploration, validation, ordinary review,
-  design gap audit, and R/C risk review.
+- `tms-run`: an orchestrator that carries one task through all eight stages, dispatching each stage as
+  its own subagent, briefing it with addresses rather than opinions, and stopping for the owner after
+  design and at the gate.
+- Eight stage skills, identical in both tool trees: `tms-00-ticket`, `tms-01-research`,
+  `tms-02-design`, `tms-03-plan`, `tms-04-implement`, `tms-04b-review`, `tms-05-test`, `tms-06-gate`.
+  Artifacts: `00_ticket.md`, `01_research.md`, `02_design.md`, `03_plan.md`, `04_implementation.md`,
+  `04b_review.md`, `05_test_report.md`, `06_review_gate.md`.
+- `tms-ui-screen`: one screen or frontend section through a managed cycle (product meaning, backend
+  map, interactive QA, independent review, the owner's visual approval, production handoff). A task that
+  changes a screen runs stage 04 through this skill.
+- Stage agents with pinned model and effort: `tms-stage` (top tier, medium), `tms-stage-deep` (top tier,
+  high), `tms-stage-light` (cheaper tier, medium), plus `tms-explorer` for research fan-out. Every
+  Claude agent now pins its model by full id instead of an alias.
+- New `AGENTS.md` template sections and tokens: *Gate: who signs what*, *Stage 04 and 04b*, *Security
+  Triggers* (`SECURITY_TRIGGERS`), a task-check command (`TASK_CHECK_CMD`, asked by the installer), the
+  known-test-debt register (`KNOWN_TEST_DEBT_LOCATION`), the trigger register
+  (`TRIGGER_REGISTER_LOCATION`) and the accepted-screen register (`ACCEPTED_SCREENS_LOCATION`).
+- `/tms-new`: a one-time guided bootstrap for a brand-new product (setup interview, not a feature
+  brainstorm).
+- Thin installer: `npx tms-pipeline` picks language and tool(s), installs skills/agents/commands into
+  `~/.claude` and/or `~/.codex`, and drops a starter `AGENTS.md`; `/tms-init` then fills it by reading
+  the repository. CLI flags `--help`, `--version`, `--dry-run`, `--answers <file.json>`, `--yes`,
+  `--force`. Until the npm package is published, `npx github:TmsNine/tms-pipeline` runs the same
+  installer.
+- Zero-dependency test suite (`node --test`), GitHub Actions CI, `scripts/check-links.mjs`,
+  `CONTRIBUTING.md`, issue and pull-request templates, the worked example
+  `templates/example-task/ACME-101/`, and the docs pages `04-stages-deep-dive`, `05-manual-setup` and
+  `06-model-routing` (EN + RU).
 
 ### Changed
-- Stage 04 is now profile-aware in both tool trees: M stays inline, E uses bounded evidence/test help,
-  and R/C requires separate Developer and proving roles plus an `8.0/10` author-stage readiness floor.
-  Material scope drift stops as `REPLAN_REQUIRED` instead of expanding silently inside 04/04b.
-- Profile R/C 04b now starts with isolated risk and integration reviewers on the same fingerprint,
-  consolidates one remediation batch, and uses a fresh final reviewer. Three failed outer attempts stop
-  terminally for replan instead of consuming an unbounded review session.
-- Codex now ships dedicated stage-04 Developer, Architect, Security/Privacy/Money, and wave Reviewer TOML
-  roles; strongest model spend is concentrated on high-risk proving judgement rather than routine work.
-- Claude stage 04 is now profile-aware instead of always running a coding mob: M stays inline, E uses
-  bounded evidence/test help, R always dispatches Developer/Tester/Reviewer plus triggered specialist
-  roles, and C keeps the full strongest role set. Claude role agents now declare tool-native model and
-  permission settings, while artifacts distinguish copied-agent defaults from plugin-ignored permission
-  fields and record actual or `runtime-selected/unknown` evidence.
-- Public docs and templates now explain the Codex-oriented stage `04`/`04b` split: focused
-  main-agent implementation with explicit self-check roles, followed by mandatory independent review over
-  the actual diff. Delivery plans now teach risk profiles `M/E/R/C` instead of the old A/B/C escort model.
-- Codex pipeline skills now use the GPT-5.6 Sol/Terra/Luna family with explicit fallbacks, add structured
-  R/X/V evidence and implementation/package fingerprints, require pre-04b risk-surface sweeps and author
-  handoffs, and make 04b audit that handoff before trusting it.
-- 04b acceptance is atomic: only a fresh reviewer and validation over the same final implementation
-  fingerprint may produce `PASS`. Per-attempt checkpoints are hidden from reviewers; remediation runs
-  repeat 04 and a fresh 04b attempt automatically in the same invocation.
-- Pipeline commit policy now leaves stages 00–05 uncommitted and creates exactly one task-scoped closing
-  commit after successful 06, verified external status sync, matching fingerprints, and unambiguous scope.
-- Package fingerprints now normalize their own evidence fields before hashing, and stage 06 records
-  commit eligibility rather than an impossible future commit SHA inside the commit itself.
-- Claude and Codex now ship a byte-identical zero-dependency fingerprint helper with SHA-256 framing,
-  explicit worktree/index sources, path containment, exact observed/manifest equality, and fixture
-  coverage proving staged-package parity, rename stability, and rejection of extra staged task files.
-- Claude and Codex skill trees now share the same M/E/R/C, atomic-04b, auto-remediation, and single-commit
-  semantics while retaining tool-native implementation and subagent mechanics.
-- The installer now copies `agents/` only to Claude Code and `codex-agents/` to Codex instead of
-  installing Claude Markdown role files into `~/.codex/agents`.
-- **Onboarding split into a thin installer + agent-driven setup** (matching the Superpowers/GSD
-  convention). `npx tms-pipeline` is now a thin installer: pick language (EN/RU) and tool(s), install the
-  skills, drop a starter `AGENTS.md` — it no longer interrogates you about test commands, ticket format,
-  or doc paths. Those move to `/tms-init`, which reads the repo and fills `AGENTS.md`, asking only about
-  gaps. Added an ANSI-Shadow "TMS" banner and colored, localized (EN/RU) terminal output.
-- **Fixed:** the docs-vault skeleton now lands at `DOC_BASE_PATH` (e.g. an external Obsidian/Notion
-  vault) instead of always being dumped into `repo/docs`. The terminal installer no longer copies the
-  per-task pipeline forms into the repo (the stage skills generate those per task).
-- `/tms-init` now calls the canonical engine via `--answers` instead of re-implementing template
-  rendering, removing the duplicated question list and the drift risk between the two onboarding paths.
-- Russian is now the canonical language for docs; English files follow it. Russian docs rewritten to
-  read natively (notably the multi-agent implementation section), with the README tagline reworded away
-  from jargon ("opinionated delivery pipeline" → benefit-first).
-- Concrete Codex install instructions (exact `~/.codex` paths and copy commands) across README and docs.
-- Newcomer reassurance callouts where placeholders are filled ("don't guess alone — ask your AI agent").
+- **Two owner stops.** The owner reads and approves the design (02) and decides at the gate (06). The
+  lead reads and signs the plan (03). Only a human writes `go`; the lead may sign `conditional_go` when
+  only execution remains, naming the launch-playbook step that closes it.
+- **Stage 04 has one executor.** The stage agent writes the whole plan itself, phase by phase, TDD-first,
+  walks every seam at the end and runs the project's task check. One `tms-security` pass runs over the
+  assembled diff only when a security trigger fires.
+- **Stage 04b is a bounded independent loop.** Up to five fresh read-only reviewer passes with a
+  stagnation rule; one pass always proves the end-to-end path; a screen gets a visual pass. A finding
+  blocks only if it is reachable on current code and a user would observe it; every other finding is
+  routed (fixed now, backlog proposal at the gate, trigger register, dropped with a reason). No score and
+  no verdict.
+- **The plan is executable.** `03_plan.md` carries normative contracts verbatim, File Ownership as a hard
+  boundary, a seam table, a runnable validation table (with a task-check row and a seam-crossing row), a
+  RED-test specification per phase and a cold fresh-reader check.
+- **Research separates facts from search misses** ("absent — checked" vs "not found by search") and
+  enumerates countable subjects one row per item.
+- **The test report counts rows.** Every validation row of the plan gets an exit code and a marker
+  check; the known-test-debt register excuses a red suite's colour, not its run.
+- Skills are fully project-agnostic and written in English; each artifact is written in the project's
+  output language.
+- Codex agents: `tms_security` now runs once over the assembled diff, matching the Claude agent.
+- The docs-vault skeleton lands at `DOC_BASE_PATH` instead of always inside `repo/docs`; the terminal
+  installer no longer copies per-task pipeline forms into the repository.
 
-### Fixed
-- Installer asset copy now preserves existing project templates, installed skills, commands, and agent
-  roles unless `--force` is explicitly passed; tests cover customized Claude and Codex files.
-- `DESIGN_SYSTEM_HINT` was used in `AGENTS.template.md` but neither asked nor deferred; it is now a
-  documented deferred token so it renders as a clear TODO and is covered by a test.
+### Removed
+- Retired skills (delete them from `~/.claude/skills` and `~/.codex/skills` when upgrading — the
+  installer never deletes files): `tms-ticket`, `tms-research`, `tms-design`, `tms-gap-audit`,
+  `tms-plan`, `tms-implement`, `tms-loop-review`, `tms-loop-code-review`, `tms-review`, `tms-test`, and
+  in the Codex tree `tms-02b-gap-audit`, `tms-04b-loop-review`, `tms-06-review`,
+  `tms-94-loop-code-review`.
+- The `02b_gap_audit` stage, the A/B/C escort profiles and the M/E/R/C risk profiles, per-phase escorts,
+  numeric reviewer scores, task/package fingerprints and the fingerprint helper.
+- Codex agents `tms_gap_auditor`, `tms_risk_reviewer`, `tms_wave_reviewer`.
+- Template token `PROFILE_C_TRIGGERS` (replaced by `SECURITY_TRIGGERS`).
 
 ## [0.1.0]
 
 ### Added
-- Initial release: the eight-stage delivery pipeline (ticket → research → design → gap-audit → plan →
+- Initial release: the staged delivery pipeline (ticket → research → design → gap-audit → plan →
   implement → test → review-gate), the four-stage codebase audit, refactoring and review-loop skills,
-  five mob-role agents, the `npx tms-pipeline` onboarding wizard, templates, and bilingual docs.
+  five role agents, the `npx tms-pipeline` onboarding wizard, templates, and bilingual docs.

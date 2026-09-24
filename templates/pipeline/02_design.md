@@ -1,35 +1,56 @@
-# Design: [TASK_NAME]
+# <TASK-ID> — 02 Design
 
-Date: [DATE]
+Date: <YYYY-MM-DD>
+Base SHA: <sha>
+Status: DRAFT | NEEDS_OWNER_DECISION | APPROVED
 
 ## Inputs
-- `01_research.md`
-- [interview answers, if any]
 
-## Solution (the single design contract)
-[The minimal sufficient change at the owning layer. Be concrete.]
+The ticket, the research, the exact documents and precedents the decision
+stands on.
 
-## Flow
-```mermaid
-flowchart LR
-  A["Trigger"] --> B["Validation"] --> C["Action"] --> D["Result"]
-```
+## Owning sources and boundaries
 
-## API / data
-- New/changed endpoints or contracts: ...
-- Schema/persistence changes: ...
+Owning layer: where we fix and why exactly there.
+Boundaries: what the task does not touch, even if it is next door.
 
-## Change-surface triggers handled
-[contracts producer+consumer, auth, async retries/idempotency, persistence read+write, legal/billing copy]
+## Owner's decision
 
-## Test strategy
-- Unit: ...
-- Integration: ...
-- E2E / manual: ...
+Each interview question as a line: `question → owner's answer → consequence`.
+No interview was needed — say so.
+
+## Solution
+
+What we do, in substance. If options were considered — which one was chosen and
+why the others were rejected. One paragraph is enough when the answer is obvious.
 
 ## Acceptance contract
-- Primary signal (user-visible): ...
-- Secondary signals (tests / typecheck / lint / build): ...
 
-## Rollout order (if contracts / migrations / auth change)
-- ...
+Observable behaviour as rows. Format: before → after, as the user sees it.
+
+| ID | Who | Before | After |
+|---|---|---|---|
+
+## Design by layer
+
+Only the touched layers. "Unchanged" is a complete answer.
+
+### API contract
+### Route and permissions
+### Service
+### Persistence and migrations
+### External effects (messaging, payments, queues)
+### UI
+
+## TDD matrix
+
+| Behaviour | Test | Level | What it proves |
+|---|---|---|---|
+
+## Rollout and rollback
+
+Rollout order, migration number, how we roll back, the sign of failure.
+
+## Resolved questions
+
+Every open question from research — with its answer. None left open.
