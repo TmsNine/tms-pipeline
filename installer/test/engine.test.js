@@ -42,9 +42,9 @@ test('stripGuidance removes HTML comments and « » notes and collapses blank ru
 });
 
 test('fillTokens: answered → value, deferred → hinted TODO, unknown → bare TODO', () => {
-  const out = fillTokens('{{FOO}} | {{PROFILE_C_TRIGGERS}} | {{NOPE}}', { FOO: 'bar' });
+  const out = fillTokens('{{FOO}} | {{SECURITY_TRIGGERS}} | {{NOPE}}', { FOO: 'bar' });
   assert.ok(out.includes('bar'));
-  assert.ok(out.includes('<<TODO: PROFILE_C_TRIGGERS'), 'deferred token becomes a TODO');
+  assert.ok(out.includes('<<TODO: SECURITY_TRIGGERS'), 'deferred token becomes a TODO');
   assert.ok(out.includes('<<TODO: NOPE>>'), 'unknown token becomes a bare TODO');
   assert.ok(!out.includes('{{'), 'no raw placeholder survives');
 });
@@ -121,8 +121,9 @@ test('Codex assets are copied only when Codex is selected', () => {
     copyCodexAssets: true, codexHome: path.join(withCodex, '.codex'),
   });
   assert.ok(fs.existsSync(path.join(withCodex, '.codex', 'skills')), 'skills copied');
-  assert.ok(fs.existsSync(path.join(withCodex, '.codex', 'skills', 'tms-00-ticket')), 'Codex-specific numbered skills copied');
-  assert.ok(!fs.existsSync(path.join(withCodex, '.codex', 'skills', 'tms-ticket')), 'Claude skill tree is not copied into Codex');
+  assert.ok(fs.existsSync(path.join(withCodex, '.codex', 'skills', 'tms-00-ticket')), 'stage skills copied');
+  assert.ok(fs.existsSync(path.join(withCodex, '.codex', 'skills', 'tms-90-audit-scope')), 'Codex-specific numbered skills copied');
+  assert.ok(!fs.existsSync(path.join(withCodex, '.codex', 'skills', 'tms-audit-scope')), 'Claude skill tree is not copied into Codex');
   assert.ok(fs.existsSync(path.join(withCodex, '.codex', 'agents')), 'agents copied');
   assert.ok(fs.existsSync(path.join(withCodex, '.codex', 'agents', 'tms_explorer.toml')), 'Codex TOML agents copied');
   assert.ok(!fs.existsSync(path.join(withCodex, '.codex', 'agents', 'tms-developer.md')), 'Claude Markdown agents are not copied into Codex');
@@ -143,8 +144,9 @@ test('Claude assets are copied only when Claude is selected', () => {
     copyClaudeAssets: true, claudeHome: path.join(withClaude, '.claude-home'),
   });
   assert.ok(fs.existsSync(path.join(withClaude, '.claude-home', 'skills')), 'skills copied');
-  assert.ok(fs.existsSync(path.join(withClaude, '.claude-home', 'skills', 'tms-ticket')), 'Claude skills copied');
-  assert.ok(!fs.existsSync(path.join(withClaude, '.claude-home', 'skills', 'tms-00-ticket')), 'Codex skill tree is not copied into Claude');
+  assert.ok(fs.existsSync(path.join(withClaude, '.claude-home', 'skills', 'tms-00-ticket')), 'stage skills copied');
+  assert.ok(fs.existsSync(path.join(withClaude, '.claude-home', 'skills', 'tms-audit-scope')), 'Claude skills copied');
+  assert.ok(!fs.existsSync(path.join(withClaude, '.claude-home', 'skills', 'tms-90-audit-scope')), 'Codex skill tree is not copied into Claude');
   assert.ok(fs.existsSync(path.join(withClaude, '.claude-home', 'agents')), 'agents copied');
   assert.ok(fs.existsSync(path.join(withClaude, '.claude-home', 'agents', 'tms-developer.md')), 'Claude Markdown agents copied');
   assert.ok(!fs.existsSync(path.join(withClaude, '.claude-home', 'agents', 'tms_explorer.toml')), 'Codex TOML agents are not copied into Claude');
@@ -164,9 +166,9 @@ test('asset copy preserves existing user files unless --force is passed', () => 
   const codexHome = path.join(dir, '.codex');
   const claudeHome = path.join(dir, '.claude-home');
   const codexAgent = path.join(codexHome, 'agents', 'tms_reviewer.toml');
-  const codexSkill = path.join(codexHome, 'skills', 'tms-04b-loop-review', 'SKILL.md');
+  const codexSkill = path.join(codexHome, 'skills', 'tms-04b-review', 'SKILL.md');
   const claudeAgent = path.join(claudeHome, 'agents', 'tms-reviewer.md');
-  const claudeSkill = path.join(claudeHome, 'skills', 'tms-loop-review', 'SKILL.md');
+  const claudeSkill = path.join(claudeHome, 'skills', 'tms-04b-review', 'SKILL.md');
 
   for (const file of [codexAgent, codexSkill, claudeAgent, claudeSkill]) {
     fs.mkdirSync(path.dirname(file), { recursive: true });

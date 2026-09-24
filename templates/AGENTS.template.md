@@ -78,60 +78,52 @@ This file applies to the whole repository unless a deeper `AGENTS.md` overrides 
   This is where governance, PRD/flows, architecture, and the backlog live. The tms-* skills read this
   path from here.»
 - The task pipeline folders live at: {{TASK_FOLDER_PATTERN}} «e.g. "docs/<TICKET-ID>/" — one folder per
-  task holding the 9 pipeline files.»
+  task holding the eight stage artifacts.»
 - The backlog (single source of truth for tasks) is: {{BACKLOG_LOCATION}}
+- The trigger register is: {{TRIGGER_REGISTER_LOCATION}} «a list of findings that matter only when a
+  named event happens ("the first bulk import", "a second API instance"); stage 04b adds rows here.
+  Can be a section of the backlog.»
 - The traceability / requirements map (if any) is: {{TRACEABILITY_LOCATION}} «delete if none.»
 - Ticket-ID format: {{TICKET_ID_FORMAT}} «e.g. "PROJ-123". Used everywhere a task is referenced.»
 
 ## Pipeline Execution
 
-The delivery pipeline has 9 durable artifacts in the task folder:
-`00_ticket` → `01_research` → `02_design` → `02b_gap_audit` → `03_delivery_plan` →
-`04_implementation` → `04b_loop_review` → `05_test_report` → `06_review_gate`.
+Eight stages, each run in its own fresh context and each leaving one artifact in the task folder:
 
-- **Staged-execution rule:** if the user starts a task by ticket ID to work the pipeline, complete only
-  the requested stage then stop for confirmation. Do not skip from research/design into coding, nor
-  from implementation into testing/review, without confirmation. `04b_loop_review` sits between
-  implementation and the test report. If the user asks for end-to-end in one go, proceed autonomously
-  while updating the artifacts in order.
-- **Research/interview rule:** after `01_research`, decide whether a product/operational interview is
-  useful before `02_design`. If research exposes meaningful product/ops/rollout/risk/UX/scope choices,
-  ask the interview questions in chat (phrased per Operating Standard), before `02_design`. Do not write
-  unanswered questions into pipeline docs.
-- Before implementing a task, confirm: the item exists in the backlog and is the exact target; relevant
+| # | Stage | Skill | Artifact | Who stops |
+|---|---|---|---|---|
+| 00 | Ticket | `tms-00-ticket` | `00_ticket.md` | — |
+| 01 | Research | `tms-01-research` | `01_research.md` | — |
+| 02 | Design | `tms-02-design` | `02_design.md` | **owner reads and approves** |
+| 03 | Plan | `tms-03-plan` | `03_plan.md` | the lead signs, with its date |
+| 04 | Implementation | `tms-04-implement` (a screen: `tms-ui-screen`) | `04_implementation.md` | — |
+| 04b | Code review | `tms-04b-review` | `04b_review.md` | — |
+| 05 | Test report | `tms-05-test` | `05_test_report.md` | — |
+| 06 | Gate | `tms-06-gate` | `06_review_gate.md` | **owner decides** |
+
+- `tms-run` carries one task through all eight stages. When the user invokes a single stage, run only
+  that stage, write its artifact and stop.
+- **Two owner stops: after design (02) and at the gate (06).** Silence is not approval at either stop.
+  The plan (03) is read and signed by the lead, not the owner.
+- **Product forks go to the owner at design, before the solution is chosen.** A destructive or
+  outward-binding decision is never chosen silently either. Internal architecture is the agent's call.
+- **File Ownership in the plan is the boundary of implementation.** A file not in that table is not
+  written; needing one means stop and ask, not widen.
+- An agent does not create a task or a rule by itself: a problem found mid-task goes to the owner with
+  its justification.
+- Before implementing, confirm the item exists in the backlog and is the exact target; relevant
   product/architecture docs are checked when the task touches lifecycle/routing/permissions/payments/
   analytics/sync; open questions are resolved or flagged.
 
-## Bounded Gap Audit (`02b_gap_audit`)
+## Gate: who signs what
 
-After `02_design` is approved, run ONE bounded structured audit pass (not open-ended) over the design,
-using a different reasoning lens than the designer (rotate: security / concurrency / UX / ops / data
-integrity / privacy).
-
-**Severity rubric** (classify each gap into exactly one; no inflation):
-- **A — Blocker:** data loss, security breach, privacy/compliance violation, duplicate production data /
-  integrity violation, or blocks launch. MUST be fixed inline in `02_design.md` before `03`.
-- **B — Incident:** recoverable production incident (stuck job, missed notification, edge-case UX,
-  incomplete rollback). Fix in `02_design.md` or pass to `03` with a handling note.
-- **C — Polish:** UX roughness, incomplete i18n, missing metrics/runbook, unclear copy. Capture as
-  **bundled** backlog tickets (bundle, don't shard).
-- **D — Theoretical:** low probability/blast radius. Backlog only if the fix is obvious and cheap; else
-  drop with a one-line reason in the audit file.
-
-**Stopping criteria** (any one closes the stage): max 2 passes (2nd only if pass 1 found ≥1 Class A); a
-full pass with 0 Class A and 0 Class B → stop; gaps predominantly C/D → stop. No third pass; don't turn
-audit into redesign; don't duplicate `06_review_gate`.
-
-**Folding and output (same session):**
-- Class A/B fixes are merged into `02_design.md` in the same session — it stays the single contract.
-- Class C findings are registered as **bundled** backlog follow-ups at low priority — never as a
-  high-priority row (polish must not read as a priority signal).
-- Output `02b_gap_audit.md`: a header (who designed, who audited, date, lens), gaps grouped by class, for
-  each A/B a "folded into `02_design` §X / passed to `03` item Y" pointer, and the stopping decision.
-
-**Skip:** for `Direct`, minimal-surface `TDD-first` (one endpoint, no auth/persistence/contracts/
-concurrency/PII/payments), or a straightforward bug fix, the file body may be a single line
-"skipped per minimal-surface exception" (always create the file).
+- **Only a human writes `go`.** No agent writes it, and silence is never read as consent.
+- **The lead may sign `conditional_go`** when the only thing still open is execution — a live check, a
+  rollout, a runbook step. The condition is named in one line together with the launch-playbook
+  document that closes it.
+- **The gate goes to the owner, and not as a formality,** whenever any of these holds: a product fork
+  the task had no right to settle; an irreversible or outward-facing action; risk to user data or money;
+  `no_go`; or the task asks the owner for work (grant access, create an account, confirm on a device).
 
 ## Task Mode
 
@@ -197,6 +189,14 @@ typecheck, lint, build, logs). No ceremony for simple local tasks.
   (targeted tests → typecheck → lint → build → focused scripts), wider suites only when needed.
 - Project commands: tests = `{{TEST_CMD}}`, typecheck = `{{TYPECHECK_CMD}}`, lint = `{{LINT_CMD}}`,
   build = `{{BUILD_CMD}}`. «fill in your real commands; delete any that don't apply.»
+- **Task check:** `{{TASK_CHECK_CMD}}` «one command that builds, type-checks and tests every package a
+  task touched, run in the task's working copy. Stages 03, 04, 04b and 05 call it. If you have none yet,
+  write the commands it should chain; a single script is strongly recommended.»
+- **Known-test-debt register:** {{KNOWN_TEST_DEBT_LOCATION}} «a list of suites that are already red on
+  the main branch. Before calling a red test a regression, check it — read it from the main branch, not
+  from the task branch. Listed suites are still run; the register excuses the colour, not the run.»
+- Green means exit code 0 **and** the expected marker in the output; a wrapper that prints success
+  regardless of its exit code is not evidence.
 - Validate after implementation and before closing. If contracts change, validate producer + consumer.
 - Treat non-zero exits, runtime errors, failed assertions, type/lint/build errors as failed validation.
   Don't declare success on proxy metrics alone — green tests are not enough if the user-visible signal is
@@ -220,6 +220,10 @@ typecheck, lint, build, logs). No ceremony for simple local tasks.
 
 «Delete this section if the project has no UI. Design system / component library location:
 {{DESIGN_SYSTEM_HINT}}»
+- **Accepted-screen register:** {{ACCEPTED_SCREENS_LOCATION}} «the list of screens the owner has
+  accepted, with their baseline frames. Accepted screens are the reference: a change to a screen runs
+  through `tms-ui-screen`, starts from the design system and the nearest accepted screens, and an
+  accepted screen is not redesigned in passing by another task.»
 - Follow the existing design system, component primitives, and styling conventions; preserve the visual
   language unless a redesign is requested.
 - Prefer parent padding + container gap for layout rhythm over ad hoc margins; keep spacing on the shared
@@ -229,90 +233,41 @@ typecheck, lint, build, logs). No ceremony for simple local tasks.
   visual overrides; for different treatment prefer existing semantic props → the smallest reusable
   semantic prop → a local feature-level wrapper. Don't bypass established primitives with ad hoc surfaces.
 
-## Stage 04 / 04b Risk Profiles
+## Stage 04 and 04b
 
-Stage `04_implementation` is profile-aware in both tools: M stays inline, E uses bounded evidence/test
-help, and R/C uses real coding/proving-role separation. The lead remains integration owner; for C it
-orchestrates rather than acting as the sole code author. `04b_loop_review` is the independent review/fix
-stage after implementation, not a delayed implementation stage.
+- **Stage 04 has one executor.** The stage agent writes the whole plan itself, phase by phase,
+  TDD-first, proving each phase with the plan's own validation row. There are no per-phase tester,
+  reviewer or architect escorts and no risk profiles: a plan is one dependent chain, and a chain split
+  across agents loses what lives between its links. A genuinely bulk, independent phase (a mechanical
+  rename across many files) may go to one developer subagent, recorded with its reason.
+- **One security pass, only on a trigger.** When the change touches any item in *Security Triggers*
+  below, stage 04 runs one read-only security review over the assembled diff (at most one re-check of
+  what it changed). No trigger — no pass, stated in one line.
+- **Stage 04b is independent review.** Up to five passes, each a fresh read-only reviewer that never
+  sees the implementer's conversation, plus a stagnation rule: two consecutive passes with no change to
+  product files and only repeated, rejected or non-blocking comments end the loop. One pass always walks
+  the end-to-end path; a screen change also gets a visual pass.
+- **A finding blocks only when** it is reachable on the current code **and** a person using the product
+  would observe the consequence. Every other finding gets a route — fixed now, proposed as one backlog
+  row at the gate, added to the trigger register, or dropped with a reason. Review holds no score and no
+  verdict; the gate decides.
+- Stages 00–05 never stage or commit. Stage 06 creates one task-scoped closing commit after `go` or
+  `conditional_go`. Never push automatically, never add AI attribution.
 
-Profiles describe the wave's risk and the depth of 04b, not just how many subagents to launch while
-coding:
+## Security Triggers
 
-- **Profile M — Mono / bounded:** clear design and plan, limited surface, available tests, small blast
-  radius. Stage 04 can stay main-agent-only; 04b still runs a narrow independent diff review.
-- **Profile E — Evidence-assisted:** broad code evidence is needed. Use cheap explorer/search help for
-  path/line evidence, but keep product, architecture, security/privacy/payment judgement with the main
-  agent.
-- **Profile R — Risk review required:** touches money, roles, tenant scope, PII/privacy, migrations,
-  lifecycle/state machines, queues/jobs, outbox/messaging, external integrations, or meaningful
-  user-facing business logic. Stage 04 uses a Developer code owner, Tester/Validator, triggered
-  Architect/Security roles and a fresh wave Reviewer; 04b stress-tests the risky surface independently.
-- **Profile C — Full proving-role separation:** maximum cost of error. Every C wave uses the full role set;
-  when the whole task is C, every wave stays C unless the approved plan records a specific evidence-backed lower-risk exception;
-  the lead orchestrates/integrates, and a fresh cross-wave readiness review runs before 04b.
-
-For R/C, stage 04 may hand off only when all R/X evidence and validation are green on the current
-fingerprint, no unresolved A/B or systemic C remains, and a fresh stage-04 Reviewer scores at least
-`8.0/10`. If implementation introduces an unplanned owner layer/trust boundary/profile trigger, or the
-task-owned path set materially exceeds the planned baseline (default signal: >25%), stop
-`REPLAN_REQUIRED` rather than widening 04/04b silently.
-
-For R/C, 04b starts with isolated risk and integration reviewers on the same fingerprint, consolidates
-one remediation batch, and uses a fresh final reviewer. Three failed outer attempts stop terminally as
-`NEEDS_REMEDIATION` with `replan_required = true`; only `PASS` may enter 05. Keep the attempt budget hidden
-from scoring reviewers.
-
-Choose the profile by the most dangerous touched risk, not by the average size of the diff. **List YOUR
-project's Profile-R/C triggers here** — keep generic patterns, add your stack's specifics:
-{{PROFILE_C_TRIGGERS}}
+Stage 04 runs its security pass, and stage 04b uses the strongest judgement model for its reviewer,
+when a change touches any of these. Keep the generic list and add your stack's specifics:
+{{SECURITY_TRIGGERS}}
 «e.g.:
-  - touches authentication, authorization, session/token issuance, or role/capability logic
-  - touches tenant-scoping predicates or identity resolution (<your tenant/user id resolution>)
-  - introduces/modifies input validation at a trust boundary (HTTP, webhook, upload, bot payload)
-  - touches secrets, signing keys, webhook signature verification, or audit logging
-  - changes payment routing or commerce surfaces (<your payment integration>)
-  - touches PII handling or cross-tenant data access paths
-  - adds/modifies code under <your auth/identity/tenant-scoping module paths>
+  - authentication, authorization, sessions, token issuance, role/capability logic
+  - tenant-scoping predicates, row-level security, identity resolution (<how you resolve user/tenant id>)
+  - input validation at a trust boundary (HTTP, webhook, upload, bot/chat payload)
+  - secrets, signing keys, webhook signature verification, audit logging
+  - money: pricing, payment links/routing, refunds (<your payment integration>)
+  - PII handling or cross-tenant data access
+  - code under <your auth/identity/tenant-scoping module paths>
 »
-
-In `04_implementation.md`, record the stage-04 mode, profile per wave, integration owner, self-check or
-dispatched roles, preferred/configured/actual model evidence, validation, follow-ups, launch actions, and
-what `04b_loop_review` must independently stress-test.
-
-### Atomic 04b and the single closing commit
-
-- Stage 04 records `base_sha`, task-owned paths, R/X/V evidence, implementation/package fingerprints,
-  and an author handoff. It never stages or commits.
-- Stage 04b audits that handoff instead of trusting it. Every scoring pass uses a fresh read-only
-  reviewer that does not receive parent reasoning, prior findings/scores/fixes, round number, remaining
-  budget, or the acceptance target.
-- The full author handoff and remediation artifacts are orchestrator-only. Every scoring pass receives a
-  freshly rebuilt sanitized brief containing only the current contract, exact scope/fingerprint, neutral
-  invariants/surfaces, repository constraints, and validation expectations.
-- The per-attempt review/fix checkpoint is hidden from reviewers and never lowers quality. When
-  implementation work remains, 04b persists `NEEDS_REMEDIATION`, automatically runs a separately
-  recorded repeat 04 in the same invocation, and starts a fresh 04b attempt. Do not ask the user to
-  restart 04 merely because a checkpoint was reached.
-- `PASS` is atomic. Required validation and the final fresh reviewer must cover the exact same final
-  implementation fingerprint. Any later code/test/SQL/contract/config change immediately invalidates
-  acceptance and returns the artifact to `NOT_ACCEPTED`.
-- The first 04b summary line includes the literal normalized token `04b status: <STATUS>` and states,
-  in the project's output language, whether stage 05 is allowed. Only `PASS` allows 05.
-- Stages 00–05 do not commit. Stage 06 creates exactly one task-scoped closing commit after `go` or
-  `conditional_go`, verified external status sync, matching fingerprints, and an unambiguous
-  task-owned package. Never auto-push or add AI attribution.
-- Package fingerprints use a deterministic normalized form: replace the values of package-fingerprint
-  evidence fields in pipeline artifacts with the literal `<normalized>` before hashing. Stage 06 records
-  commit eligibility, not a future commit SHA; report the actual SHA externally after the commit succeeds.
-- Both tool trees use their byte-identical `task-fingerprint.mjs` helper, version
-  `tms-task-fingerprint-v1`, with the exact manifests recorded in `04_implementation.md`. Do not replace
-  it with an ad-hoc hash. Before the closing commit, its worktree and staged-index package hashes must match.
-- Hash equality is insufficient by itself. Stage 06 derives the complete task-owned changed-path set from
-  Git, requires exact equality with the package manifest before and after staging via `--observed`, and
-  blocks on an omitted, extra, ambiguous, overlapping, or unrelated staged path.
-- Path derivation uses `--no-renames` in both worktree and index modes, so every rename is represented by
-  the same source deletion plus destination addition on both sides of the closing comparison.
 
 ## Database / Schema Migration Policy
 
