@@ -1,6 +1,6 @@
 ---
 name: tms-95-care-refactoring
-description: Pragmatic maintenance refactoring workflow for codebases. Use when the user invokes `/tms-care-refactoring`, or asks to make a codebase easier to understand, safer to change, or more consistent with existing architecture without changing behavior; includes repository discovery, scoped refactor selection, challenge review, minimal implementation, validation, and a "no changes needed" outcome.
+description: Pragmatic maintenance refactoring workflow for codebases. Use when the user invokes `tms-95-care-refactoring`, or asks to make a codebase easier to understand, safer to change, or more consistent with existing architecture without changing behavior; includes repository discovery, scoped refactor selection, challenge review, minimal implementation, validation, and a "no changes needed" outcome.
 ---
 
 # Care Refactoring

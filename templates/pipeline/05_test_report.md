@@ -1,31 +1,41 @@
-# Test Report: [TASK_NAME]
+# <TASK-ID> — 05 Test report
 
-Date: [DATE]
+Date: <YYYY-MM-DD>
 
-## Freshness
-- 04b normalized status: PASS / non-PASS
-- Implementation fingerprint: [current] / [accepted 04b] — match yes/no
-- Package fingerprint (normalized evidence fields): ...
-- Fingerprint helper: `tms-task-fingerprint-v1`; source: `worktree`; manifests match stage 04: yes/no
+## Primary signal
 
-## Automated checks (cheapest meaningful first)
-| V-ID | Type | Command | Implementation fingerprint | Result | Covers |
+The scenario that was run by hand, step by step. What was seen. Evidence:
+screenshot, log line, the message that arrived.
+
+If it cannot be run live — name the reason and name the check that crosses all
+seams and stands in its place: command and result. "Not run" without such a
+substitute means the primary signal is verified by nothing, and it goes to the
+gate exactly like that.
+
+## Checks run
+
+One row per row of `Validation strategy` in `03_plan.md`, in the same order and
+the same number.
+
+| # | Command | Directory | Exit code | Marker from the plan found | Verdict |
 |---|---|---|---|---|---|
-| V-05-... | Targeted tests | `...` | ... | PASS/FAIL | AC/R/X |
-| V-05-... | Typecheck | `...` | ... | PASS/FAIL | ... |
-| V-05-... | Lint | `...` | ... | PASS/FAIL | ... |
-| V-05-... | Build | `...` | ... | PASS/FAIL | ... |
 
-## Smoke / manual (user-visible behavior)
-| Scenario | Expectation | Result |
-|---|---|---|
-| ... | ... | ... |
+Rows in the plan: `<N>`. Rows here: `<N>`. Any mismatch is named explicitly.
 
-## Producer + consumer (if contracts changed)
-- ...
+## Secondary signal
 
-## Verdict
-- **Primary signal status:** met / not met / partially validated
-- **Secondary signal status:** [exact checks run and what they showed]
-- V-ID freshness: ...
-- Blockers: ...
+Targeted tests, typecheck, lint, build of the touched app — the summary.
+
+## Known caveats
+
+Red suites from the known-test-debt register that do not relate to the task.
+With a link to the register row.
+
+## Not run
+
+Signals that were not run, and why. Empty is an answer too.
+
+## Manual runtime smoke
+
+What remains to be checked on a live environment and by whom. Manual steps go
+to the launch playbook (`AGENTS.md` → *Pre-Launch Manual Action Capture*).

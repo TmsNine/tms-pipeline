@@ -10,10 +10,10 @@
 # tms-pipeline
 
 **tms-pipeline is a discipline for AI agents: it takes one already-defined task from a ticket to reviewed code, keeping the agent's context clean at every step.**
-The work is split into nine durable artifacts. You run each stage as a separate command to the agent (such a command is
-called a *skill* here — for example, `/tms-research`). The call at every step stays yours: the agent does
-one step, you check it, and only then do you move on (this is the "human in the loop" principle —
-a person reviews every step).
+The work is split into eight stages. Each stage runs in its own fresh context and leaves one document behind
+(each stage is a *skill* — a command you give the agent, for example `/tms-01-research`). One more skill,
+`/tms-run`, carries a task through all eight stages for you. The pipeline stops for you twice — after the
+design and at the final gate — and never decides on your behalf (this is the "human in the loop" principle).
 
 🇷🇺 [Читать по-русски](README.ru.md) · 📖 [Full methodology](docs/00-methodology.md) · 🚀 [Getting started](docs/01-getting-started.md) · 🧭 [Model routing](docs/06-model-routing.md)
 
@@ -21,20 +21,21 @@ a person reviews every step).
 
 ## In short
 
-- **What it is.** A nine-artifact process that takes **one already-defined** task from a ticket to reviewed
-  code. The core idea: at each step the agent holds in mind only what it needs right now.
+- **What it is.** An eight-stage process that takes **one already-defined** task from a ticket to reviewed
+  code. The core idea: at each stage the agent holds in mind only what it needs right now.
   (The agent has a limited working memory — its *context window*; the more clutter in it, the worse the answer.)
-- **The real work is thinking on paper.** All nine durable artifacts are text documents (`.md`). The main
-  code change is written alongside 04 (implementation), and 04b may make review fixes against the actual
-  diff. You work everything out in text first, and write code only after that.
-- **You stay at the center the whole time (a person reviews every step).** This is not "set a task and walk
-  away": after each step the agent stops, you check what it did, and only then launch the next one. You
-  don't delegate the work wholesale — you steer the agent and verify each step.
+- **The real work is thinking on paper.** Every stage leaves a text document (`.md`). Code is written only
+  in stage 04, after the design is approved and the plan is signed. Mistakes get caught in text, where
+  fixing them costs a sentence.
+- **You stay in charge at two points.** You read and approve the **design** (stage 02) and you make the
+  **final decision** at the gate (stage 06). In between, the agents work on their own: the plan is checked
+  by a fresh reader and signed by the lead agent, the code is reviewed by independent reviewers who never
+  saw the author's conversation. Silence is never taken as a yes.
 - **What it isn't.** It does not generate a product, invent features for you, or act as a "magic button."
 - **One command.** `npx tms-pipeline` sets the process up on top of your **existing** repo.
-- **See it live.** [A full task run through the staged pipeline →](templates/example-task/ACME-101/) — a synthetic
-  task from `00_ticket.md` to `06_review_gate.md`, so you can see each step's format before you start.
-- **Under the hood.** [How each step works: which agents, on which models, and why →](docs/04-stages-deep-dive.md)
+- **See it live.** [A full task run through the pipeline →](templates/example-task/ACME-101/) — a synthetic
+  task from `00_ticket.md` to `06_review_gate.md`, so you can see each stage's format before you start.
+- **Under the hood.** [How each stage works: which agents, on which models, and why →](docs/04-stages-deep-dive.md)
 
 ---
 
@@ -62,7 +63,7 @@ starting structure, but filling them with real product decisions is your job.
 
 tms-pipeline expects you to already have a documentation base and at least one task in the backlog — it
 takes defined tasks to code, it doesn't invent the product. If you're starting from nothing, do this
-**one-time initial setup** to reach the starting line. This is a one-off setup activity, not one of the nine stages
+**one-time initial setup** to reach the starting line. This is a one-off setup activity, not one of the eight stages
 of the process and not an automated brainstorm: you define the product; the agent only asks questions and
 sorts your answers into documents.
 
@@ -115,72 +116,69 @@ project's standards. Quality depends on how clean a context the agent gets at ea
 
 ---
 
-## The pipeline steps
+## The eight stages
 
 ```
-00_ticket → 01_research → 02_design → 02b_gap_audit → 03_delivery_plan → 04_implementation → 04b_loop_review → 05_test_report → 06_review_gate
+00_ticket → 01_research → 02_design → 03_plan → 04_implementation → 04b_review → 05_test_report → 06_review_gate
 ```
 
 ```mermaid
 flowchart LR
-  T["00 ticket"] --> R["01 research"] --> D["02 design"] --> G["02b gap audit"]
-  G --> P["03 plan"] --> I["04 implement"] --> L["04b loop review"] --> TE["05 test"] --> RG["06 review gate"]
+  T["00 ticket"] --> R["01 research"] --> D["02 design"]
+  D -->|"you approve"| P["03 plan"]
+  P -->|"lead signs"| I["04 implement"] --> L["04b review"] --> TE["05 test"] --> G["06 gate"]
+  G -->|"you decide"| Done["closing commit"]
 ```
 
-There are nine durable artifacts in the normal chain. Step 02b (the gap audit) sits between design and
-planning; step 04b (the loop review) sits between implementation and the test report.
+Each stage creates one document in the task folder (`docs/<TASK-ID>/`) and runs in a **fresh context**: it
+gets the previous documents, never the previous conversation. A stage that inherits the reasoning of the one
+before it inherits its blind spots — so this is the one rule the whole process protects. There is **no**
+brainstorm/ideation stage — the process starts once a task exists.
 
-Each step creates one document in the task folder and, by default, stops so you can confirm the move to the
-next one. At that stop you read the step's document, review it, and correct it if needed before the agent
-goes on (that's exactly how an error is caught in text, not in finished code). There is **no**
-brainstorm/ideation step — the process starts once a task exists.
+| Stage | Skill | What it does | Who stops |
+|-------|-------|--------------|-----------|
+| 00 Ticket | `/tms-00-ticket` | Writes down the problem in one sentence from the user's side, who it affects and what is out of scope. Only you decide that a task exists. | — |
+| 01 Research | `/tms-01-research` | Collects the facts, with exact files and lines, and no opinions. Separates "checked and absent" from "not found by search", and lists countable things one row per item. | — |
+| 02 Design | `/tms-02-design` | Chooses the solution: the layer that owns the behaviour, before → after as the user sees it, a test for every behaviour, a rollback. If two choices would change what users see, it asks you one question first. | **You read and approve** |
+| 03 Plan | `/tms-03-plan` | Cuts the work into small phases with an exact list of files (File Ownership — nothing outside it gets written), a map of the seams between phases, a runnable check for every phase, and a precise failing-test spec. A fresh reader checks the plan against itself. | The lead agent signs |
+| 04 Implement | `/tms-04-implement` | One agent writes the whole plan, test first, phase by phase, then checks every seam end to end. If the change touches security, money, tenants or personal data, one security reviewer looks at the whole change. | — |
+| 04b Review | `/tms-04b-review` | Up to five fresh, independent reviewers in turn; one of them always proves the whole path works end to end. Only a real, user-visible defect blocks; every other finding is fixed, proposed for the backlog, parked with a named trigger, or dropped with a reason. | — |
+| 05 Test | `/tms-05-test` | Runs every check from the plan and reports what each one returned — the user-visible signal first, the code checks second, and what was not run. | — |
+| 06 Gate | `/tms-06-gate` | One page for the decision: proof the task works, acceptance row by row, what review did, what is left for a person. **Only you write `go`.** The lead may sign `conditional_go` when only a live check or a rollout step is left. | **You decide** |
 
-A few terms in the table below appear here for the first time; we gloss them right in the cells and explain
-them in full on the next pages:
+→ What exactly happens in each stage (which agents, on which models, where your check is) — in the
+[under-the-hood stage walkthrough](docs/04-stages-deep-dive.md).
 
-| Step | Skill | What it does |
-|------|-------|--------------|
-| 00 Ticket | `/tms-ticket` | Records who is asking for the task and why (the driver), its scope, acceptance criteria, and task mode. |
-| 01 Research | `/tms-research` | Narrows the codebase to facts ("how it is now") through a bounded parallel search. |
-| 02 Design | `/tms-design` | Writes the design contract — a description of the change agreed up front, which the code is later checked against; the change is the smallest one that does the job, reviewed before any code. |
-| 02b Gap audit | `/tms-gap-audit` | One bounded pass where a different agent looks at the design with fresh, skeptical eyes, hunts for holes, and rates each one by severity. |
-| 03 Plan | `/tms-plan` | Splits the work into small finished slices — "waves"; for each, it sets a risk profile and the depth of review needed after implementation. |
-| 04 Implement | `/tms-implement` | Writes code wave by wave. Codex defaults to one main agent; Claude keeps M inline, adds bounded help for E, and uses real proving-role mobs for R/C. |
-| 04b Loop review | `/tms-loop-review` | Independently reviews the implementation diff, fixes actionable findings, and records the review loop before the test report. |
-| 05 Test | `/tms-test` | Validates the primary (user-visible) signal + secondary ones. |
-| 06 Review gate | `/tms-review` | Checks the result against the design contract and returns a verdict: go (ship), conditional_go (ship once conditions are met), no-go (do not ship). |
-
-→ What exactly happens in each step (which agents, on which models, where your check is) — in the
-[under-the-hood step walkthrough](docs/04-stages-deep-dive.md).
-
-Plus extra skills for working on a codebase: a four-step **audit** (`/tms-audit-scope` → `sweep` →
-`triage` → `backlog`), maintenance **refactoring** (`/tms-care-refactoring`, `/tms-ui-refactoring`), and an
-iterative **review loop** (`/tms-loop-code-review`).
+Plus extra skills: **`/tms-run`** (the orchestrator — carries one task through all eight stages and stops
+at your two checkpoints), **`/tms-ui-screen`** (one screen through design-system reuse, interactive QA,
+review and your visual approval — a task that changes a screen uses it instead of stage 04), a four-step
+codebase **audit** (`/tms-audit-scope` → `sweep` → `triage` → `backlog`), maintenance **refactoring**
+(`/tms-care-refactoring`, `/tms-ui-refactoring`), and **`/tms-new`** for a product that starts from nothing.
 
 ---
 
-## Three things most agent processes don't have
+## Things most agent processes don't have
 
-1. **A gap audit that rates how serious each hole is.** Before any code is written, a different agent
-   deliberately hunts for holes in the design — and looks at it from a different angle than the one who
-   wrote it. Each hole found goes in one class: **A** (blocker), **B** (recoverable failure), **C** (small
-   polish), or **D** (theoretical). There are explicit rules against inflating the list and criteria for
-   when to stop. A wrong design gets fixed in text, not in code.
-2. **Risk profiles that decide where quality is bought.** Each implementation wave gets a risk profile:
-   **M** for small bounded work, **E** when cheap evidence gathering is useful, **R** when the touched
-   surface needs strong independent review, and **C** when full classic multi-agent implementation is
-   deliberately allowed. In Codex, ordinary stage 04 work stays with the main agent and explicit
-   self-check roles; the expensive independence moves to 04b, where a fresh reviewer checks the actual
-   diff. Stage 03 keeps one canonical risk ledger for 04 and 04b: stable R-IDs, invariants, required
-   proof, owner layer, failure signal, owning wave, and adjacent surfaces to search. Heavy review only kicks in where it
-   pays off; "run everything to be safe" is explicitly discouraged.
-3. **Nothing found gets lost.** Deferred items found along the way (follow-ups), documentation drift, and
-   manual pre-launch actions are captured by a hard rule. Each finding has a table for where to send it: to
-   the backlog (the list of future tasks), to the source document, to the launch playbook (the list of
-   manual steps before a rollout), or to an ADR (a short record of an architecture decision: what was
-   decided and why). And the backlog itself is kept in order by a "bundle findings, don't shard them" rule.
+1. **A fresh context for every stage, and briefs without opinions.** The orchestrator hands each stage the
+   paths to its input documents and your exact words — never its own theory of the problem. An agent handed
+   a hypothesis returns it confirmed; a fresh one checks it.
+2. **One author for the code, independent eyes for the review.** Splitting one chain of work between many
+   agents loses what lives between their pieces, and coordination costs more than the work. So one agent
+   writes the whole plan, and independence comes where it matters: reviewers who never saw the author's
+   conversation, a security pass when a real trigger fires, and an end-to-end pass that must prove the
+   feature actually reaches the user.
+3. **Review that ends.** A reviewer can always find one more edge case. Here a finding blocks only if it can
+   be reproduced on the current code **and** a user would notice it; everything else gets a route — fixed
+   now, one backlog line for you to accept or decline, a trigger register entry ("matters when X happens"),
+   or dropped with a reason. At most five passes, and the loop stops early when it stagnates.
+4. **Nothing found gets lost.** Follow-ups, documentation drift and manual pre-launch steps are captured by a
+   hard rule: to the backlog, to the source document, or to the launch playbook (the list of manual steps
+   before a rollout). The backlog itself is kept in order by a "bundle findings, don't shard them" rule.
+5. **Model and effort are pinned per role.** Each agent role declares its model and reasoning effort, so you
+   never switch models by hand: deep judgement (design, review, security) on the strongest model at high
+   effort, routine assembly and search on a cheaper one.
 
-→ Details: [docs/00-methodology.md](docs/00-methodology.md).
+→ Details: [docs/00-methodology.md](docs/00-methodology.md) · [docs/06-model-routing.md](docs/06-model-routing.md).
 
 ## The process is sized to the task
 
@@ -195,9 +193,9 @@ the test passes). The full heavy machinery only kicks in for substantial work.
 
 The result is the same — the only difference is how much you do by hand.
 
-- **Turnkey — right for most people.** Run `npx tms-pipeline`, answer a short list of questions (Enter
-  accepts the default), and the installer (a terminal program, not an agent) writes `AGENTS.md` and
-  installs the skills for you. `AGENTS.md` is your project's settings file, which the agents read to learn
+- **Turnkey — right for most people.** Run `npx tms-pipeline` (a terminal program, not an agent): it
+  installs the skills and drops a starter `AGENTS.md`; then `/tms-init` inside your agent reads the repo and
+  fills it in. `AGENTS.md` is your project's settings file, which the agents read to learn
   your rules. Take this path if you want to start working today without digging into how it's built.
 - **Manual — if you want control.** Read the methodology, install the skills, and write `AGENTS.md`
   yourself. Take this path if you want to understand every detail and tune the process for your team.
@@ -213,27 +211,34 @@ only what's needed (for example, it won't create `.claude/CLAUDE.md` if you only
 ```bash
 # 1) Set the process up ON YOUR existing project (short y/n wizard; asks about Claude/Codex)
 npx tms-pipeline
+
+#    Or run the latest version straight from GitHub:
+npx github:TmsNine/tms-pipeline
+
+#    Preview without writing anything:   npx tms-pipeline --dry-run
 ```
 
 ```text
 # 2a) Claude Code — install the skills + agents. Two ways, pick ONE (to avoid duplicates).
-#     Way (a) is handier if you want to update with one command; way (b) is for when you'd rather
-#     the files just sit in your ~/.claude.
 #   (a) via the plugin marketplace:
 /plugin marketplace add TmsNine/tms-pipeline
 /plugin install tms-pipeline@tms-pipeline
 /reload-plugins
-#   (b) or let the installer copy them in: at the "Install the tms-* skills … Choose where" step pick 1
-#       (Claude Code) → skills/agents/commands land in ~/.claude, then restart Claude Code.
+#   (b) or let the installer copy them in: answer "yes" to "Install the tms-* skill files now"
+#       → skills/agents/commands land in ~/.claude, then restart Claude Code.
 
 # 2b) Codex — reads AGENTS.md natively. Codex has no /plugin install equivalent, so its skills/agents
-#     go in ~/.codex. At the same installer step pick 2 (Codex) and it copies them. By hand:
+#     go in ~/.codex. The installer copies them when you select Codex. By hand:
 #       cp -R codex-skills/* ~/.codex/skills/ && cp -R codex-agents/* ~/.codex/agents/
 #     More: docs/02-configuration.md#codex
 ```
 
-> The installer installs only what you select: answer "no" to Claude Code and no `.claude/CLAUDE.md` is
-> created; the "Choose where" step (1 Claude / 2 Codex / 3 both / 0 skip) decides where the skills land.
+> The installer installs only what you select and never overwrites an existing file unless you pass
+> `--force`. **Upgrading from 0.1.x?** It also never deletes anything, so remove the retired skill folders
+> (`tms-ticket`, `tms-research`, `tms-design`, `tms-gap-audit`, `tms-plan`, `tms-implement`,
+> `tms-loop-review`, `tms-loop-code-review`, `tms-review`, `tms-test`, and in Codex `tms-02b-gap-audit`,
+> `tms-04b-loop-review`, `tms-06-review`, `tms-94-loop-code-review`) from `~/.claude/skills` and
+> `~/.codex/skills` by hand — see [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
@@ -241,72 +246,78 @@ npx tms-pipeline
 
 ### Step 1 — Onboard your project
 
-Run `npx tms-pipeline` (or `/tms-init` inside Claude Code) and answer the short list of questions (Enter
-accepts each default). The installer writes a filled `AGENTS.md` and `.claude/CLAUDE.md` into your project,
-and can copy the blank templates for the process documents and the documentation base.
+Run `npx tms-pipeline`, then `/tms-init` inside Claude Code or Codex. The installer drops a starter
+`AGENTS.md` (your project's settings file, which the agents read to learn your rules); `/tms-init` reads your
+repository and fills it — test and build commands, paths, ticket format — asking you only about what it
+cannot find.
 
 ### Step 2 — One-time configuration
 
-Open the generated `AGENTS.md` and:
+Open the generated `AGENTS.md` and resolve the remaining `<<TODO: ...>>` markers — first of all:
 
-- resolve the `<<TODO: ...>>` markers (these are intentional placeholders in the settings file that you
-  fill in for your project) — first of all **`PROFILE_C_TRIGGERS`** (which parts of the code should trigger
-  Profile R/C risk handling and deeper 04b review) and your access model: does the system have separate
-  customers whose data must not be mixed (tenants), and how it determines who is in front of the system;
-- if you copied the blank documentation-base templates, **rename the `PROJECT_NAME` folder** to your
-  project's name and put the path in `DOC_BASE_PATH`.
+- **`SECURITY_TRIGGERS`** — which parts of the code (sign-in, roles, tenant data, money, personal data)
+  should trigger the security pass in stage 04 and the strongest reviewer in 04b;
+- **`TASK_CHECK_CMD`** — one command that builds, type-checks and tests everything a task touched;
+- the **known-test-debt register** (tests already red on the main branch) and the **trigger register**
+  (findings that matter only when a named event happens);
+- if you copied the blank documentation-base templates, **rename the `PROJECT_NAME` folder** and put the
+  path in `DOC_BASE_PATH`.
 
-> **Not sure what to put in a `<<TODO>>`?** Don't guess alone: ask your AI agent (Claude Code or Codex) to
-> read your code and propose values, then confirm or correct them. This is the intended way to fill in the
-> configuration — it's by design.
+> **Not sure what to put in a `<<TODO>>`?** Don't guess alone: ask your AI agent to read your code and
+> propose values, then confirm or correct them — [docs/05-manual-setup.md](docs/05-manual-setup.md) has
+> ready-to-paste prompts.
 
 → Reference: [docs/02-configuration.md](docs/02-configuration.md).
 
 ### Step 3 — Run one task through the process
 
-Pick a task from your backlog and walk all the steps. The agent does one step and stops for your OK:
+The simplest way: let the orchestrator carry it.
 
 ```text
-/tms-ticket    ACME-123     → writes 00_ticket.md    (driver, scope, acceptance, task mode)
-/tms-research  ACME-123     → writes 01_research.md   (the facts; may interview you)
-/tms-design    ACME-123     → writes 02_design.md     (the design contract — you review it)
-/tms-gap-audit ACME-123     → writes 02b_gap_audit.md (A/B/C/D gaps; Class A fixed into the design)
-/tms-plan      ACME-123     → writes 03_delivery_plan.md (waves + risk profiles)
-/tms-implement ACME-123     → writes 04_implementation.md (implementation log + self-checks)
-/tms-loop-review ACME-123   → writes 04b_loop_review.md (independent review/fix loop)
-/tms-test      ACME-123     → writes 05_test_report.md (primary + secondary signals)
-/tms-review    ACME-123     → writes 06_review_gate.md (go / conditional_go / no-go)
+/tms-run ACME-123
 ```
 
-After each step a file appears in the task folder (`docs/ACME-123/`). Read it, confirm or correct it, then
-run the next step.
+It runs each stage as its own agent with a fresh context and stops twice:
 
-> **Start each step in a clean context window** (that is, clear the agent's working memory before you run
-> it). This is the whole idea of context control: the next step should get only the previous step's
-> document, not the accumulated noise of the conversation. Each skill reminds you of this at the end.
-> Before running the next step:
-> **Claude Code** → `/clear`; **Codex** → `/clear` (or `/new`). Then run the next `/tms-*` command.
+1. **After `02_design.md`** — read the design and approve it (or ask for changes). If a choice would change
+   what users see, you get one plain-language question with a recommended answer before the design is
+   finished.
+2. **At `06_review_gate.md`** — read one page and decide: `go`, "fix first", or "not now". If only a live
+   check or a rollout step is left, the lead signs `conditional_go` and writes that step into your launch
+   playbook.
 
-Ask the agent to "run it end to end" only for small tasks, where keeping one context is cheaper than the
-gain from clearing it.
+Prefer to drive it by hand? Run the stages one by one, each in a clean context window (**Claude Code** →
+`/clear`; **Codex** → `/clear` or `/new` before the next command):
+
+```text
+/tms-00-ticket     ACME-123  → 00_ticket.md          (the problem, who, out of scope)
+/tms-01-research   ACME-123  → 01_research.md        (facts only)
+/tms-02-design     ACME-123  → 02_design.md          (you approve)
+/tms-03-plan       ACME-123  → 03_plan.md            (phases, File Ownership, checks — lead signs)
+/tms-04-implement  ACME-123  → 04_implementation.md  (code, test first)
+/tms-04b-review    ACME-123  → 04b_review.md         (independent review loop)
+/tms-05-test       ACME-123  → 05_test_report.md     (every check, with exit codes)
+/tms-06-gate       ACME-123  → 06_review_gate.md     (you decide)
+```
 
 ### Step 4 — Where things land
 
-- Code changes: in your repo, committed (no AI listed as the author, and not pushed to the server
-  automatically). The code stays on a separate branch and waits while you review it and CI runs — the
-  automatic build and tests on the server.
-- Deferred items found along the way (follow-ups): new backlog rows, grouped into bundles.
-- Manual pre-launch steps: your launch playbook.
+- Code changes: in your repo, as one closing commit per task after the gate (no AI listed as the author,
+  never pushed automatically).
+- Follow-ups you approved at the gate: new backlog rows, grouped into bundles.
+- Findings that matter only later: the trigger register.
+- Manual pre-launch steps and `conditional_go` conditions: your launch playbook.
 
 ### FAQ
 
 - **Do I need both Claude Code and Codex?** No — either one works. Skills are portable; Codex reads
   `AGENTS.md` natively.
-- **Can I skip steps?** For small tasks, yes: the task mode (Direct/Investigation) trims the process, and
-  the gap audit can be skipped for very small changes — the file is marked "skipped per minimal-surface
-  exception", but the empty placeholder file is still created.
-- **The design came out wrong — what do I do?** That's exactly the point of steps 02/02b: fix it in the
-  text and re-run. It's cheap while no code exists yet.
+- **Can I skip stages?** No — every task goes through all eight, but a small task fills them in a few
+  lines each. Sections are fixed; length is free.
+- **The design came out wrong — what do I do?** Say so at the design stop. The change lands in the design
+  document and the plan is written from the corrected version. It's cheap while no code exists yet.
+- **What if the agent needs to touch a file that isn't in the plan?** It stops and asks you. File Ownership
+  is the boundary of implementation.
 - **Will it invent features for me?** No. Bring your own task; the process takes it to code.
 
 ---
@@ -314,14 +325,14 @@ gain from clearing it.
 ## Repository layout
 
 ```
-skills/        Claude Code tms-* skills (setup + process + audit + refactoring)
-codex-skills/  Codex tms-* skills with Codex-native names and instructions
-agents/        5 Claude proving roles (developer, tester, architect, security, reviewer)
-codex-agents/  5 Codex TOML roles (explorer, validator, reviewer, gap auditor, risk reviewer)
+skills/        Claude Code tms-* skills (8 stages + tms-run + tms-ui-screen + audit + refactoring + tms-new)
+codex-skills/  Codex tms-* skills (same stage skills; audit/refactoring under numbered names)
+agents/        9 Claude Code role agents, each pinning its model and effort
+codex-agents/  6 Codex TOML role agents
 commands/      the /tms-init onboarding command
 installer/     the core config engine + the `npx tms-pipeline` installer
-templates/     AGENTS/CLAUDE templates, process document forms, blank documentation-base templates, an example task
-docs/          methodology + setup/configuration + stage walkthrough + model-routing memo
+templates/     AGENTS/CLAUDE templates, stage document forms, blank documentation-base templates, an example task
+docs/          methodology + setup/configuration + stage walkthrough + model routing
 ```
 
 ---
@@ -339,12 +350,15 @@ This project synthesizes and builds on the work of others:
   ideas by [di.sukharev](https://www.instagram.com/di.sukharev/) and turned into skills here.
 - **The `AGENTS.md` canon** — parts draw on the `AGENTS.md` format and conventions by **Boris Cherny**.
 
-Everything else (the extension to nine durable artifacts, the gap audit with severity ratings, the risk
-profiles and 04b review loop, the capture of follow-ups and manual pre-launch actions, and the packaging
+- **The 04b review loop** — builds on the `loop-code-review` skill by di-sukharev, with a finding contract
+  (blocking vs routed) replacing its verdict and open-ended stop.
+
+Everything else (the eight-stage chain with its two owner stops, the one-executor implementation, the
+seam map, the finding routes, the capture of follow-ups and manual pre-launch actions, and the packaging
 itself) is original to this project.
 
 ## License
 
-[Apache-2.0](LICENSE). Free to use and adapt. Treat the process as a living thing — change the step names,
-the risk triggers, and the prompts to fit your team's culture; what matters is the principle: control the
+[Apache-2.0](LICENSE). Free to use and adapt. Treat the process as a living thing — change the stage names,
+the security triggers, and the prompts to fit your team's culture; what matters is the principle: control the
 context at every step and put independent review where it checks the real result.

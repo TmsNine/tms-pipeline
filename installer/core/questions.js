@@ -80,6 +80,12 @@ const QUESTIONS = [
     kind: 'text',
   },
   {
+    token: 'TASK_CHECK_CMD',
+    prompt: 'One command that checks a whole task: build, types and tests of every touched package (blank = none yet)',
+    default: '',
+    kind: 'text',
+  },
+  {
     token: 'LAUNCH_PLAYBOOK_LOCATION',
     prompt: 'Where are pre-launch manual actions tracked? (a launch playbook/checklist; blank if none yet)',
     default: '',
@@ -115,12 +121,14 @@ const CONFIRMS = [
 // Tokens we intentionally do NOT ask (project-specific judgement). The engine leaves a clear TODO so the
 // user fills them in by hand or with help from Claude/Codex.
 const DEFERRED_TOKENS = [
-  'AUDIENCE_PROFILE_NOTE',
   'DOC_INDEX_HINT',
   'CODE_LAYOUT_HINT',
   'PERSISTENCE_AND_TENANCY',
   'TRACEABILITY_LOCATION',
-  'PROFILE_C_TRIGGERS',
+  'SECURITY_TRIGGERS',
+  'KNOWN_TEST_DEBT_LOCATION',
+  'TRIGGER_REGISTER_LOCATION',
+  'ACCEPTED_SCREENS_LOCATION',
   'MIGRATION_POLICY',
   'LAUNCH_STAGE_MAPPING',
   'DESIGN_SYSTEM_HINT',

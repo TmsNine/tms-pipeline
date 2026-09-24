@@ -70,7 +70,7 @@ const STRINGS = {
     step_claudeInstalled: 'Claude Code: skills are in ~/.claude — restart Claude Code to load them (don\'t also /plugin install).',
     step_claudePlugin: 'Claude Code: /plugin marketplace add TmsNine/tms-pipeline → /plugin install tms-pipeline@tms-pipeline → /reload-plugins',
     step_codex: 'Codex: re-run and accept the skill install, or: cp -R codex-skills/* ~/.codex/skills/ && cp -R codex-agents/* ~/.codex/agents/',
-    step_task: 'Then start a task:  /tms-ticket <your first ticket>',
+    step_task: 'Then carry a task through the eight stages:  /tms-run <your first ticket>',
     enterHint: 'Enter = default',
   },
   ru: {
@@ -87,7 +87,7 @@ const STRINGS = {
     step_claudeInstalled: 'Claude Code: скиллы в ~/.claude — перезапустите Claude Code (не делайте ещё и /plugin install).',
     step_claudePlugin: 'Claude Code: /plugin marketplace add TmsNine/tms-pipeline → /plugin install tms-pipeline@tms-pipeline → /reload-plugins',
     step_codex: 'Codex: перезапустите и согласитесь на установку, или: cp -R codex-skills/* ~/.codex/skills/ && cp -R codex-agents/* ~/.codex/agents/',
-    step_task: 'Затем запустите задачу:  /tms-ticket <первый тикет>',
+    step_task: 'Затем проведите задачу через восемь стадий:  /tms-run <первый тикет>',
     enterHint: 'Enter = значение по умолчанию',
   },
 };

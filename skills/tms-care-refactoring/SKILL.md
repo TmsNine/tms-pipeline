@@ -1,22 +1,21 @@
 ---
 name: tms-care-refactoring
-description: "Pragmatic maintenance refactor — make code easier to change without altering behavior. Discovery, scoped scope proposal, challenge checkpoint, characterization tests, minimal implementation, validation. A valid result is 'no changes needed'. Use when the user invokes /tms-care-refactoring or asks to make a codebase safer/clearer/more consistent without changing behavior."
-allowed-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Grep
-  - Glob
-  - Agent
-  - TodoWrite
+description: Pragmatic maintenance refactoring workflow for codebases. Use when the user invokes `/tms-care-refactoring`, or asks to make a codebase easier to understand, safer to change, or more consistent with existing architecture without changing behavior; includes repository discovery, scoped refactor selection, challenge review, minimal implementation, validation, and a "no changes needed" outcome.
 ---
 
 # Care Refactoring
 
 Perform a pragmatic maintenance refactor. Optimize for future feature work by humans and AI agents. Do not refactor for aesthetics alone. A valid result is: `No code changes needed`.
 
-Read THIS repo's `AGENTS.md` / `CLAUDE.md` and local conventions first — they override the defaults below.
+Read THIS repo's `AGENTS.md` and local conventions first — they override the defaults below.
+
+## Subagent Authorization (Claude Code)
+
+A user invocation of this skill explicitly authorizes the subagents described by
+the workflow. Use Claude Code's `Agent` tool for delegated discovery and the
+challenge checkpoint. Fall back to a local pass only when the Agent tool is
+genuinely unavailable or the user explicitly opts out, and record the
+limitation in the final summary.
 
 ## Operating Rules
 
@@ -37,7 +36,7 @@ Understand the project before proposing changes:
 3. Inspect current diffs and avoid touching unrelated modified files.
 4. Identify the owning layer for the behavior under review.
 
-When broad code discovery is needed, delegate repository search to a subagent via the `Agent` tool (`subagent_type: Explore` or `general-purpose`). Ask for a compact evidence map only: `path:line`, symbol or route name, relevant snippet or signature, and why it matters. Verify critical findings before editing.
+When broad code discovery is needed and subagents are available, delegate repository search through the `Agent` tool (`Explore` for compact evidence maps, `general-purpose` for cross-module archaeology). Use `sonnet` by default. Ask for `path:line`, symbol/route, snippet/signature, and why it matters. Verify critical findings before editing.
 
 ## Refactor Candidates
 
@@ -82,7 +81,7 @@ For each proposed scope, state:
 
 ## Challenge Checkpoint
 
-Spawn a fresh challenge agent via the `Agent` tool (`subagent_type: general-purpose`, `model: opus`) to validate the proposed scope before implementation. Claude Code subagents run with their own context and only the prompt you pass — give the challenge agent a self-contained brief and do NOT paste your own rationale or preferred answer. The challenge agent must stay read-only and must not write code.
+If subagents are available, ask a fresh `general-purpose` challenge agent to validate the proposed scope before implementation. Use `sonnet` for local refactors and `opus` for public contracts, auth/RLS/payments/PII/lifecycle/persistence/architecture boundaries. The challenge agent must not write code.
 
 Ask it to answer:
 
@@ -94,7 +93,9 @@ Ask it to answer:
 - What existing or new characterization test should protect the behavior before refactoring?
 - Should we proceed, narrow the scope, do nothing, or turn this into a separate product task?
 
-You and the challenge agent may do at most two short rounds of disagreement. If spawning a subagent is not available or disproportionate, perform the same challenge as a separate critical pass yourself and summarize the conclusion.
+The main agent and challenge agent may do at most two short rounds of disagreement.
+
+If subagents are not available, perform the same challenge as a separate critical pass yourself and summarize the conclusion.
 
 End with exactly one decision:
 

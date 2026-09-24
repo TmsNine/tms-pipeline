@@ -1,6 +1,6 @@
 ---
 name: tms-96-ui-refactoring
-description: Deep UI code refactoring workflow for enforcing strict component ownership of visual styling. Use when the user invokes `/tms-ui-refactoring`, asks for systematic UI refactoring, or wants pages/screens/routes cleaned up so visual styles live inside reusable components while external code controls only layout composition.
+description: Deep UI code refactoring workflow for enforcing strict component ownership of visual styling. Use when the user invokes `tms-96-ui-refactoring`, asks for systematic UI refactoring, or wants pages/screens/routes cleaned up so visual styles live inside reusable components while external code controls only layout composition.
 ---
 
 # UI Refactoring

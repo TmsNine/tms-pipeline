@@ -1,299 +1,240 @@
 # Under the hood: a walkthrough of every stage
 
 > tms-pipeline is a discipline for AI agents: it takes one already-defined task from a ticket to
-> reviewed code, keeping the agent's context clean at every step. A task moves through staged checkpoints:
-> the core 00-06 path, 02b gap audit, and 04b loop review. Only one stage writes code (04,
+> reviewed code, keeping the agent's context clean at every step. A task moves through eight stages,
+> 00 → 06 with 04b between implementation and the test report. Only one stage writes product code (04,
 > implementation); the others each produce a text document (`.md`). Most of the pipeline is thinking on
 > paper, not generating code.
 >
-> This page shows what actually happens at each stage: which agents work, on which models, what they take
-> in and hand back, and — above all — **where you fit in**. If the README answers "why", this page
-> answers "how it actually works".
+> This page shows what actually happens at each stage: what goes in, what comes out, who stops the
+> pipeline, and which common failure the stage exists to prevent. If the
+> [methodology overview](00-methodology.md) answers "why", this page answers "how it actually works".
 >
 > **First time here?** Read the [README](../README.md) and the [methodology overview](00-methodology.md)
-> first: this page assumes you already grasp the general idea and walks through each stage in detail.
-> Russian version — [04-stages-deep-dive.ru.md](04-stages-deep-dive.ru.md).
+> first. Russian version — [04-stages-deep-dive.ru.md](04-stages-deep-dive.ru.md).
 
 ## Where all of this runs
 
 You work with an agent in an ordinary chat inside your AI tool — either **Claude Code** or **Codex**
-(the two programs that can run tms-pipeline; you need only one of the two, your choice). You type commands
-like `/tms-ticket` or `/tms-research` straight into that chat. A command like this is called a **skill** —
-a command you give the agent to make it do one step of the work. The documents produced at each stage
-(`00_ticket.md`, `01_research.md`, and so on) the agent files away itself, into the task folder inside
-your repository — the same place your code lives. You see them as ordinary files and can read and edit
-them by hand.
+(you need only one of the two). You type commands like `/tms-run ACME-101` or `/tms-01-research` straight
+into that chat. A command like this is a **skill**. The documents each stage produces (`00_ticket.md`,
+`01_research.md`, and so on) land in the task folder inside your repository (`docs/<TASK-ID>/` by
+default), next to your code. You can read and edit them as ordinary files.
+
+The skills read your project's rules from `AGENTS.md` — test commands, where the backlog lives, which
+changes count as security triggers, where launch steps go. A starter is in
+[templates/AGENTS.template.md](../templates/AGENTS.template.md); the sections are explained in
+[02-configuration.md](02-configuration.md).
 
 ## How to read this page
 
-A few ideas you will meet in every section. First, the agent's memory, because the whole pipeline is built
-around it.
+- **The context window is the agent's working memory.** It is limited, and the more clutter it holds,
+  the worse the agent reasons. Every stage therefore starts in a **fresh context** from its input
+  documents and the ticket — never from the previous conversation.
+- **The orchestrator (`tms-run`) and the lead.** `/tms-run <TASK-ID>` is the chat that carries the task:
+  it dispatches each stage as its own subagent, collects the document, checks that its required sections
+  are filled, and stops at the checkpoints. It never writes code or design and never approves anything
+  for you. Its briefs carry addresses (task ID, working copy, skill, input paths), not opinions.
+- **Stage agents and role agents.** In Claude Code each stage runs as a pinned agent — `tms-stage` (top
+  tier, medium effort), `tms-stage-deep` (top tier, high) or `tms-stage-light` (cheaper tier, medium).
+  Inside a stage it may call role agents: `tms-explorer`, `tms-reviewer`, `tms-security`,
+  `tms-developer`, `tms-tester`. Codex has no stage agents; there a stage runs on the session default,
+  and role agents pin their own model. Details in [06-model-routing.md](06-model-routing.md).
+- **Who stops.** You stop the pipeline twice: after design (02) and at the gate (06). The lead signs the
+  plan (03). Everything else runs without asking you.
 
-- **The context window is the agent's working memory.** It is everything the agent can see and hold at
-  once: your request, the files it has read, its earlier answers. The window is limited in size, and the
-  more clutter it holds, the worse the agent reasons — it loses the early instructions and starts to get
-  confused. So the pipeline tries to give each agent only what that step needs, and nothing more.
-- **The main agent (the lead).** The agent in your chat — the one you talk to. It makes the decisions,
-  pulls the result together, and judges what is correct. In Codex, stage 04 usually stays with this main
-  agent; the discipline comes from explicit self-check roles plus the independent 04b review.
-- **Role agents (subagents).** Separate agents the lead can start for narrow evidence gathering,
-  challenge, or independent review. Each has its own clean context window: it sees only its brief, not the
-  whole conversation.
-- **Risk profile (M / E / R / C).** How risky a wave is and therefore how much help or independent review
-  it needs. M is bounded mono work, E allows evidence lookup, R requires focused independent review, and C
-  allows the full classic multi-agent implementation for maximum-risk work.
-- **You check every step (human in the loop).** The core idea: after each stage the agent stops, and you
-  review the result before going on. You don't hand off the work wholesale — you steer the agent.
+Each stage section below has the same four parts: **In**, **Out**, **Who stops**, **Failure it
+prevents**.
 
-> The specific model names in the skills can change. The stable principle is the split of work: cheap
-> models can gather evidence; high-judgement work and independent review use stronger reasoning.
-> Current Sol/Terra/Luna table: [model routing](06-model-routing.md).
+## Stage 00 — Ticket (`/tms-00-ticket`)
 
----
+Runs in the orchestrator's own chat — the one stage without a subagent, because it needs your exact
+words.
 
-## Stage 00 — Ticket (`/tms-ticket`)
+- **In:** your own words, or a real, reproduced problem found during other work.
+- **Out:** `00_ticket.md` — one-sentence problem from the user's side, who it affects, how it shows up
+  today, what becomes possible, what the task does *not* do — plus one short row in the backlog.
+- **Who stops:** only you decide that a task exists. A problem an agent discovers goes to you as a
+  proposal first; a hypothesis without a reproduced failing path is not a ticket.
+- **Failure it prevents:** tasks that exist only because an agent thought they should, and new scope
+  glued onto an already-closed task.
 
-- **Purpose.** Pin down exactly what we're doing: the driver (what the task is for — which pain or goal it
-  closes), the scope (what's in the task and what's deliberately left out), and the acceptance criteria.
-  And confirm the task is genuinely ready to work on.
-- **Who works.** A single lead, no subordinates. It reads the project's `AGENTS.md` — your project's
-  settings file, which tells the agent your rules: where the task folders are, where the backlog (the list
-  of future tasks) is, and which language to write in.
-- **Input → Output.** The task description from the backlog → an `00_ticket.md` file in the task folder.
-- **What the agent does.** Checks the preconditions (the task is in the backlog and it's the right one;
-  the sources are linked), writes a short ticket index, and **classifies the task mode** — how heavy the
-  rest of the process will be. There are three modes: `Direct` (cosmetic work, a small edit),
-  `Investigation` (the cause of the bug is still unclear, so you have to dig first), or `TDD-first` (real
-  behavior or logic is changing — that kind of work goes through TDD: first a test that fails, then code
-  until the test goes green).
-- **Where you check.** You confirm that the task and its scope are understood correctly. If not, you fix
-  it right here, while nothing has been built yet.
-- **When to go on.** After your OK — on to `01_research`. The next stage starts in a clean context window:
-  the lead opens it with an empty memory, so the noise from the ticket discussion doesn't get in the way
-  of the research.
+## Stage 01 — Research (`/tms-01-research`)
 
----
+Runs as `tms-stage`; bulk lookups fan out to `tms-explorer` agents on the cheaper tier.
 
-## Stage 01 — Research (`/tms-research`)
+- **In:** the ticket, and nothing from earlier conversations.
+- **Out:** `01_research.md` — facts as they are, with exact `file:line`: the **vertical** from the
+  person's action to the data and back (each row says what it hands to the next), neighbours, precedents
+  in the code, data and schema state, open factual questions for design. No opinions, no recommendations.
+- **Who stops:** nobody. The lead checks mechanically that every enumerated row is filled before writing.
+- **Failure it prevents:** a sample passed off as the whole. A countable subject (migrations, call sites,
+  routes, screens) is listed from the source of truth, counted and given one row per item. And
+  "**absent** — I opened it and looked" is kept apart from "**not found by searching for** `<pattern>`",
+  so a missed search never travels downstream as a fact.
 
-- **Purpose.** Narrow a huge codebase down to the facts that matter for this particular task. Don't spend
-  tokens on "the whole project", and don't carry information noise into the later stages.
-- **Who works.** This is where a team of agents first appears:
-  - **the lead on a strong reasoning model** decides what to look for and where;
-  - **4 subordinate collector agents on a cheap evidence model** work in
-    parallel. Each one covers a different corner of the code, so that together they cover the task from
-    every side without overlapping:
-    - one follows the **execution path top to bottom** — how a request travels through the system from
-      input to result;
-    - the second looks at the **neighboring code** — what sits nearby and what the task will connect to;
-    - the third gathers the **product documents** — descriptions of what the product does and why;
-    - the fourth digs up **prior work and history** — recent tickets, the git change history, similar
-      solutions already shipped;
-  - then **the lead re-checks** the findings itself.
-- **Input → Output.** `00_ticket.md` → an `01_research.md` file with facts, links to specific
-  `file:line` locations, and a confidence note on each item.
-- **What the agent does.** The collectors **only gather and quote** — they don't design, don't advise,
-  don't write the final document. The lead opens the cited spots in the code and makes sure what was
-  reported is really there; it catches contradictions between what the different collectors found; if gaps
-  remain, it sends at most 2 more targeted follow-up queries. The key rule: the document describes the
-  system as it is now, **with no judgments and no proposals to rework anything** — that is the job of later
-  stages.
-- **Where you check.** If the research turned up real forks in the product or in operations (for example:
-  should deleted records show up in the history? how do we count an active user?), the agent runs an
-  **interview right in the chat** — one question at a time, in plain language, with its own recommendation
-  — before design begins. Questions you didn't answer are not written into the document.
-- **When to go on.** Once the picture is whole and re-checked — on to `02_design`.
+## Stage 02 — Design (`/tms-02-design`)
 
----
+Runs as `tms-stage-deep` (top tier, high effort). Mandatory for every task, even a one-line fix.
 
-## Stage 02 — Design (`/tms-design`)
+- **In:** the ticket and `01_research.md`.
+- **Out:** `02_design.md` — the owning layer (where the behaviour really belongs), the acceptance
+  contract as before → after rows in the user's words, design by layer (only touched layers; "unchanged"
+  is a full answer), the TDD matrix (every behaviour and the test that proves it), rollout and rollback,
+  and an answer to every open question from research.
+- **Who stops:** **you — owner stop 1.** You read the design and approve it. If two defensible choices
+  change what a person using the product sees, can do or must recover from, the stage asks you one
+  question at a time, with a scenario, plain options and a recommendation, *before* choosing a solution.
+  Internal architecture is never your question.
+- **Failure it prevents:** a fix in the wrong layer, an unplanned tool, or a product decision guessed by
+  an agent. Design may also send research back once for a targeted top-up of named rows — the only
+  backward move in the pipeline.
 
-- **Purpose.** Design the solution and review it **before the first line of code**. Fixing a mistake in
-  the design text is many times cheaper than rewriting finished code.
-- **Who works.** The lead. It builds on the facts from `01_research.md` and your project's standards from
-  `AGENTS.md`.
-- **Input → Output.** `01_research.md` + the project standards → an `02_design.md` file. This is the
-  **design contract** — the change agreed up front, which the finished code is later checked against. Its
-  essence is the **minimal sufficient change at the owning layer**. The "owning layer" is the place in the
-  code where the problem belongs at its source, not the first handy spot where you can patch it. For
-  example, if data arrives corrupted, fix it where it is created, not by scrubbing it in the ten places it
-  later turns up.
-- **What the agent does.** Describes what changes and where, which parts of the system it affects, and how
-  it fits with the approaches already used in the project. The goal is the smallest coherent change that
-  actually solves the task, with no extra layers or abstractions.
-- **Where you check.** This is one of the main moments where you look with your own eyes: do you agree
-  with the approach? Did the agent pick a poor solution (the classic example — making a heavy operation
-  synchronous, so the user waits for it to finish, when it could have run in the background)? Edits go into
-  the text — by hand or with clarifying prompts.
-- **When to go on.** Once the design satisfies you — on to `02b_gap_audit`.
+## Stage 03 — Plan (`/tms-03-plan`)
 
----
+Runs as the same `tms-stage-deep` agent, resumed after your approval — it already holds the code it read
+for the design. If it cannot be resumed, a fresh one is dispatched.
 
-## Stage 02b — Gap audit (`/tms-gap-audit`)
+- **In:** the approved `02_design.md`.
+- **Out:** `03_plan.md` — phases that can each be tested on their own; the normative contracts copied in
+  verbatim (schema, signatures), not linked; **File Ownership**, the complete list of files stage 04 may
+  touch; the **seam table**, every hop of the research vertical with the phase that owns it; a validation
+  table where each row is a command, the directory it runs from and what "green" looks like; an exact
+  **RED-test specification** per phase; and the Base SHA.
+- **Who stops:** **the lead signs the plan**, with its date. Before signing, a fresh reader
+  (`tms-reviewer` in plan mode) checks the plan against itself and the design, and the lead reads the one
+  file that *consumes* the task's result end to end.
+- **Failure it prevents:** scope that nobody chose (a parser written "as a regression guard" because there
+  was no list to put it on), a hop between phases that belongs to nobody, and a check written as prose
+  that nobody can run. The finish line is concrete: each phase's first test can be written from the plan
+  alone, and its only reason to fail is that the product code does not exist yet.
 
-- **Purpose.** Take one look at the finished design with **fresh, skeptical eyes** — deliberately hunting
-  for holes in it, and from a different angle than the one it was written with — to catch problems before
-  code.
-- **Who works.** A separate auditor agent. It is given a specific angle to check from — not a vague "look
-  closely" but a particular theme to hunt holes under. The themes rotate from run to run: security,
-  concurrent access, ease of use, running it in production, data integrity, privacy. Over a few runs the
-  design gets looked at from every side.
-- **Input → Output.** `02_design.md` → an `02b_gap_audit.md` file with a list of the holes found, sorted
-  by severity.
-- **What the agent does.** It puts each hole it finds into exactly one class (with rules against inflating
-  the severity):
-  - **A — blocker** (data loss, a security hole, a privacy violation, anything that blocks launch) → fixed
-    right in `02_design.md` before the plan;
-  - **B — incident** (a serious but recoverable problem on a running production system) → fixed in the
-    design or passed to the plan with a note;
-  - **C — small polish** → into the backlog as a separate bundle, not as a priority;
-  - **D — theoretical** → into the backlog only if the fix is obvious and cheap, otherwise dropped with a
-    one-line reason.
-  There are **stopping criteria** so the audit doesn't turn into endless rework: at most 2 passes, and the
-  second only if the first found at least one Class A blocker.
-- **Where you check.** You look at the list of holes and decide whether you agree with the classification
-  and with how the blockers were folded back into the design.
-- **When to go on.** Once the blockers are resolved — on to `03_delivery_plan`. For very small tasks this
-  stage can be skipped (marked "skipped per minimal-surface exception" — meaning the change is too small
-  to justify a full audit). An empty placeholder `02b_gap_audit.md` is still created, so the task folder
-  has the full set of stages.
+## Stage 04 — Implementation (`/tms-04-implement`)
 
----
+Runs as `tms-stage`. **One executor for the whole plan** — the stage agent writes the code itself.
 
-## Stage 03 — Delivery plan (`/tms-plan`)
+- **In:** the signed `03_plan.md`.
+- **Out:** the code change and `04_implementation.md` — per phase: files, what changed, the test written
+  first and shown red, the checks and their results, deviations; then the seam walk (for each seam, the
+  producer line and the consumer line that agree), the project's task check, and the security note.
+- **Who stops:** nobody, unless the plan's boundary is hit. A file or tool outside File Ownership, or a
+  change to what users see, stops the stage and goes to you. A purely technical correction to the plan
+  is appended, recorded and implementation resumes at the affected phase — no restart.
+- **Security:** when the diff touches a security trigger (`AGENTS.md` → *Security Triggers*), **one**
+  `tms-security` pass over the assembled change, plus at most one re-check of what it changed. No
+  trigger — one line saying so.
+- **Failure it prevents:** scope creep ("while I'm here"), and defects that live between phases split
+  across agents. There are no per-phase reviewers or escorts; a finding that arrives after a phase closed
+  is written down for 04b, not argued here.
 
-- **Purpose.** Split the approved design into **waves** — small, self-contained slices of the task, each
-  of which can be coded and proven with tests on its own. The agent handles small slices
-  better than one huge task whole.
-- **Who works.** The lead.
-- **Input → Output.** `02_design.md` (with the blockers folded in) → an `03_delivery_plan.md` file: a list
-  of waves, and **each wave has its own risk profile M/E/R/C** with the reason for the choice.
-- **What the agent does.** Divides the work into finished units, notes for each which files will be
-  created or changed, what the main agent must self-check in 04, and how deep 04b must be. It also writes
-  one canonical append-only risk ledger with stable R-IDs, invariants, proof, owner layer, failure signal,
-  owning wave, and the adjacent search map. Each wave references its owning R-IDs.
-- **Where you check.** You check whether the agent invented anything extra: is the plan split logically,
-  did entities, files, or layers appear that weren't in the approved design? (Agents sometimes confidently
-  write in things the task doesn't actually contain — that's what to catch.)
-- **When to go on.** After your approval — on to `04_implementation`.
+## Stage 04b — Code review (`/tms-04b-review`)
 
----
+Runs as `tms-stage`; each pass is a fresh read-only `tms-reviewer` (top tier, high effort). Based on the
+`loop-code-review` skill by di-sukharev.
 
-## Stage 04 — Implementation (`/tms-implement`)
+- **In:** the task's diff, `02_design.md`, `03_plan.md`, the research vertical, and any finding rows 04
+  left behind.
+- **Out:** `04b_review.md` — blocking findings and their fixes, the route of every other finding, trust
+  in the tests, an understanding of the change, rejected findings with evidence, validation per pass.
+- **How it runs:** up to **five** fresh, independent reviewer passes, each without the parent
+  conversation. It stops earlier on **stagnation**: two consecutive passes with no change to product
+  files and only repeated, rejected or non-blocking comments. One pass is always **end to end** — briefed
+  to prove the path works, quoting the line that supplies each value at each hop or naming the hop where
+  it breaks. A screen also gets a **visual** pass beside the accepted baselines.
+- **Blocking** means reachable on the current code **and** visible to a person using the product.
+  Blocking findings are fixed in the loop. Everything else is routed by the stage itself: fixed now,
+  backlog proposal for the gate, a row in the trigger register, or dropped with a reason.
+- **Who stops:** nobody. There is no numeric grade and no verdict. You are brought in only when a
+  blocking finding cannot be closed here — it needs a file outside File Ownership, or means the project
+  does not have — as one named blocker with what it would take.
+- **Failure it prevents:** an endless review loop that always finds "one more thing", and the opposite —
+  a green suite over a path that never reaches the person it was built for.
 
-- **Purpose.** Write the code per the approved plan while keeping the implementation context small enough
-  to reason about.
-- **Who works.** In Codex, the main agent normally implements and performs explicit role self-checks. In
-  Claude, M stays with the lead, E uses one bounded Architect/evidence pass plus Tester, R always dispatches
-  Developer/Tester/Reviewer plus the triggered Architect/Security roles, and C uses the full set. One integration
-  owner remains responsible for each wave.
-- **Input → Output.** `03_delivery_plan.md` → code in the repository + an `04_implementation.md` file (a
-  log of the waves).
-- **What the main agent does (one wave).** It reads the plan for the current wave only → implements the
-  smallest coherent change → runs targeted tests/checks → verifies architecture, contracts, security,
-  privacy, money, and launch implications when relevant → records what passed and what 04b must
-  stress-test. On Profile R/C waves it also performs a bounded risk-surface sweep, checks the invariant
-  table adversarially, and writes a compact 04b handoff as an orchestrator-only author risk map. Stage 04b
-  audits it and derives a sanitized neutral brief for the independent reviewer; author findings, fixes,
-  searches, and remediation history are not forwarded. The next wave starts only after the current wave
-  is locally coherent.
-- **Where you check.** The lead shows you the result wave by wave. At the end the code **does not move on
-  by itself**. Stage 04 does not commit: the task-owned package stays in the worktree for independent
-  04b, stage-05 testing, and one closing commit after successful 06.
-- **When to go on.** After all the waves have passed — on to `04b_loop_review`.
+## Stage 05 — Test report (`/tms-05-test`)
 
-Why stage 04 works this way. Multi-agent implementation is expensive because every role has to rebuild
-enough context to act. Bounded M/E work preserves one implementation thread; Claude buys real proving-role
-separation for R/C, where the failure cost justifies it. In every profile, 04b still inspects the finished
-diff independently.
+Runs as `tms-stage-light` (cheaper tier).
 
----
+- **In:** the validation table from `03_plan.md` and the working copy.
+- **Out:** `05_test_report.md` — the **primary signal** (the user-visible scenario, run for real, with
+  evidence), every plan row with its exit code and whether the expected marker appeared, the project's
+  task check, the **secondary signal** (tests, types, lint, build), known caveats, and what was not run
+  and why.
+- **Who stops:** nobody. Red is a fact for the gate, not something to fix here. Before calling a red test
+  a regression, the stage checks the known-test-debt register (`AGENTS.md` → *Testing And Validation*),
+  read from the main branch, not the task branch.
+- **Failure it prevents:** a check silently skipped. The report has as many rows as the plan, counted,
+  not estimated; a row without an exit code is allowed only for a missing live environment or a manual
+  scenario.
 
-## Stage 04b — Loop review (`/tms-loop-review`)
+## Stage 06 — Gate (`/tms-06-gate`)
 
-- **Purpose.** Independently review the implementation diff before the test report, fix confirmed
-  findings, and make the review evidence durable. This is the quality backstop for the cheaper default 04.
-- **Who works.** The lead plus fresh independent reviewer subagents. The reviewer context is kept separate
-  from the implementation context so it can inspect the diff without inheriting the implementer's
-  assumptions.
-- **Input → Output.** `02_design.md`, `03_delivery_plan.md`, `04_implementation.md`, and the resolved
-  implementation diff → `04b_loop_review.md`.
-- **What the loop does.** Normally it resolves the uncommitted task-owned worktree scope left by stage
-  04. Committed or mixed ranges are accepted only for legacy tasks or explicitly requested standalone
-  reviews. Then the orchestrator audits the 04b handoff instead of trusting it and derives a sanitized
-  neutral reviewer brief from the contract, current scope/fingerprint, invariants, and surfaces. The
-  independent reviewer never receives author findings/fixes or remediation history. The loop then
-  runs a bounded review/fix/re-review loop until validation is green and the latest independent reviewer
-  either scores the result high enough or reports no actionable findings. The depth scales by risk: small
-  tasks get a narrow diff review, ordinary features get fix + re-review, and risk-heavy work gets the
-  classic iterative loop with broad first-reviewer coverage. If the loop exposes repeated blocker-like
-  defects, it automatically switches to a separately recorded repeat-04 remediation cycle in the same
-  session, then starts a fresh 04b attempt with a new reviewer.
-- **Where you check.** You read the fixes, rejected/deferred findings, validation results, and final
-  acceptance signal. If the stage was skipped, the file must say why and where that review debt is tracked.
-- **When to go on.** Only after a normalized `PASS` — on to `05_test_report`. 04b never commits:
-  accepted fixes remain in the task-owned package for 05/06 and the one closing commit after 06.
+Runs as `tms-stage-light`.
 
----
+- **In:** every artifact of the task.
+- **Out:** `06_review_gate.md` — first, the **proof that the task works** (the run that shows its own
+  outcome, or the condition that would produce it); the acceptance contract row by row with evidence;
+  04b's route table as it is; the validation summary; what is left for a human; proposed follow-ups.
+- **Who stops:** **you — owner stop 2.** You decide `go`, "fix first" or "not now". The lead may sign
+  `conditional_go` when only execution is left (a live check, a rollout, a runbook step), naming the
+  launch-playbook document that closes it — unless there is a product fork, an irreversible or
+  outward-facing action, a risk to users' data or money, a `no_go`, or the task asks you for work. Only
+  a human writes `go`; silence is not approval.
+- **After the decision:** human-only steps go to the launch playbook (`AGENTS.md` → *Pre-Launch Manual
+  Action Capture*), approved follow-ups to the backlog, one closing commit with no AI attribution. It
+  never pushes.
+- **Failure it prevents:** closing a task because reviewers ran out of things to say, and a gate page
+  that claims "the user now sees it" while the test report says it was never checked.
 
-## Stage 05 — Test report (`/tms-test`)
+## Screens: `tms-ui-screen`
 
-- **Purpose.** Make sure the task is really solved — not just "the tests are green", but that the thing
-  the user sees actually works.
-- **Who works.** The lead.
-- **Input → Output.** The implementation → an `05_test_report.md` file.
-- **What the agent does.** Checks two levels. **The main thing** — the user-visible behavior: does the
-  feature itself work if you launch the product and try it. **On top of that** — the technical checks:
-  tests, types, linter, build. If the user's scenario is broken, it doesn't count as success, even when
-  all the technical checks pass.
-- **Where you check.** You look at whether the main thing is genuinely covered, not swapped out for the
-  "green checkmarks" of the technical checks.
-- **When to go on.** On to `06_review_gate`.
+When the task changes a **screen** — anything your accepted-screen register lists (`AGENTS.md` → *UI And
+Design*) — stage 04 is `/tms-ui-screen` instead of `/tms-04-implement`. The eight code stages never open
+the design system, and no code reviewer can see a pixel; this skill does both. It works from the two
+nearest accepted screens and the design system, runs its own steps (scope, product and backend map,
+screen contract, first interactive slice, self-QA, independent review) and ends with your visual
+acceptance. Before dispatching it, the orchestrator checks that `03_plan.md` carries the baseline entries
+and a reuse matrix; missing them, the plan goes back, not the code. Accepted screens are the reference
+and are not redesigned in passing. Projects without a UI skip this.
 
----
+## The audit pipeline: `tms-audit-*`
 
-## Stage 06 — Review gate (`/tms-review`)
+A separate pipeline for auditing a **whole codebase**, not for delivering a task:
 
-- **Purpose.** The final reconciliation: does the result match the design contract you approved.
-- **Who works.** The lead (in the reviewer role), plus the final **human** review and your CI.
-- **Input → Output.** The implementation + `02_design.md` → an `06_review_gate.md` file with a verdict:
-  **go** (safe to merge) / **conditional_go** (you can, but do the listed conditions first) / **no-go**
-  (you can't).
-- **What the agent does.** Matches what was done against the design and the acceptance criteria, checks
-  the 04b status and validation evidence, and writes out the discrepancies and conditions. If 04b already
-  accepted the implementation, 06 does not repeat a full 04b-style code review; it verifies design
-  conformance and launch readiness. If `conditional_go` is the verdict, the conditions go into the launch
-  playbook (a separate list of mandatory manual steps to do before shipping) — so they don't get lost.
-- **Closing commit.** On `go` or `conditional_go`, the agent creates exactly one task-scoped commit
-  containing all repo-local task changes from 00 through 06. External backlog/status and launch entries
-  are updated and reread first but do not enter Git. Ambiguous dirty ownership forbids the commit.
-- **Where you check.** This is the last human gate: you read the verdict, run your own CI/CD, and make the
-  final decision on merging.
-- **When to go on.** The task is closed. Everything found along the way but not done now is already sorted
-  into the backlog and the launch playbook — under the strict "nothing gets lost" rule: no problem found
-  should ever drop out of sight.
+1. **`/tms-audit-scope`** — freezes a snapshot (full or delta), inventories the code and cuts it into
+   context-sized zones along owners and seams.
+2. **`/tms-audit-sweep`** — one zone per run, each in a fresh context: a finder proposes defects and
+   debt, a skeptic tries to refute them, and only findings that survive are recorded.
+3. **`/tms-audit-triage`** — consolidates across zones, removes duplicates by root cause, classifies on
+   the audit's own A/B/C/D rubric and proposes bundles of work. **Stops for you.**
+4. **`/tms-audit-backlog`** — re-checks the approved triage against the current code and maps each
+   approved finding exactly once into the backlog, a bundle, an accepted disposition or the launch
+   playbook.
 
----
+In Codex these are numbered `tms-90-audit-scope` … `tms-93-audit-backlog`. The A/B/C/D classes belong to
+the audit only; delivery review (04b) does not use them.
 
-## In short: where the subagents work and where you work
+## Refactoring skills
 
-| Stage | Agent team | Models | Your control point |
-|---|---|---|---|
-| 00 Ticket | one lead | strong enough for scope judgement | Confirm the task and scope |
-| 01 Research | lead + up to 4 collectors | Terra lead + Terra evidence collectors; Sol for risky judgement | Answer the interview (if asked) |
-| 02 Design | one lead | strong design/reasoning model | **Review and correct the design** |
-| 02b Audit | auditor (separate checking angle) | strong risk-judgement model | Sign off on the classes of the holes found |
-| 03 Plan | one lead | cheaper planning tier unless risk ambiguity remains | Check whether the agent invented anything extra |
-| 04 Implementation | Codex main-agent by default; Claude M inline, E bounded help, R/C proving roles | strong implementation owner + profile-scaled evidence/judgement roles | Review the implementation log and what 04b must stress-test |
-| 04b Loop review | lead + independent reviewers | strong independent review model; deeper tier for security/privacy/payment/data risks | Check the review evidence and fixes |
-| 05 Test | one lead | cheap validation/reporting tier unless failures need diagnosis | Make sure the user-visible part works |
-| 06 Review gate | lead + you | strong judgement model + human | **Final review and merge decision** |
+Two skills outside the delivery chain, for when you want the code easier to work with rather than a new
+behaviour:
 
-> Beyond the delivery stages there are separate skills for working with the codebase (a four-stage audit
-> and maintenance refactoring). As a reminder: a skill is a command like `/tms-research` that
-> you give the agent to run one step. There is also the `/tms-new` skill — it helps you sort a new product
-> into its starter documents one time (a one-off initial setup, not one of the delivery stages above). How
-> all these skills are built is described in the skills themselves and in the
-> [methodology](00-methodology.md).
-</content>
-</invoke>
+- **`/tms-care-refactoring`** — a pragmatic maintenance refactor that keeps behaviour, contracts and
+  permissions as they are. It picks one small, high-value change, puts it through a challenge checkpoint,
+  locks behaviour with characterization tests first, and treats "no changes needed" as a valid result.
+- **`/tms-ui-refactoring`** — moves visual styling into reusable components so that pages and screens
+  control only layout.
+
+In Codex: `tms-95-care-refactoring` and `tms-96-ui-refactoring`.
+
+## In short: where the agents work and where you work
+
+| Stage | Runs as (Claude Code) | You |
+|---|---|---|
+| 00 Ticket | the orchestrator's chat | describe the task; only you decide it exists |
+| 01 Research | `tms-stage` + `tms-explorer` fan-out | — |
+| 02 Design | `tms-stage-deep` | answer product forks; **approve the design** |
+| 03 Plan | `tms-stage-deep` (resumed) + a fresh reader | — (the lead signs) |
+| 04 Implementation | `tms-stage` (screen: `tms-ui-screen`) + one `tms-security` on triggers | only if File Ownership must grow |
+| 04b Code review | `tms-stage` + fresh `tms-reviewer` passes | only for a blocker that cannot close here |
+| 05 Test report | `tms-stage-light` | — |
+| 06 Gate | `tms-stage-light` | **decide**: go / fix first / not now; yes/no on follow-ups |

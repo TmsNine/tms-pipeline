@@ -13,7 +13,7 @@ documentation base: the descriptions of the product, the architecture, and the l
 the main documents the agent checks everything else against, at every stage.
 
 Where this base physically lives is up to you; the methodology does not dictate it. Anything durable
-works: a `docs/` tree in the repo, a wiki, an Obsidian vault, or a Notion export. You point to the place
+works: a `docs/` tree in the repo, a wiki, an Obsidian vault, or an export from another notes tool. You point to the place
 you chose once, in the `AGENTS.md` file, in the `DOC_BASE_PATH` field. (`AGENTS.md` is your project's
 settings file: where tasks live, what language to write in, your rules.) Nothing ties you to a particular
 tool; the methodology needs only a path to the folder.
@@ -57,7 +57,7 @@ yourself. (There is no `01` folder in the set — the numbering jumps from `00` 
 
 - **Definition of Ready / Done** — the entry and exit bar for a task. These are checklist conditions:
   "Ready" means the task is described well enough to start; "Done" means the task is finished. The agent
-  checks "Ready" before the first stage (00) and "Done" at the final review.
+  checks "Ready" before the first stage (00) and "Done" at the gate (06).
 - **Documentation System and Handoff Guide** — the order in which the documents should be read, and which
   one counts as the main one when they disagree. It exists so a new contributor — human or agent —
   immediately knows where to look for an answer.
@@ -69,10 +69,12 @@ yourself. (There is no `01` folder in the set — the numbering jumps from `00` 
   an architecture decision: what was decided and why).
 - **Backlog** — the list of future tasks. Each row here is a pointer: the row itself is short, while the
   long context (description, file paths, scope of work) lives separately, in the task folder.
-- Small follow-ups the agent finds during the gap audit (a separate pass where a different agent looks at
-  the design with fresh, skeptical eyes and hunts for holes) do not go into the active backlog table. They
-  are collected in a separate `### Bundled follow-ups` section, so the active list stays a list of what is
-  being worked on right now.
+- Findings from the code review (stage 04b) that are not fixed right away do not go straight into the
+  active backlog table. They reach the gate (06) as proposed backlog rows, and only approved ones are
+  added — grouped in the `### Bundled follow-ups` section, so the active list stays a list of what is
+  being worked on right now. Findings that matter only when a named event happens ("the first bulk
+  import", "a second server") go to the trigger register instead (`TRIGGER_REGISTER_LOCATION` in
+  `AGENTS.md`; it can be a section of the backlog).
 
 ## Keep the backlog short
 

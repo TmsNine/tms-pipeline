@@ -1,7 +1,7 @@
 {
   "name": "tms-pipeline",
-  "version": "0.1.0",
-  "description": "An opinionated AI-agent delivery pipeline: staged skills from ticket to review gate, with 04b loop review, severity-rated gap audit, risk-profiled implementation, and guaranteed follow-up/launch capture.",
+  "version": "0.2.0",
+  "description": "An opinionated AI-agent delivery pipeline: eight staged skills from ticket to review gate, each in a fresh context, with two owner stops, one-executor implementation, independent 04b review and follow-up/launch capture.",
   "author": {
     "name": "TmsNine"
   },
@@ -14,26 +14,25 @@
     "methodology",
     "multi-agent",
     "code-review",
-    "gap-audit",
     "context-engineering"
   ],
   "skills": [
+    "./skills/tms-00-ticket",
+    "./skills/tms-01-research",
+    "./skills/tms-02-design",
+    "./skills/tms-03-plan",
+    "./skills/tms-04-implement",
+    "./skills/tms-04b-review",
+    "./skills/tms-05-test",
+    "./skills/tms-06-gate",
     "./skills/tms-audit-backlog",
     "./skills/tms-audit-scope",
     "./skills/tms-audit-sweep",
     "./skills/tms-audit-triage",
     "./skills/tms-care-refactoring",
-    "./skills/tms-design",
-    "./skills/tms-gap-audit",
-    "./skills/tms-implement",
-    "./skills/tms-loop-code-review",
-    "./skills/tms-loop-review",
     "./skills/tms-new",
-    "./skills/tms-plan",
-    "./skills/tms-research",
-    "./skills/tms-review",
-    "./skills/tms-test",
-    "./skills/tms-ticket",
-    "./skills/tms-ui-refactoring"
+    "./skills/tms-run",
+    "./skills/tms-ui-refactoring",
+    "./skills/tms-ui-screen"
   ]
 }

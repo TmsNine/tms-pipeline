@@ -1,7 +1,7 @@
 {
   "name": "tms-pipeline",
-  "version": "0.1.0",
-  "description": "An opinionated AI-agent delivery pipeline for Claude Code and Codex: staged skills, severity-rated gap audit, risk-profiled implementation, mandatory 04b diff review, and follow-up/launch capture.",
+  "version": "0.2.0",
+  "description": "An opinionated AI-agent delivery pipeline for Claude Code and Codex: eight stages from ticket to gate, each in a fresh context with its own artifact, two owner stops (design and gate), one executor for implementation, and up to five independent review passes.",
   "bin": {
     "tms-pipeline": "installer/cli/index.js"
   },

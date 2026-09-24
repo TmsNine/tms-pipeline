@@ -1,30 +1,37 @@
-# Ticket: Export reports list to CSV
+# ACME-101 — Export the reports list to CSV
 
+Status: OPEN
 Date: 2026-01-15
-Ticket ID: ACME-101
+Priority: Should
+Source: the owner's words in chat, 2026-01-15
 
-## Driver / Why
-Managers want to pull the reports table into a spreadsheet for their weekly review. Today they copy rows
-by hand, which is slow and error-prone.
+## Problem
 
-## Scope
-- In: a "Export to CSV" button on the reports list page that downloads the currently-filtered rows.
-- Out: scheduled/emailed exports; PDF export; exporting other pages.
+A manager cannot take the reports they see in the reports list into a spreadsheet without copying rows by
+hand.
 
-## Acceptance (observable pass/fail)
-1. A visible "Export to CSV" button on the reports list.
-2. Clicking it downloads a `.csv` containing exactly the rows matching the active filters.
-3. The CSV columns match the visible table columns, in the same order.
-4. Only reports the current user is allowed to see are included.
+## Who it affects
 
-## Source links
-- Backlog row: ACME-101
-- Product doc: `02 Product/PRD - Reports.md` · Flow: `02 Product/Flow - Reports list.md`
+Managers who prepare the weekly review from the reports list, filtered by period and status.
 
-## Task mode
-- [x] TDD-first — new behavior + a data-access path that must respect permissions.
+## How it shows up today
 
-## Preconditions checked
-- [x] Item exists in the backlog and is the exact target
-- [x] Relevant product/architecture docs identified
-- [x] Open questions resolved or flagged
+The reports list has filters and a table, but no way to download it. Managers select rows with the mouse,
+paste them into a spreadsheet and fix the columns by hand; rows get lost when the list is longer than one
+page.
+
+## What becomes possible
+
+A manager presses one button and gets a `.csv` file with exactly the rows the filtered list shows, in the
+same columns.
+
+## What we do NOT do here
+
+- Scheduled or emailed exports.
+- PDF export.
+- Export on any page other than the reports list.
+
+## Source
+
+The owner's words: "Managers keep copying the reports table by hand for the weekly review — give them a
+CSV button." Backlog row ACME-101.

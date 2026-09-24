@@ -1,80 +1,31 @@
-# Implementation Log: [TASK_NAME]
+# <TASK-ID> — 04 Implementation
 
-Date: [DATE]
+Date: <YYYY-MM-DD>
+Plan: docs/<TASK-ID>/03_plan.md
 
-## Scope and fingerprints
-- Base SHA: ...
-- Task-owned tracked paths: ...
-- Task-owned untracked paths: ...
-- Starting implementation fingerprint: ...
-- Final implementation fingerprint: ...
-- Package fingerprint (normalized evidence fields): ...
-- Fingerprint helper: `tms-task-fingerprint-v1`; source: `worktree`; base: ...
-- Implementation manifest (repo-relative POSIX paths, one per line): ...
-- Package manifest (full repo-local task package, one path per line): ...
+## Phase N — <name>
 
-## Wave-by-wave execution
+Files: <from File Ownership>
 
-### Wave 1 — [name]
-- Profile: [M/E/R/C] — [trigger reason]
-- Integration owner: lead
-- Code owner: lead (M/E) / Developer agent (R/C)
-- Status: [pass/fail]
-- What was done: ...
-- What changed (files): ...
-- Self-check roles covered: Developer / Tester / Architect / Security-Privacy-Money / Reviewer
-- Risk-surface sweep: [searched symbols/routes/services/tests/mocks + result]
-- Pre-04b adversarial self-review: [invariant table status, defects found/fixed, residual items]
-- Validation: ...
-- 04b must stress-test: ...
+**Done:** what changed, in substance.
+**Test:** which one was written, what it proves, that it was red before the change.
+**Checks:** command → result.
+**Deviations:** what did not go to plan and how it was resolved. Empty is an answer too.
 
-| Role | Self-check / dispatched | Preferred model | Configured/default | Actual | Permission source/evidence |
-|---|---|---|---|---|---|
-| Lead / Developer / Tester / Architect / Security / Reviewer | ... | ... | ... | actual / runtime-selected/unknown | copied-agent mode / plugin ignored + parent/runtime / unknown |
+## Seams
 
-### Wave 2 — [name]
-- Profile: [M/E/R/C] — [trigger reason]
-- Integration owner: lead
-- Code owner: ...
-- Status: ...
-- Self-check roles covered: ...
-- Risk-surface sweep: ...
-- Validation: ...
-- 04b must stress-test: ...
-
-## R/X/V evidence
-
-| R-ID | Invariant | Owner layer | Required proof | Result |
-|---|---|---|---|---|
-| R-... | ... | ... | ... | PASS/FAIL |
-
-| X-ID | Newly exposed risk | Evidence | Disposition |
+| Seam from the plan | Producer line | Consumer line | Agree |
 |---|---|---|---|
-| X-04-... | ... | ... | fixed / handed to 04b / follow-up |
 
-| V-ID | Command / signal | Scope | Implementation fingerprint | Result | Fresh/reused | Covers |
-|---|---|---|---|---|---|---|
-| V-... | `...` | ... | ... | PASS/FAIL | fresh/reused | AC/R/X |
+## Whole-task check
 
-## 04b handoff — orchestrator-only author risk map
-- Reviewer isolation: 04b must audit this handoff, then derive a sanitized neutral brief; never forward
-  author findings/fixes, searches/results, suspicions, scores, or remediation history.
-- Resolved task-owned files: ...
-- Base SHA, task-owned paths, and diff commands for 04b: ...
-- Wave/profile summary: ...
-- Dangerous invariants by wave: ...
-- Searches/risk-surface sweeps performed in 04: ...
-- Adjacent routes/services/tests/mocks checked or intentionally not checked: ...
-- Validation commands and remaining manual/launch checks: ...
-- Final implementation fingerprint for 04b: ...
-- Package fingerprint (normalized evidence fields) and task-owned manifest: ...
-- Reviewer stress-test prompts: ...
+<task check command> → result and red lines (known debt — with a link to the register row).
+Security: <one pass — what it found and what was fixed> | <not needed — no trigger touched>.
 
-## Deviations from plan
-- ...
+## Stops and returns to the owner
 
-## Follow-ups captured (per AGENTS.md "Future Work Capture")
-- [TICKET-ID] [area] [driver] → [backlog path]
+What required going beyond File Ownership and what the owner decided.
 
-## Pre-launch manual actions captured (per AGENTS.md)
-- [action] → [launch playbook doc]
+## Summary
+
+All phases, their state, the total diff.

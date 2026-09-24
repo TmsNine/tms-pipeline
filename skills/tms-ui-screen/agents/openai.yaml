@@ -1,0 +1,4 @@
+interface:
+  display_name: "TMS UI Screen"
+  short_description: "Screen pipeline from meaning to acceptance"
+  default_prompt: "Use $tms-ui-screen to take the next screen from research to visual acceptance."

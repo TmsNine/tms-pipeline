@@ -12,77 +12,58 @@
 
 Everything shared lives in `AGENTS.md`. This file contains only Claude Code-specific execution rules.
 
-## Stage 04 — Profile-Aware Execution
+## Pipeline
 
-Use the approved M/E/R/C profile to choose execution depth. Bounded work stays with the lead; risk-heavy work receives real proving-role separation. Do not run a full mob merely for ceremony, and do not silently downgrade R/C to save context.
+The methodology lives in the skills, not in this file. Eight stages, `tms-00-ticket` → `tms-06-gate`,
+orchestrated by `tms-run`. Invoke the stage you were asked for and only that one.
 
-Stage 01 may still use the bounded read-only evidence fan-out defined by `tms-research`; design and final judgement remain with the lead.
+Stage 04 is carried by one executor — the stage agent itself — for the whole plan, with one
+`tms-security` pass over the assembled diff when a security trigger fires (`AGENTS.md` → *Security
+Triggers*). There are no per-phase escorts and no risk profiles; `tms-04-implement` defines this.
+Stage 01 may fan out cheap read-only gatherers (`tms-explorer`) as that skill describes, and nothing
+else. Stage 04b runs up to five fresh independent `tms-reviewer` passes with a stagnation rule.
 
-### Roles
+## Models and effort — pinned per role, not chosen by hand
 
-1. **Developer** — implements one approved R/C wave at the owning layer.
-2. **Tester/Builder** — runs the smallest meaningful validation and reports exact results.
-3. **Architect** — checks design/plan fit, owner layer, contracts, and coupled paths.
-4. **Security / Privacy / Money** — checks auth, tenant scope, trust boundaries, PII, external effects, and money semantics.
-5. **Reviewer** — checks the wave against acceptance criteria without editing.
+`tms-run` dispatches every stage by `subagent_type`, and each agent in `~/.claude/agents/` pins its own
+model by full id and its effort:
 
-The lead remains the single integration owner, writes self-contained briefs, verifies findings, and decides each local gate.
+| Agent | Tier | Effort | Used for |
+|---|---|---|---|
+| `tms-stage` | top | medium | 01, 04, 04b |
+| `tms-stage-deep` | top | high | 02, then 03 (resumed) |
+| `tms-stage-light` | cheaper | medium | 05, 06 |
+| `tms-reviewer`, `tms-security`, `tms-architect` | top | high | review passes, security |
+| `tms-developer` | top | medium | bounded fixes |
+| `tms-explorer` | cheaper | medium | research fan-out |
+| `tms-tester` | cheaper | low | named checks |
 
-### M/E/R/C profiles
+The exact model ids are in each agent's frontmatter; edit them there when your plan or a newer model
+changes what "top" and "cheaper" mean. Never dispatch a stage as `general-purpose` (it inherits whatever
+the chat runs on), and never pin by a short alias — an alias can resolve to different models over time.
+For search use `tms-explorer`, not the built-in `Explore`. `permissionMode` in agent frontmatter applies
+to agents copied into `~/.claude/agents/` but is ignored for plugin-shipped agents.
 
-Use the profile already approved in `03_delivery_plan.md`; do not replace it with an agent-count label.
+## Auto Mode Discipline — no speculative expansion
 
-- **M — Mechanical/bounded:** lead implements inline and performs local Developer/Tester/Reviewer self-checks; no coding mob; narrow 04b.
-- **E — Evidence-heavy:** lead implements inline; one bounded read-only Architect/evidence pass and Tester isolate search/log volume; standard 04b.
-- **R — Risk review required:** Developer + Tester plus every triggered Architect/Security role and a stage-04 Reviewer; risk-focused 04b.
-- **C — Classic maximum-risk:** full role set, strongest judgement models, a mandatory strongest-available per-invocation Reviewer override, broad author risk sweep, and broad first-pass plus fresh final 04b reviewer.
+Auto mode removes the permission prompt; it does not widen scope.
 
-Choose by the most dangerous touched risk, not average diff size. Escalate when the implementation exposes a stronger trigger; record an append-only X-ID instead of silently relabelling history.
+**Forbidden:**
 
-### Wave gate
+- Subagents beyond what the stage skill names. No "also run a security pass to be sure" — security runs
+  only on the explicit triggers.
+- Speculative `bash` / `grep` / `read` / file listing "just to be safe". Every call is tied to the
+  current step's deliverable.
+- Parallel side-investigations. One hypothesis at a time; a second one goes to the owner.
+- "While I'm here" cleanup, refactor or doc edits found in passing. Capture and move on.
+- Retrying a failed approach with a slightly reworded prompt. Surface the failure instead.
 
-For every wave:
+**Still required:**
 
-1. Resolve profile, scope, acceptance, R-IDs and validation before editing.
-2. Keep the lead as integration owner; use the lead as code owner for M/E and Developer as code owner for R/C.
-3. Give every subagent a compact brief: task/wave, profile, `base_sha`, exact paths/diff, current fingerprint, R-IDs, neutral acceptance/invariants, allowed actions, evidence required, and not-in-scope items.
-4. Use Sonnet defaults for Developer/Tester/Reviewer and Opus for Architect/Security; Profile C must override Reviewer per invocation to the strongest available judgement model. Record preferred/configured/actual model and permission evidence; use `runtime-selected/unknown` when runtime does not expose the result. `permissionMode` frontmatter applies to copied project/user agents but is ignored for plugin-shipped agents, which must record parent/runtime permission evidence instead.
-5. Verify and batch genuine findings at the owning layer; rerun affected validation after fixes.
-6. Pass only after acceptance, applicable proving roles, and changed-surface validation are green. Never use Fast mode.
+- Parallel dispatch of independent work the stage skill names (research fan-out over an enumerable
+  set).
+- Parallel tool calls when independent and needed for the same step.
+- Acting without confirmation on local, reversible work unambiguously inside the current scope.
 
-Record R/X/V ledgers, task-owned paths, implementation/package fingerprints, and the 04b author handoff in `04_implementation.md`.
-
-### Automatic remediation from 04b
-
-An active `tms-loop-review` invocation may call stage 04 back automatically. In that case:
-
-- append `Remediation cycle N`;
-- use the bounded remediation brief;
-- fix and validate owned defects;
-- refresh fingerprints and the handoff;
-- do not stop for confirmation, stage, or commit;
-- return directly to the same 04b invocation for a fresh reviewer.
-
-### Stage-04 close
-
-Capture follow-ups and pre-launch manual actions per `AGENTS.md`. Stage 04 never stages or commits. The single task-scoped commit is created only after a successful stage 06.
-
-## Stage 04b — Independent and atomic
-
-Every scoring pass uses a fresh read-only Agent with a self-contained prompt. Do not reveal parent reasoning, prior findings/scores/fixes, round number, remaining budget, or the acceptance target.
-
-The per-attempt checkpoint limits orchestration, not quality. If implementation work remains, 04b persists `NEEDS_REMEDIATION`, automatically runs repeat 04, and starts a fresh attempt. It does not ask the user to restart 04.
-
-`PASS` is atomic: validation and a fresh independent review must cover the exact same final implementation fingerprint, and no implementation change may follow that reviewer. Any later code/test/SQL/contract/config edit immediately returns the artifact to `NOT_ACCEPTED`.
-
-Only a normalized `PASS` may proceed to 05. The first user-facing line must include `04b status: <STATUS>` and explicitly say whether 05 is allowed.
-
-## Auto Mode Discipline
-
-Auto mode removes permission prompts; it does not widen scope.
-
-- No speculative side investigations, unrelated cleanup, or hidden scope expansion.
-- Parallel proving roles and independent tool calls are allowed when tied to the current wave.
-- Prefer one hypothesis at a time.
-- Capture adjacent work as follow-up instead of implementing it opportunistically.
-- Never use Fast mode for pipeline stages or scoring review.
+**Heuristic before any call:** would I have run this without auto mode, with the owner watching? If the
+honest answer is "probably not, I was being thorough" — do not run it.
