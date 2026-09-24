@@ -12,8 +12,8 @@ First time here? Start with the overview: [getting started](01-getting-started.m
 
 Onboarding tms-pipeline is split into two halves, on purpose:
 
-1. **The installer** (`npx tms-pipeline`, or `npx github:TmsNine/tms-pipeline` until the npm package is
-   published; for Claude Code, alternatively the plugin) — puts the skills and agent roles in place and
+1. **The installer** (`npx tms-pipeline`, or `npx github:TmsNine/tms-pipeline` for the latest version
+   from GitHub; for Claude Code, alternatively the plugin) — puts the skills and agent roles in place and
    writes a starter `AGENTS.md` into your project. A skill is a command like `/tms-01-research` that you
    give the agent to run one step of the work. The installer never asks you about your project, so it
    leaves almost every field in `AGENTS.md` marked `<<TODO>>` — deliberate placeholders, not things it

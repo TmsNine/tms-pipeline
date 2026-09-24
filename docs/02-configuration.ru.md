@@ -146,7 +146,7 @@ Discipline*, *Safety And Workspace Hygiene*, *Decision Rules*, *Completion Proto
 У Codex нет команды вроде `/plugin install`, поэтому файлы нужно положить в `~/.codex` вручную или
 полуавтоматически:
 
-- **Полуавтоматически:** запустите `npx tms-pipeline` (пока npm-пакет не опубликован —
+- **Полуавтоматически:** запустите `npx tms-pipeline` (или самая свежая версия с GitHub —
   `npx github:TmsNine/tms-pipeline`), выберите Codex и согласитесь на копирование. Установщик скопирует
   `codex-skills/` → `~/.codex/skills/` и `codex-agents/` → `~/.codex/agents/`. Если вы не пользуетесь
   Codex, установщик `~/.codex` не трогает.

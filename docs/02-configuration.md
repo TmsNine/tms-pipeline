@@ -146,8 +146,8 @@ when you switch to the other.
 Codex has no command like `/plugin install`, so the files need to go into `~/.codex` either by hand or
 semi-automatically:
 
-- **Semi-automatically:** run `npx tms-pipeline` (until the npm package is published,
-  `npx github:TmsNine/tms-pipeline`), choose Codex and agree to the copy. The installer then copies
+- **Semi-automatically:** run `npx tms-pipeline` (or `npx github:TmsNine/tms-pipeline`
+  for the latest version from GitHub), choose Codex and agree to the copy. The installer then copies
   `codex-skills/` → `~/.codex/skills/` and `codex-agents/` → `~/.codex/agents/`. If you don't use Codex,
   the installer leaves `~/.codex` alone.
 - **By hand:** `cp -R codex-skills/* ~/.codex/skills/ && cp -R codex-agents/* ~/.codex/agents/`.

@@ -67,7 +67,7 @@ tms-pipeline — это дисциплина для AI-агентов: она п
 npx tms-pipeline
 ```
 
-Пока npm-пакет не опубликован, запускайте его прямо с GitHub:
+Или запустите самую свежую версию прямо с GitHub:
 
 ```bash
 npx github:TmsNine/tms-pipeline

@@ -69,7 +69,7 @@ in the settings.
 npx tms-pipeline
 ```
 
-Until the npm package is published, run it straight from GitHub:
+Or run the latest version straight from GitHub:
 
 ```bash
 npx github:TmsNine/tms-pipeline

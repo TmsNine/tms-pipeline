@@ -212,7 +212,7 @@ only what's needed (for example, it won't create `.claude/CLAUDE.md` if you only
 # 1) Set the process up ON YOUR existing project (short y/n wizard; asks about Claude/Codex)
 npx tms-pipeline
 
-#    Until the npm package is published, run it straight from GitHub:
+#    Or run the latest version straight from GitHub:
 npx github:TmsNine/tms-pipeline
 
 #    Preview without writing anything:   npx tms-pipeline --dry-run
