@@ -57,7 +57,8 @@ repo). If there is no repo yet, that's fine — this stage creates the starting 
    - run `npx tms-pipeline` (or `/tms-init`) to generate `AGENTS.md` / `.claude/CLAUDE.md`, pointing
      `DOC_BASE_PATH` at the doc base you just created and resolving the `<<TODO>>` markers (offer to help
      fill them by reading the code);
-   - then start delivering the first backlog item with `/tms-ticket <TICKET-ID>`.
+   - then start delivering the first backlog item: `/tms-run <TICKET-ID>` carries it through all eight
+     stages (or run `tms-00-ticket` alone to register it first).
 
 ## Tone
 Match the user's output language and audience. This is setup and decision-capture, not a lecture — keep it

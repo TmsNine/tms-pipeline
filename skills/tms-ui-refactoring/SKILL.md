@@ -1,20 +1,11 @@
 ---
 name: tms-ui-refactoring
-description: "Deep UI refactor enforcing strict component ownership of visual styling — visual styles live inside reusable components, external code controls only layout composition. Use when the user invokes /tms-ui-refactoring or wants pages/screens/routes cleaned up so cosmetic overrides (style/className/utility classes) stop leaking from call sites."
-allowed-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Grep
-  - Glob
-  - Agent
-  - TodoWrite
+description: Deep UI code refactoring workflow for enforcing strict component ownership of visual styling. Use when the user invokes `/tms-ui-refactoring`, asks for systematic UI refactoring, or wants pages/screens/routes cleaned up so visual styles live inside reusable components while external code controls only layout composition.
 ---
 
 # UI Refactoring
 
-Read THIS repo's `AGENTS.md` / `CLAUDE.md`, the existing design system, and component conventions first — align with established primitives and naming.
+Read THIS repo's `AGENTS.md`, the existing design system, and component conventions first — align with established primitives and naming.
 
 ## Core Principle
 

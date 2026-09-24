@@ -16,7 +16,7 @@ looks empty (no source, no docs), say so and offer `/tms-new` instead.
 - **Discover first, ask second.** Never ask for something you can read from the repo.
 - **One compact batch** of questions for the true gaps, in the user's `OUTPUT_LANGUAGE`.
 - **Don't guess deep judgment calls.** Leave them as `<<TODO>>` and point to the tutorial rather than
-  inventing tenancy models, migration policies, or Profile-C triggers.
+  inventing tenancy models, migration policies, or security triggers.
 
 ## 1. Locate & confirm
 
@@ -32,6 +32,9 @@ Read in parallel where you can, and map findings to tokens:
 - **Validation commands** → `TEST_CMD` / `BUILD_CMD` / `LINT_CMD` / `TYPECHECK_CMD`. Read
   `package.json` scripts, or `Makefile` / `pyproject.toml` / `Cargo.toml` / `go.mod`, and
   `.github/workflows/*`. Prefer script names that actually exist; leave blank if there is none.
+- **Task check** → `TASK_CHECK_CMD`: one command that builds, type-checks and tests everything a task
+  touched. Use an existing script if there is one (e.g. a `validate`/`check`/`ci` script); otherwise
+  propose chaining the commands above and say it is a proposal.
 - **Project one-liner + stack** → `PROJECT_ONE_LINER`. Draft it from the README / package metadata.
 - **Ticket-ID format** → `TICKET_ID_FORMAT`. Scan `git log` and existing docs/backlog for an ID pattern
   (e.g. `ABC-123`). It is a **format example**, not an auto-numbering prefix — say so if the user asks.
@@ -49,9 +52,10 @@ Show a compact table of what you discovered (token → proposed value → source
   the repo). If they have none and want one, offer to create the skeleton (see step 4).
 - **`AUDIENCE_PROFILE`** — who reads the output (sets the tone/altitude). One short answer.
 
-Leave the deep judgment tokens — `PROFILE_C_TRIGGERS`, `PERSISTENCE_AND_TENANCY`, `MIGRATION_POLICY`,
+Leave the deep judgment tokens — `SECURITY_TRIGGERS`, `PERSISTENCE_AND_TENANCY`, `MIGRATION_POLICY`,
 `LAUNCH_STAGE_MAPPING`, `TRACEABILITY_LOCATION`, `CODE_LAYOUT_HINT`, `DOC_INDEX_HINT`,
-`DESIGN_SYSTEM_HINT` — as `<<TODO>>` unless the user volunteers them. They are covered in step 5.
+`DESIGN_SYSTEM_HINT`, `KNOWN_TEST_DEBT_LOCATION`, `TRIGGER_REGISTER_LOCATION`,
+`ACCEPTED_SCREENS_LOCATION` — as `<<TODO>>` unless the user volunteers them. They are covered in step 5.
 
 ## 4. Render via the engine (do NOT hand-write AGENTS.md)
 
@@ -87,9 +91,10 @@ JSON shape (all keys optional; missing ones fall back to the `questions.js` defa
 
 - List what was written and every remaining `<<TODO>>` the user must still resolve.
 - Point them to **`docs/05-manual-setup.md`** — a guided walkthrough with ready-to-paste prompts for the
-  deep judgment fields (Profile-C triggers, tenancy/identity, migration policy, doc structure). Offer to
-  do it now, one field at a time, reading the code with them.
-- Then the first real step: `/tms-ticket <their first ticket>`.
+  deep judgment fields (security triggers, tenancy/identity, migration policy, the known-test-debt and
+  trigger registers, doc structure). Offer to do it now, one field at a time, reading the code with them.
+- Then the first real step: `/tms-run <their first ticket>` — it carries the task through the eight
+  stages and stops for the owner after design and at the gate.
 
 ## Tone
 
